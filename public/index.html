@@ -1,302 +1,660 @@
-const express = require('express');
-const session = require('express-session');
-const bcrypt = require('bcryptjs');
-const multer = require('multer');
-const { Pool } = require('pg');
-const path = require('path');
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Mazren Spedition - System VTC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .logo-hover {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .logo-hover:hover {
+            opacity: 0.8;
+        }
+        .example-link {
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #0d6efd;
+            text-decoration: underline;
+            margin-left: 5px;
+        }
+        .example-link:hover {
+            color: #0a58ca;
+        }
+    </style>
+</head>
+<body class="bg-light">
 
-const app = express();
-const PORT = process.env.PORT || 10000;
+    <div class="container py-4" id="app">
+        <!-- LOGOWANIE -->
+        <div id="auth-section" class="row justify-content-center" style="display:flex;">
+            <div class="col-md-5 mt-5">
+                <div class="card shadow p-4">
+                    <h3 class="text-center mb-4">Mazren Spedition - Logowanie</h3>
+                    <div class="mb-3">
+                        <label class="form-label">Nazwa użytkownika</label>
+                        <input type="text" id="username" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hasło</label>
+                        <input type="password" id="password" class="form-control">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" onclick="performLogin()">Zaloguj się</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="performRegister()">Zarejestruj się</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-// Konfiguracja połączenia z PostgreSQL (Supabase / Session Pooler)
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-});
+        <!-- PANEL GŁÓWNY -->
+        <div id="dashboard-section" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                <div class="d-flex align-items-center">
+                    <img src="/logo.png" alt="Logo VTC" title="Wróć do strony głównej" class="me-3 logo-hover" style="max-height: 60px; max-width: 150px; object-fit: contain;" onclick="switchTab('jobs')" onerror="this.style.display='none'">
+                    <div>
+                        <h2>Witaj, <span id="user-display"></span>! <span id="admin-badge" class="badge bg-danger d-none">SZEF</span></h2>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="switchTab('jobs')">Trasy i Firma</button>
+                    <button class="btn btn-outline-info me-2" onclick="switchTab('garage')">Garaż VTC</button>
+                    <button id="admin-tab-btn" class="btn btn-outline-warning me-2 d-none" onclick="switchTab('management')">Zarządzanie</button>
+                    <button class="btn btn-outline-danger" onclick="performLogout()">Wyloguj</button>
+                </div>
+            </div>
 
-// Test połączenia z bazą
-pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-        console.error('Błąd połączenia z bazą PostgreSQL:', err.message);
-    } else {
-        console.log('Połączono z bazą PostgreSQL pomyślnie!');
-    }
-});
+            <!-- ZAKŁADKA TRAS I STATYSTYK -->
+            <div id="tab-jobs">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow p-4 h-100">
+                            <h4>Twój limit miesięczny (Cel: 6000 km)</h4>
+                            <div class="progress my-3" style="height: 25px;">
+                                <div id="km-progress" class="progress-bar" role="progressbar" style="width: 0%;">0 km / 6000 km</div>
+                            </div>
+                            <p id="limit-status" class="text-muted mb-0"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow p-4 h-100 bg-white">
+                            <h4>Statystyki Całej Firmy</h4>
+                            <p class="mb-1"><strong>Razem przejechano w tym miesiącu:</strong> <span id="company-total-km" class="text-primary fw-bold">0</span> km</p>
+                            <hr>
+                            <strong>Ranking kierowców:</strong>
+                            <ul id="drivers-ranking" class="list-unstyled mb-0 mt-2" style="max-height: 80px; overflow-y: auto;"></ul>
+                        </div>
+                    </div>
+                </div>
 
-// Tworzenie tabel, jeśli nie istnieją
-async function initDB() {
-    try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                role VARCHAR(50) DEFAULT 'driver'
-            );
-            
-            CREATE TABLE IF NOT EXISTS jobs (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                start_city VARCHAR(255) NOT NULL,
-                end_city VARCHAR(255) NOT NULL,
-                cargo VARCHAR(255) NOT NULL,
-                distance INTEGER NOT NULL,
-                cmr_file TEXT,
-                summary_photo TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card shadow p-4 mb-4">
+                            <h4 id="form-title">Dodaj nową trasę</h4>
+                            <form id="job-form">
+                                <input type="hidden" id="edit-job-id">
+                                <div class="mb-3">
+                                    <label class="form-label">Skąd (Miasto)</label>
+                                    <input type="text" id="start_city" name="start_city" class="form-control" placeholder="np. Warszawa" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Dokąd (Miasto)</label>
+                                    <input type="text" id="end_city" name="end_city" class="form-control" placeholder="np. Berlin" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Ładunek</label>
+                                    <input type="text" id="cargo" name="cargo" class="form-control" placeholder="np. Świeże ryby" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Dystans (km)</label>
+                                    <input type="number" id="distance" name="distance" class="form-control" placeholder="np. 1250" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Plik CMR <span class="example-link" onclick="showExample('cmr')">[Przykład]</span></label>
+                                    <input type="file" name="cmr" class="form-control" accept="image/*,.pdf">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Zdjęcie z ETS2 (Podsumowanie) <span class="example-link" onclick="showExample('summary')">[Przykład]</span></label>
+                                    <input type="file" name="summary" class="form-control" accept="image/*">
+                                </div>
+                                <button type="submit" class="btn btn-success w-100" id="submit-job-btn">Wyślij zlecenie</button>
+                                <button type="button" class="btn btn-secondary w-100 mt-2 d-none" id="cancel-edit-btn" onclick="resetJobForm()">Anuluj edycję</button>
+                            </form>
+                        </div>
+                    </div>
 
-            CREATE TABLE IF NOT EXISTS trucks (
-                id SERIAL PRIMARY KEY,
-                driver_name VARCHAR(255) NOT NULL,
-                truck_model VARCHAR(255) NOT NULL,
-                trailer_model VARCHAR(255),
-                plates VARCHAR(50) NOT NULL,
-                photo TEXT NOT NULL
-            );
-        `);
-        console.log('Tabele zostały pomyślnie zainicjalizowane.');
-    } catch (err) {
-        console.error('Błąd tworzenia tabel:', err.message);
-    }
-}
-initDB();
+                    <div class="col-md-8">
+                        <div class="card shadow p-4">
+                            <h4>Wszystkie trasy w firmie</h4>
+                            <div class="table-responsive">
+                                <table class="table table-striped align-middle">
+                                   <thead>
+                                       <tr>
+                                           <th>Kierowca</th>
+                                           <th>Trasa</th>
+                                           <th>Ładunek</th>
+                                           <th>Dystans</th>
+                                           <th>Dowody</th>
+                                           <th>Akcje</th>
+                                       </tr>
+                                   </thead>
+                                   <tbody id="jobs-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+            <!-- GARAŻ VTC -->
+            <div id="tab-garage" style="display:none;">
+                <div class="row">
+                    <div class="col-md-4" id="truck-form-column" style="display:none;">
+                        <div class="card shadow p-4 mb-4">
+                            <h4 id="truck-form-title">Dodaj do floty</h4>
+                            <form id="truck-form">
+                                <input type="hidden" id="edit-truck-id">
+                                <div class="mb-3">
+                                    <label class="form-label">Kierowca</label>
+                                    <input type="text" id="truck_driver_name" name="driver_name" class="form-control" placeholder="np. Jan Kowalski" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Model Ciężarówki</label>
+                                    <input type="text" id="truck_model" name="truck_model" class="form-control" placeholder="np. Volvo FH16" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Model Naczepy</label>
+                                    <input type="text" id="trailer_model" name="trailer_model" class="form-control" placeholder="np. Krone Dry Liner">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Rejestracja</label>
+                                    <input type="text" id="truck_plates" name="plates" class="form-control" placeholder="np. WA 12345" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Zdjęcie zestawu <span id="photo-req-text" class="text-danger">*</span></label>
+                                    <input type="file" name="truck_photo" id="truck_photo" class="form-control" accept="image/*">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="submit-truck-btn">Dodaj pojazd</button>
+                                <button type="button" class="btn btn-secondary w-100 mt-2 d-none" id="cancel-truck-edit-btn" onclick="resetTruckForm()">Anuluj edycję</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="trucks-list-column" class="col-md-12">
+                        <div class="card shadow p-4">
+                            <h4>Flota VTC</h4>
+                            <div class="row" id="trucks-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-app.use(session({
-    secret: 'mazren-spedition-secret-key',
-    resave: false,
-    saveUninitialized: false
-}));
+            <!-- ZAKŁADKA ZARZĄDZANIE (TYLKO DLA SZEFA) -->
+            <div id="tab-management" style="display:none;">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card shadow p-4 border-warning">
+                            <h3 class="text-warning mb-3">Panel Szefa: Zarządzanie Kierowcami</h3>
+                            <p class="text-muted">Tutaj możesz zmieniać hasła kontom pracowników lub usuwać kierowców, którzy odeszli z firmy.</p>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-striped align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Użytkownik</th>
+                                            <th>Rola</th>
+                                            <th>Nowe hasło</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="management-users-list"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-const upload = multer({ storage: multer.memoryStorage() });
+        <!-- MODAL DO WYŚWIETLANIA PRZYKŁADÓW -->
+        <div class="modal fade" id="exampleModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalTitle">Wzorcowy przykład</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p id="exampleModalDesc" class="text-muted mb-3"></p>
+                        <div id="exampleModalContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-// --- ENDPOINTY AUTORYZACJI ---
+        <!-- STOPKA -->
+        <footer class="text-center py-4 mt-5 text-muted border-top">
+            <small>&copy; Mazren Spedition Sp. z o.o. - Wszystkie prawa zastrzeżone</small>
+        </footer>
+    </div>
 
-app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Uzupełnij login i hasło.' });
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
-        const role = parseInt(userCountRes.rows[0].count) === 0 ? 'admin' : 'driver';
+    <script>
+        let currentUserId = null;
+        let currentUserRole = '';
 
-        await pool.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3)', [username, hashedPassword, role]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(400).json({ error: 'Użytkownik o takiej nazwie już istnieje.' });
-    }
-});
+        function showExample(type) {
+            const title = document.getElementById('exampleModalTitle');
+            const desc = document.getElementById('exampleModalDesc');
+            const content = document.getElementById('exampleModalContent');
 
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        if (result.rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowy login lub hasło.' });
+            if (type === 'summary') {
+                title.textContent = 'Przykład: Podsumowanie z końca zlecenia';
+                desc.textContent = 'Zrzut ekranu z gry ETS2 prezentujący ekran podsumowania trasy.';
+                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg" alt="Przykład z ETS2" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
+            } else if (type === 'cmr') {
+                title.textContent = 'Przykład: Dokument CMR';
+                desc.textContent = 'Zdjęcie lub skan listu przewozowego CMR.';
+                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg" alt="Przykład CMR" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
+            }
 
-        const user = result.rows[0];
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(401).json({ error: 'Nieprawidłowy login lub hasło.' });
-
-        req.session.userId = user.id;
-        req.session.username = user.username;
-        req.session.role = user.role;
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd serwera podczas logowania.' });
-    }
-});
-
-app.get('/api/user', async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    try {
-        const userRes = await pool.query('SELECT id, username, role FROM users WHERE id = $1', [req.session.userId]);
-        if (userRes.rows.length === 0) return res.status(401).json({ error: 'Użytkownik nie istnieje' });
-        
-        const user = userRes.rows[0];
-        const kmRes = await pool.query('SELECT SUM(distance) as total FROM jobs WHERE user_id = $1', [user.id]);
-        const monthlyKm = parseInt(kmRes.rows[0].total || 0);
-
-        res.json({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            monthlyKm: monthlyKm,
-            limitKm: 6000
-        });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania danych użytkownika' });
-    }
-});
-
-app.post('/api/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.json({ success: true });
-    });
-});
-
-// --- PANEL SZEFA: ZARZĄDZANIE KIEROWCAMI (HASŁA I USUWANIE) ---
-
-app.get('/api/users', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    try {
-        const result = await pool.query('SELECT id, username, role FROM users ORDER BY username ASC');
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania listy użytkowników' });
-    }
-});
-
-app.put('/api/users/:id/password', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    const { newPassword } = req.body;
-    const targetUserId = req.params.id;
-
-    if (!newPassword) return res.status(400).json({ error: 'Nowe hasło jest wymagane' });
-
-    try {
-        const hashed = await bcrypt.hash(newPassword, 10);
-        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, targetUserId]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd zmiany hasła' });
-    }
-});
-
-app.delete('/api/users/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    const targetUserId = req.params.id;
-
-    // Nie pozwól szefowi usunąć samego siebie
-    if (parseInt(targetUserId) === req.session.userId) {
-        return res.status(400).json({ error: 'Nie możesz usunąć własnego konta administratora.' });
-    }
-
-    try {
-        await pool.query('DELETE FROM users WHERE id = $1', [targetUserId]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd usuwania użytkownika' });
-    }
-});
-
-// --- TRASY I STATYSTYKI ---
-
-app.get('/api/jobs', async (req, res) => {
-    try {
-        const query = `
-            SELECT jobs.*, users.username 
-            FROM jobs 
-            JOIN users ON jobs.user_id = users.id 
-            ORDER BY jobs.id DESC
-        `;
-        const result = await pool.query(query);
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania tras' });
-    }
-});
-
-app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    const { start_city, end_city, cargo, distance } = req.body;
-    
-    const cmrFile = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg';
-    const summaryPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
-
-    try {
-        await pool.query(
-            'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [req.session.userId, start_city, end_city, cargo, parseInt(distance), cmrFile, summaryPhoto]
-        );
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd zapisu trasy' });
-    }
-});
-
-app.delete('/api/jobs/:id', async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    try {
-        const jobId = req.params.id;
-        const jobRes = await pool.query('SELECT * FROM jobs WHERE id = $1', [jobId]);
-        if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Trasa nie znaleziona' });
-
-        const job = jobRes.rows[0];
-        if (job.user_id !== req.session.userId && req.session.role !== 'admin') {
-            return res.status(403).json({ error: 'Brak uprawnień' });
+            const modal = new bootstrap.Modal(document.getElementById('exampleModal'));
+            modal.show();
         }
 
-        await pool.query('DELETE FROM jobs WHERE id = $1', [jobId]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd usuwania trasy' });
-    }
-});
+        function switchTab(tab) {
+            document.getElementById('tab-jobs').style.display = (tab === 'jobs') ? 'block' : 'none';
+            document.getElementById('tab-garage').style.display = (tab === 'garage') ? 'block' : 'none';
+            document.getElementById('tab-management').style.display = (tab === 'management') ? 'block' : 'none';
+            
+            if (tab === 'garage') {
+                loadTrucks();
+            } else if (tab === 'management' && currentUserRole === 'admin') {
+                loadManagementUsers();
+            }
+        }
 
-app.get('/api/company-stats', async (req, res) => {
-    try {
-        const totalRes = await pool.query('SELECT SUM(distance) as total FROM jobs');
-        const totalCompanyKm = parseInt(totalRes.rows[0].total || 0);
+        async function checkUser() {
+            const savedUser = localStorage.getItem('vtc_logged_user');
+            if (!savedUser) {
+                document.getElementById('auth-section').style.display = 'flex';
+                document.getElementById('dashboard-section').style.display = 'none';
+                return;
+            }
 
-        const rankingRes = await pool.query(`
-            SELECT users.username, SUM(jobs.distance) as km 
-            FROM jobs 
-            JOIN users ON jobs.user_id = users.id 
-            GROUP BY users.username 
-            ORDER BY km DESC
-        `);
+            try {
+                const res = await fetch('/api/user');
+                if (res.ok) {
+                    const data = await res.json();
+                    currentUserId = data.id;
+                    currentUserRole = data.role;
+                    document.getElementById('auth-section').style.display = 'none';
+                    document.getElementById('dashboard-section').style.display = 'block';
+                    document.getElementById('user-display').innerText = data.username;
+                    
+                    if (data.role === 'admin') {
+                        document.getElementById('admin-badge').classList.remove('d-none');
+                        document.getElementById('admin-tab-btn').classList.remove('d-none');
+                        document.getElementById('truck-form-column').style.display = 'block';
+                        document.getElementById('trucks-list-column').className = 'col-md-8';
+                    } else {
+                        document.getElementById('admin-badge').classList.add('d-none');
+                        document.getElementById('admin-tab-btn').classList.add('d-none');
+                        document.getElementById('truck-form-column').style.display = 'none';
+                        document.getElementById('trucks-list-column').className = 'col-md-12';
+                    }
 
-        res.json({
-            totalCompanyKm,
-            driversRanking: rankingRes.rows
+                    loadCompanyStats();
+
+                    const km = data.monthlyKm;
+                    const limit = data.limitKm;
+                    const percent = Math.min(Math.round((km / limit) * 100), 100);
+                    const progressBar = document.getElementById('km-progress');
+                    progressBar.style.width = percent + '%';
+                    progressBar.textContent = `${km} km / ${limit} km (${percent}%)`;
+                    
+                    if (km >= limit) {
+                        progressBar.classList.add('bg-success');
+                        document.getElementById('limit-status').textContent = 'Limit miesięczny osiągnięty!';
+                    } else {
+                        progressBar.classList.remove('bg-success');
+                        document.getElementById('limit-status').textContent = `Do limitu brak: ${limit - km} km.`;
+                    }
+
+                    loadJobs();
+                } else {
+                    localStorage.removeItem('vtc_logged_user');
+                    document.getElementById('auth-section').style.display = 'flex';
+                    document.getElementById('dashboard-section').style.display = 'none';
+                }
+            } catch (e) {
+                document.getElementById('auth-section').style.display = 'flex';
+                document.getElementById('dashboard-section').style.display = 'none';
+            }
+        }
+
+        async function performLogin() {
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (!usernameInput || !passwordInput) {
+                alert('Wpisz nazwę użytkownika i hasło!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('vtc_logged_user', usernameInput);
+                    await checkUser();
+                } else {
+                    alert(data.error || 'Nieprawidłowy login lub hasło.');
+                }
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
+        }
+
+        async function performRegister() {
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (!usernameInput || !passwordInput) {
+                alert('Wpisz nazwę użytkownika i hasło!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('Konto zostało utworzone pomyślnie! Możesz się teraz zalogować.');
+                } else {
+                    alert(data.error || 'Błąd rejestracji.');
+                }
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
+        }
+
+        async function performLogout() {
+            localStorage.removeItem('vtc_logged_user');
+            await fetch('/api/logout', { method: 'POST' });
+            document.getElementById('auth-section').style.display = 'flex';
+            document.getElementById('dashboard-section').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function loadManagementUsers() {
+            const res = await fetch('/api/users');
+            if (res.ok) {
+                const users = await res.json();
+                const tbody = document.getElementById('management-users-list');
+                tbody.innerHTML = '';
+                users.forEach(u => {
+                    let deleteBtn = '';
+                    if (u.role !== 'admin') {
+                        deleteBtn = `<button class="btn btn-sm btn-danger ms-2" onclick="deleteUser(${u.id}, '${u.username}')">Zwolnij (Usuń)</button>`;
+                    }
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${u.username}</strong></td>
+                            <td><span class="badge bg-${u.role === 'admin' ? 'danger' : 'secondary'}">${u.role}</span></td>
+                            <td>
+                                <div class="input-group input-group-sm" style="max-width: 250px;">
+                                    <input type="password" id="new-pass-${u.id}" class="form-control" placeholder="Nowe hasło">
+                                    <button class="btn btn-outline-warning" onclick="changeUserPassword(${u.id})">Zmień</button>
+                                </div>
+                            </td>
+                            <td>${deleteBtn}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        async function changeUserPassword(userId) {
+            const newPassword = document.getElementById(`new-pass-${userId}`).value;
+            if (!newPassword) {
+                alert('Wpisz nowe hasło!');
+                return;
+            }
+            if (confirm('Czy na pewno chcesz zmienić hasło temu użytkownikowi?')) {
+                const res = await fetch(`/api/users/${userId}/password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newPassword })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Hasło zostało zmienione pomyślnie!');
+                    document.getElementById(`new-pass-${userId}`).value = '';
+                } else {
+                    alert(data.error || 'Błąd zmiany hasła.');
+                }
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            if (confirm(`Czy na pewno chcesz usunąć kontro kierowcy "${username}"? Zostaną również usunięte jego trasy.`)) {
+                const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('Kierowca został usunięty z firmy.');
+                    loadManagementUsers();
+                    loadCompanyStats();
+                } else {
+                    alert(data.error || 'Błąd usuwania użytkownika.');
+                }
+            }
+        }
+
+        async function loadCompanyStats() {
+            const res = await fetch('/api/company-stats');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('company-total-km').textContent = data.totalCompanyKm;
+                const rankingList = document.getElementById('drivers-ranking');
+                rankingList.innerHTML = '';
+                if (data.driversRanking.length === 0) {
+                    rankingList.innerHTML = '<li class="text-muted">Brak przejechanych tras.</li>';
+                } else {
+                    data.driversRanking.forEach((d, index) => {
+                        rankingList.innerHTML += `<li>${index + 1}. <strong>${d.username}</strong> - ${d.km} km</li>`;
+                    });
+                }
+            }
+        }
+
+        async function loadJobs() {
+            const res = await fetch('/api/jobs');
+            if (res.ok) {
+                const jobs = await res.json();
+                const tbody = document.getElementById('jobs-table-body');
+                tbody.innerHTML = '';
+                jobs.forEach(job => {
+                    let canModify = (job.user_id === currentUserId || currentUserRole === 'admin');
+                    let actionHtml = '';
+                    if (canModify) {
+                        actionHtml = `
+                            <button class="btn btn-sm btn-warning me-1" onclick="editJob(${job.id}, '${job.start_city}', '${job.end_city}', '${job.cargo}', ${job.distance})">Edytuj</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteJob(${job.id})">Usuń</button>
+                        `;
+                    }
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${job.username}</td>
+                            <td>${job.start_city} ➔ ${job.end_city}</td>
+                            <td>${job.cargo}</td>
+                            <td>${job.distance} km</td>
+                            <td>
+                                ${job.cmr_file ? `<a href="${job.cmr_file}" target="_blank" class="btn btn-sm btn-outline-primary mb-1">CMR</a>` : ''}
+                                ${job.summary_photo ? `<a href="${job.summary_photo}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1">Zdjęcie</a>` : ''}
+                            </td>
+                            <td>${actionHtml}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function editJob(id, start, end, cargo, distance) {
+            document.getElementById('form-title').textContent = 'Edytuj trasę';
+            document.getElementById('edit-job-id').value = id;
+            document.getElementById('start_city').value = start;
+            document.getElementById('end_city').value = end;
+            document.getElementById('cargo').value = cargo;
+            document.getElementById('distance').value = distance;
+            document.getElementById('submit-job-btn').textContent = 'Zapisz zmiany';
+            document.getElementById('cancel-edit-btn').classList.remove('d-none');
+        }
+
+        function resetJobForm() {
+            document.getElementById('form-title').textContent = 'Dodaj nową trasę';
+            document.getElementById('job-form').reset();
+            document.getElementById('edit-job-id').value = '';
+            document.getElementById('submit-job-btn').textContent = 'Wyślij zlecenie';
+            document.getElementById('cancel-edit-btn').classList.add('d-none');
+        }
+
+        document.getElementById('job-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('edit-job-id').value;
+            const formData = new FormData(e.target);
+            
+            let url = '/api/jobs';
+            let method = 'POST';
+            if (editId) {
+                url = `/api/jobs/${editId}`;
+                method = 'PUT';
+            }
+
+            const res = await fetch(url, { method: method, body: formData });
+            if (res.ok) {
+                resetJobForm();
+                checkUser();
+            } else {
+                alert('Błąd zapisu trasy.');
+            }
         });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd statystyk firmy' });
-    }
-});
 
-// --- GARAŻ VTC ---
+        async function deleteJob(id) {
+            if (confirm('Usunąć tę trasę?')) {
+                await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+                checkUser();
+            }
+        }
 
-app.get('/api/trucks', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM trucks ORDER BY id DESC');
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania floty' });
-    }
-});
+        async function loadTrucks() {
+            const res = await fetch('/api/trucks');
+            if (res.ok) {
+                const trucks = await res.json();
+                const container = document.getElementById('trucks-container');
+                container.innerHTML = '';
+                if (trucks.length === 0) {
+                    container.innerHTML = '<p class="text-muted">Brak pojazdów we flocie firmy.</p>';
+                    return;
+                }
+                trucks.forEach(t => {
+                    let adminActions = '';
+                    if (currentUserRole === 'admin') {
+                        adminActions = `
+                            <div class="mt-2 pt-2 border-top d-flex justify-content-between">
+                                <button class="btn btn-sm btn-warning" onclick="editTruck(${t.id}, '${t.driver_name}', '${t.truck_model}', '${t.trailer_model || ''}', '${t.plates}')">Edytuj</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTruck(${t.id})">Usuń</button>
+                            </div>
+                        `;
+                    }
+                    container.innerHTML += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <img src="${t.photo}" class="card-img-top" style="height: 140px; object-fit: cover;">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <h5 class="card-title">🚚 ${t.truck_model}</h5>
+                                        <p class="card-text mb-1 text-muted"><strong>Naczepa:</strong> ${t.trailer_model || 'Brak'}</p>
+                                        <p class="card-text mb-1"><strong>Kierowca:</strong> ${t.driver_name}</p>
+                                        <p class="card-text text-muted"><strong>Rejestracja:</strong> ${t.plates}</p>
+                                    </div>
+                                    ${adminActions}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
 
-app.post('/api/trucks', upload.single('truck_photo'), async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    const { driver_name, truck_model, trailer_model, plates } = req.body;
-    const photoUrl = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
+        function editTruck(id, driver, truck, trailer, plates) {
+            document.getElementById('truck-form-title').textContent = 'Edytuj pojazd';
+            document.getElementById('edit-truck-id').value = id;
+            document.getElementById('truck_driver_name').value = driver;
+            document.getElementById('truck_model').value = truck;
+            document.getElementById('trailer_model').value = trailer;
+            document.getElementById('truck_plates').value = plates;
+            document.getElementById('truck_photo').removeAttribute('required');
+            document.getElementById('photo-req-text').classList.add('d-none');
+            document.getElementById('submit-truck-btn').textContent = 'Zapisz zmiany';
+            document.getElementById('cancel-truck-edit-btn').classList.remove('d-none');
+        }
 
-    try {
-        await pool.query(
-            'INSERT INTO trucks (driver_name, truck_model, trailer_model, plates, photo) VALUES ($1, $2, $3, $4, $5)',
-            [driver_name, truck_model, trailer_model || '', plates, photoUrl]
-        );
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd dodawania pojazdu' });
-    }
-});
+        function resetTruckForm() {
+            document.getElementById('truck-form-title').textContent = 'Dodaj do floty';
+            document.getElementById('truck-form').reset();
+            document.getElementById('edit-truck-id'].value = '';
+            document.getElementById('truck_photo').setAttribute('required', 'required');
+            document.getElementById('photo-req-text').classList.remove('d-none');
+            document.getElementById('submit-truck-btn').textContent = 'Dodaj pojazd';
+            document.getElementById('cancel-truck-edit-btn').classList.add('d-none');
+        }
 
-app.delete('/api/trucks/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    try {
-        await pool.query('DELETE FROM trucks WHERE id = $1', [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd usuwania pojazdu' });
-    }
-});
+        const truckForm = document.getElementById('truck-form');
+        if (truckForm) {
+            truckForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const editId = document.getElementById('edit-truck-id').value;
+                const formData = new FormData(e.target);
+                
+                let url = '/api/trucks';
+                let method = 'POST';
+                if (editId) {
+                    url = `/api/trucks/${editId}`;
+                    method = 'PUT';
+                }
 
-app.listen(PORT, () => {
-    console.log(`Serwer VTC działa na porcie ${PORT}`);
-});
+                const res = await fetch(url, { method: method, body: formData });
+                if (res.ok) {
+                    resetTruckForm();
+                    loadTrucks();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Błąd zapisu pojazdu.');
+                }
+            });
+        }
+
+        async function deleteTruck(id) {
+            if (confirm('Usunąć ten pojazd z floty?')) {
+                const res = await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadTrucks();
+                } else {
+                    alert('Błąd podczas usuwania pojazdu.');
+                }
+            }
+        }
+
+        checkUser();
+    </script>
+</body>
+</html>
