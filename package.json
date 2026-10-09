@@ -1,17 +1,16 @@
 {
-  "name": "vtc-manual",
+  "name": "vtc-ets2",
   "version": "1.0.0",
-  "description": "VTC System",
+  "description": "Mazren Spedition VTC System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "multer": "^1.4.5-lts.1",
-    "node-fetch": "^2.7.0",
     "sqlite3": "^5.1.7"
   }
 }
