@@ -36,7 +36,7 @@ async function initDB() {
             
             CREATE TABLE IF NOT EXISTS jobs (
                 id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id),
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 start_city VARCHAR(255) NOT NULL,
                 end_city VARCHAR(255) NOT NULL,
                 cargo VARCHAR(255) NOT NULL,
@@ -82,7 +82,6 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        // Pierwszy zarejestrowany użytkownik automatycznie dostaje rolę admina (Szefa)
         const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
         const role = parseInt(userCountRes.rows[0].count) === 0 ? 'admin' : 'driver';
 
@@ -99,9 +98,7 @@ app.post('/api/login', async (req, res) => {
         const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
         if (result.rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowy login lub hasło.' });
 
-        const user = result.rows.length > 0 ? result.rows[0] : null;
-        if (!user) return res.status(401).json({ error: 'Nieprawidłowy login lub hasło.' });
-
+        const user = result.rows[0];
         const match = await bcrypt.compare(password, user.password);
         if (!match) return res.status(401).json({ error: 'Nieprawidłowy login lub hasło.' });
 
@@ -121,8 +118,6 @@ app.get('/api/user', async (req, res) => {
         if (userRes.rows.length === 0) return res.status(401).json({ error: 'Użytkownik nie istnieje' });
         
         const user = userRes.rows[0];
-        
-        // Pobierz sumę kilometrów użytkownika
         const kmRes = await pool.query('SELECT SUM(distance) as total FROM jobs WHERE user_id = $1', [user.id]);
         const monthlyKm = parseInt(kmRes.rows[0].total || 0);
 
@@ -144,7 +139,7 @@ app.post('/api/logout', (req, res) => {
     });
 });
 
-// --- PANEL SZEFA: ZARZĄDZANIE HASŁAMI KIEROWCÓW ---
+// --- PANEL SZEFA: ZARZĄDZANIE KIEROWCAMI (HASŁA I USUWANIE) ---
 
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
@@ -152,7 +147,7 @@ app.get('/api/users', async (req, res) => {
         const result = await pool.query('SELECT id, username, role FROM users ORDER BY username ASC');
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania listu użytkowników' });
+        res.status(500).json({ error: 'Błąd pobierania listy użytkowników' });
     }
 });
 
@@ -169,6 +164,23 @@ app.put('/api/users/:id/password', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Błąd zmiany hasła' });
+    }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    const targetUserId = req.params.id;
+
+    // Nie pozwól szefowi usunąć samego siebie
+    if (parseInt(targetUserId) === req.session.userId) {
+        return res.status(400).json({ error: 'Nie możesz usunąć własnego konta administratora.' });
+    }
+
+    try {
+        await pool.query('DELETE FROM users WHERE id = $1', [targetUserId]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd usuwania użytkownika' });
     }
 });
 
@@ -193,9 +205,8 @@ app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), asy
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     const { start_city, end_city, cargo, distance } = req.body;
     
-    // Używamy przykładowych linków z GitHuba, jeśli kierowca nie załączył własnych plików
-    const cmrFile = req.files['cmr'] ? `https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg` : 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg';
-    const summaryPhoto = req.files['summary'] ? `https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg` : 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
+    const cmrFile = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg';
+    const summaryPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
 
     try {
         await pool.query(
@@ -230,7 +241,7 @@ app.delete('/api/jobs/:id', async (req, res) => {
 app.get('/api/company-stats', async (req, res) => {
     try {
         const totalRes = await pool.query('SELECT SUM(distance) as total FROM jobs');
-        const totalCompanyKm = parseInt(totalRes.rows.total || 0);
+        const totalCompanyKm = parseInt(totalRes.rows[0].total || 0);
 
         const rankingRes = await pool.query(`
             SELECT users.username, SUM(jobs.distance) as km 
