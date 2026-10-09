@@ -183,7 +183,7 @@ app.delete('/api/users/:id', async (req, res) => {
     }
 });
 
-// --- TRASY I STATYSTYKY (Z POWIADOMIENIAMI DISCORD) ---
+// --- TRASY I STATYSTYKY (Z WBUDOWANYM DISCORD WEBHOOK) ---
 
 app.get('/api/jobs', async (req, res) => {
     try {
@@ -217,19 +217,18 @@ app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), asy
         const userRes = await pool.query('SELECT username FROM users WHERE id = $1', [req.session.userId]);
         const username = userRes.rows[0] ? userRes.rows[0].username : 'Kierowca';
 
-        // Wysyłanie powiadomienia na Discord (skonfiguruj zmienną środowiskową DISCORD_WEBHOOK_URL lub wklej bezpośrednio link)
-        const webhookUrl = process.env.DISCORD_WEBHOOK_URL; 
-        if (webhookUrl) {
-            const discordPayload = {
-                content: `🚛 **Nowa trasa w Mazren Spedition!**\n👤 **Kierowca:** ${username}\n📍 **Trasa:** ${start_city} ➔ ${end_city}\n📦 **Ładunek:** ${cargo}\n📏 **Dystans:** ${distance} km`
-            };
-            
-            await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(discordPayload)
-            }).catch(err => console.log('Błąd wysyłania powiadomienia na Discord:', err));
-        }
+        // Wbudowany bezpośrednio link do Discorda
+        const webhookUrl = "https://discord.com/api/webhooks/1558211120228073512/xYLNti0-1Q0Pn32oHAI_v0XJogBTw6LPnqNp6hbHNKK5qdbbtkjDKrdoKUWaBARI3m9J";
+        
+        const discordPayload = {
+            content: `🚛 **Nowa trasa w Mazren Spedition!**\n👤 **Kierowca:** ${username}\n📍 **Trasa:** ${start_city} ➔ ${end_city}\n📦 **Ładunek:** ${cargo}\n📏 **Dystans:** ${distance} km`
+        };
+        
+        await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(discordPayload)
+        }).catch(err => console.log('Błąd wysyłania powiadomienia na Discord:', err));
 
         res.json({ success: true });
     } catch (err) {
