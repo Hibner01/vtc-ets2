@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <title>Mazren Spedition - System VTC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .logo-hover {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .logo-hover:hover {
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -35,7 +44,8 @@
         <div id="dashboard-section" style="display:none;">
             <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
                 <div class="d-flex align-items-center">
-                    <img src="/logo.png" alt="Logo VTC" style="max-height: 60px; max-width: 150px; object-fit: contain;" class="me-3" onerror="this.style.display='none'">
+                    <!-- LOGO JAKO PRZYCISK POWROTU DO GŁÓWNEGO EKRANU -->
+                    <img src="/logo.png" alt="Logo VTC" title="Wróć do strony głównej" class="me-3 logo-hover" style="max-height: 60px; max-width: 150px; object-fit: contain;" onclick="switchTab('jobs')" onerror="this.style.display='none'">
                     <div>
                         <h2>Witaj, <span id="user-display"></span>! <span id="admin-badge" class="badge bg-danger d-none">SZEF</span></h2>
                     </div>
@@ -78,19 +88,19 @@
                                 <input type="hidden" id="edit-job-id">
                                 <div class="mb-3">
                                     <label class="form-label">Skąd (Miasto)</label>
-                                    <input type="text" id="start_city" name="start_city" class="form-control" required>
+                                    <input type="text" id="start_city" name="start_city" class="form-control" placeholder="np. Berlin" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Dokąd (Miasto)</label>
-                                    <input type="text" id="end_city" name="end_city" class="form-control" required>
+                                    <input type="text" id="end_city" name="end_city" class="form-control" placeholder="np. Paris" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Ładunek</label>
-                                    <input type="text" id="cargo" name="cargo" class="form-control" required>
+                                    <input type="text" id="cargo" name="cargo" class="form-control" placeholder="np. Świeże ryby" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Dystans (km)</label>
-                                    <input type="number" id="distance" name="distance" class="form-control" required>
+                                    <input type="number" id="distance" name="distance" class="form-control" placeholder="np. 1250" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Plik CMR</label>
@@ -140,11 +150,11 @@
                                 <input type="hidden" id="edit-truck-id">
                                 <div class="mb-3">
                                     <label class="form-label">Kierowca</label>
-                                    <input type="text" id="truck_driver_name" name="driver_name" class="form-control" required>
+                                    <input type="text" id="truck_driver_name" name="driver_name" class="form-control" placeholder="np. Jan Kowalski" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Model Ciężarówki</label>
-                                    <input type="text" id="truck_model" name="truck_model" class="form-control" required>
+                                    <input type="text" id="truck_model" name="truck_model" class="form-control" placeholder="np. Volvo FH16" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Model Naczepy</label>
@@ -152,7 +162,7 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Rejestracja</label>
-                                    <input type="text" id="truck_plates" name="plates" class="form-control" required>
+                                    <input type="text" id="truck_plates" name="plates" class="form-control" placeholder="np. WA 12345" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Zdjęcie zestawu <span id="photo-req-text" class="text-danger">*</span></label>
@@ -392,7 +402,7 @@
         }
 
         const truckForm = document.getElementById('truck-form');
-        if (truckForm) {
+        if (trucksForm = document.getElementById('truck-form')) {
             truckForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const editId = document.getElementById('edit-truck-id').value;
