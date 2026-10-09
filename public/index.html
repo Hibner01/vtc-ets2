@@ -1,328 +1,57 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Mazren Spedition - System VTC</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .logo-hover {
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .logo-hover:hover {
-            opacity: 0.8;
-        }
-        .example-link {
-            font-size: 0.85rem;
-            cursor: pointer;
-            color: #0d6efd;
-            text-decoration: underline;
-            margin-left: 5px;
-        }
-        .example-link:hover {
-            color: #0a58ca;
-        }
-    </style>
-</head>
-<body class="bg-light">
-
-    <div class="container py-4" id="app">
-        <!-- LOGOWANIE -->
-        <div id="auth-section" class="row justify-content-center" style="display:flex;">
-            <div class="col-md-5 mt-5">
-                <div class="card shadow p-4">
-                    <h3 class="text-center mb-4">Mazren Spedition - Logowanie</h3>
-                    <form id="auth-form" onsubmit="return false;">
-                        <div class="mb-3">
-                            <label class="form-label">Nazwa użytkownika</label>
-                            <input type="text" id="username" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Hasło</label>
-                            <input type="password" id="password" class="form-control" required>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-primary" onclick="performLogin()">Zaloguj się</button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="performRegister()">Zarejestruj się</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- PANEL GŁÓWNY -->
-        <div id="dashboard-section" style="display:none;">
-            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                <div class="d-flex align-items-center">
-                    <img src="/logo.png" alt="Logo VTC" title="Wróć do strony głównej" class="me-3 logo-hover" style="max-height: 60px; max-width: 150px; object-fit: contain;" onclick="switchTab('jobs')" onerror="this.style.display='none'">
-                    <div>
-                        <h2>Witaj, <span id="user-display"></span>! <span id="admin-badge" class="badge bg-danger d-none">SZEF</span></h2>
-                    </div>
-                </div>
-                <div>
-                    <button class="btn btn-outline-primary me-2" onclick="switchTab('jobs')">Trasy i Firma</button>
-                    <button class="btn btn-outline-info me-2" onclick="switchTab('garage')">Garaż VTC</button>
-                    <button class="btn btn-outline-danger" onclick="performLogout()">Wyloguj</button>
-                </div>
-            </div>
-
-            <!-- ZAKŁADKA TRAS I STATYSTYK -->
-            <div id="tab-jobs">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card shadow p-4 h-100">
-                            <h4>Twój limit miesięczny (Cel: 6000 km)</h4>
-                            <div class="progress my-3" style="height: 25px;">
-                                <div id="km-progress" class="progress-bar" role="progressbar" style="width: 0%;">0 km / 6000 km</div>
-                            </div>
-                            <p id="limit-status" class="text-muted mb-0"></p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card shadow p-4 h-100 bg-white">
-                            <h4>Statystyki Całej Firmy</h4>
-                            <p class="mb-1"><strong>Razem przejechano w tym miesiącu:</strong> <span id="company-total-km" class="text-primary fw-bold">0</span> km</p>
-                            <hr>
-                            <strong>Ranking kierowców:</strong>
-                            <ul id="drivers-ranking" class="list-unstyled mb-0 mt-2" style="max-height: 80px; overflow-y: auto;"></ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card shadow p-4 mb-4">
-                            <h4 id="form-title">Dodaj nową trasę</h4>
-                            <form id="job-form">
-                                <input type="hidden" id="edit-job-id">
-                                <div class="mb-3">
-                                    <label class="form-label">Skąd (Miasto)</label>
-                                    <input type="text" id="start_city" name="start_city" class="form-control" placeholder="np. Warszawa" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Dokąd (Miasto)</label>
-                                    <input type="text" id="end_city" name="end_city" class="form-control" placeholder="np. Berlin" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Ładunek</label>
-                                    <input type="text" id="cargo" name="cargo" class="form-control" placeholder="np. Świeże ryby" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Dystans (km)</label>
-                                    <input type="number" id="distance" name="distance" class="form-control" placeholder="np. 1250" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Plik CMR <span class="example-link" onclick="showExample('cmr')">[Przykład]</span></label>
-                                    <input type="file" name="cmr" class="form-control" accept="image/*,.pdf">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Zdjęcie z ETS2 (Podsumowanie) <span class="example-link" onclick="showExample('summary')">[Przykład]</span></label>
-                                    <input type="file" name="summary" class="form-control" accept="image/*">
-                                </div>
-                                <button type="submit" class="btn btn-success w-100" id="submit-job-btn">Wyślij zlecenie</button>
-                                <button type="button" class="btn btn-secondary w-100 mt-2 d-none" id="cancel-edit-btn" onclick="resetJobForm()">Anuluj edycję</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="col-md-8">
-                        <div class="card shadow p-4">
-                            <h4>Wszystkie trasy w firmie</h4>
-                            <div class="table-responsive">
-                                <table class="table table-striped align-middle">
-                                   <thead>
-                                       <tr>
-                                           <th>Kierowca</th>
-                                           <th>Trasa</th>
-                                           <th>Ładunek</th>
-                                           <th>Dystans</th>
-                                           <th>Dowody</th>
-                                           <th>Akcje</th>
-                                       </tr>
-                                   </thead>
-                                   <tbody id="jobs-table-body"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GARAŻ I ZARZĄDZANIE KONTAMI (DLA SZEFA) -->
-            <div id="tab-garage" style="display:none;">
-                <!-- PANEL ZARZĄDZANIA HASŁAMI KIEROWCÓW (TYLKO SZEF) -->
-                <div class="row mb-4" id="admin-users-panel" style="display:none;">
-                    <div class="col-md-12">
-                        <div class="card shadow p-4 border-danger">
-                            <h4 class="text-danger">Panel Szefa: Zarządzanie Hasłami Kierowców</h4>
-                            <p class="text-muted small">Tutaj możesz zmienić hasło dowolnemu kierowcy w firmie w przypadku jego zapomnienia.</p>
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Użytkownik</th>
-                                            <th>Rola</th>
-                                            <th>Nowe hasło</th>
-                                            <th>Akcja</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="admin-users-list"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-4" id="truck-form-column" style="display:none;">
-                        <div class="card shadow p-4 mb-4">
-                            <h4 id="truck-form-title">Dodaj do floty</h4>
-                            <form id="truck-form">
-                                <input type="hidden" id="edit-truck-id">
-                                <div class="mb-3">
-                                    <label class="form-label">Kierowca</label>
-                                    <input type="text" id="truck_driver_name" name="driver_name" class="form-control" placeholder="np. Jan Kowalski" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Model Ciężarówki</label>
-                                    <input type="text" id="truck_model" name="truck_model" class="form-control" placeholder="np. Volvo FH16" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Model Naczepy</label>
-                                    <input type="text" id="trailer_model" name="trailer_model" class="form-control" placeholder="np. Krone Dry Liner">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Rejestracja</label>
-                                    <input type="text" id="truck_plates" name="plates" class="form-control" placeholder="np. WA 12345" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Zdjęcie zestawu <span id="photo-req-text" class="text-danger">*</span></label>
-                                    <input type="file" name="truck_photo" id="truck_photo" class="form-control" accept="image/*">
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100" id="submit-truck-btn">Dodaj pojazd</button>
-                                <button type="button" class="btn btn-secondary w-100 mt-2 d-none" id="cancel-truck-edit-btn" onclick="resetTruckForm()">Anuluj edycję</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div id="trucks-list-column" class="col-md-12">
-                        <div class="card shadow p-4">
-                            <h4>Flota VTC</h4>
-                            <div class="row" id="trucks-container"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL DO WYŚWIETLANIA PRZYKŁADÓW -->
-        <div class="modal fade" id="exampleModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalTitle">Wzorcowy przykład</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <p id="exampleModalDesc" class="text-muted mb-3"></p>
-                        <div id="exampleModalContent"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- STOPKA -->
-        <footer class="text-center py-4 mt-5 text-muted border-top">
-            <small>&copy; Mazren Spedition Sp. z o.o. - Wszystkie prawa zastrzeżone</small>
-        </footer>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        let currentUserId = null;
-        let currentUserRole = '';
-
-        function showExample(type) {
-            const title = document.getElementById('exampleModalTitle');
-            const desc = document.getElementById('exampleModalDesc');
-            const content = document.getElementById('exampleModalContent');
-
-            if (type === 'summary') {
-                title.textContent = 'Przykład: Podsumowanie z końca zlecenia';
-                desc.textContent = 'Zrzut ekranu z gry ETS2 prezentujący ekran podsumowania trasy.';
-                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg" alt="Przykład z ETS2" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
-            } else if (type === 'cmr') {
-                title.textContent = 'Przykład: Dokument CMR';
-                desc.textContent = 'Zdjęcie lub skan listu przewozowego CMR.';
-                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg" alt="Przykład CMR" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
-            }
-
-            const modal = new bootstrap.Modal(document.getElementById('exampleModal'));
-            modal.show();
-        }
-
-        function switchTab(tab) {
-            document.getElementById('tab-jobs').style.display = (tab === 'jobs') ? 'block' : 'none';
-            document.getElementById('tab-garage').style.display = (tab === 'garage') ? 'block' : 'none';
-            if (tab === 'garage') {
-                loadTrucks();
-                if (currentUserRole === 'admin') loadAdminUsers();
-            }
-        }
-
-        async function checkUser() {
-            try {
-                const res = await fetch('/api/user');
-                if (res.ok) {
-                    const data = await res.json();
-                    currentUserId = data.id;
-                    currentUserRole = data.role;
-                    document.getElementById('auth-section').style.display = 'none';
-                    document.getElementById('dashboard-section').style.display = 'block';
-                    document.getElementById('user-display').innerText = data.username;
-                    
-                    if (data.role === 'admin') {
-                        document.getElementById('admin-badge').classList.remove('d-none');
-                        document.getElementById('truck-form-column').style.display = 'block';
-                        document.getElementById('admin-users-panel').style.display = 'block';
-                        document.getElementById('trucks-list-column').className = 'col-md-8';
-                    } else {
-                        document.getElementById('truck-form-column').style.display = 'none';
-                        document.getElementById('admin-users-panel').style.display = 'none';
-                        document.getElementById('trucks-list-column').className = 'col-md-12';
-                    }
-
-                    loadCompanyStats();
-
-                    const km = data.monthlyKm;
-                    const limit = data.limitKm;
-                    const percent = Math.min(Math.round((km / limit) * 100), 100);
-                    const progressBar = document.getElementById('km-progress');
-                    progressBar.style.width = percent + '%';
-                    progressBar.textContent = `${km} km / ${limit} km (${percent}%)`;
-                    
-                    if (km >= limit) {
-                        progressBar.classList.add('bg-success');
-                        document.getElementById('limit-status').textContent = 'Limit miesięczny osiągnięty!';
-                    } else {
-                        progressBar.classList.remove('bg-success');
-                        document.getElementById('limit-status').textContent = `Do limitu brak: ${limit - km} km.`;
-                    }
-
-                    loadJobs();
-                } else {
-                    document.getElementById('auth-section').style.display = 'flex';
-                    document.getElementById('dashboard-section').style.display = 'none';
-                }
-            } catch (e) {
-                document.getElementById('auth-section').style.display = 'flex';
-                document.getElementById('dashboard-section').style.display = 'none';
-            }
-        }
-
-        async function performLogin() {
-            const usernameInput = document.getElementById('username').value;
-            const passwordInput = document.getElementById('password').value;
+async function performLogin() {
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
 
             if (!usernameInput || !passwordInput) {
                 alert('Wpisz nazwę użytkownika i hasło!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: usernameInput,
+                        password: passwordInput
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await checkUser();
+                } else {
+                    alert(data.error || 'Nieprawidłowy login lub hasło.');
+                }
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
+        }
+
+        async function performRegister() {
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (!usernameInput || !passwordInput) {
+                alert('Wpisz nazwę użytkownika i hasło!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: usernameInput,
+                        password: passwordInput
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('Konto zostało utworzone pomyślnie! Możesz się teraz zalogować.');
+                } else {
+                    alert(data.error || 'Błąd rejestracji.');
+                }
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
+        }
