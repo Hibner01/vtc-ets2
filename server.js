@@ -9,7 +9,6 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Konfiguracja połączenia z PostgreSQL (Supabase / Render)
 const db = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -20,7 +19,6 @@ db.connect((err) => {
     else console.log('Połączono z bazą PostgreSQL w chmurze.');
 });
 
-// Tworzenie tabel w PostgreSQL
 db.query(`
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -49,7 +47,6 @@ db.query(`
     );
 `).catch(err => console.error('Błąd tworzenia tabel:', err.message));
 
-// Konfiguracja folderu na przesyłane pliki
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -80,7 +77,6 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        
         const userCount = await db.query(`SELECT COUNT(*) FROM users`);
         const role = (parseInt(userCount.rows[0].count) === 0) ? 'admin' : 'driver';
 
@@ -127,6 +123,37 @@ app.get('/api/user', async (req, res) => {
         });
     } catch (e) {
         res.status(500).json({ error: 'Błąd serwera.' });
+    }
+});
+
+// --- ZARZĄDZANIE UŻYTKOWNIKAMI PRZEZ SZEFA ---
+
+app.get('/api/users', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień.' });
+    }
+    try {
+        const result = await db.query(`SELECT id, username, role FROM users ORDER BY id ASC`);
+        res.json(result.rows);
+    } catch (e) {
+        res.status(500).json({ error: 'Błąd pobierania użytkowników.' });
+    }
+});
+
+app.put('/api/users/:id/password', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Brak uprawnień. Tylko szef może zmieniać hasła.' });
+    }
+    const userId = req.params.id;
+    const { newPassword } = req.body;
+    if (!newPassword) return res.status(400).json({ error: 'Podaj nowe hasło.' });
+
+    try {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.query(`UPDATE users SET password = $1 WHERE id = $2`, [hashedPassword, userId]);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Błąd zmiany hasła.' });
     }
 });
 
