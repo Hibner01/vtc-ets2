@@ -171,7 +171,6 @@ app.delete('/api/users/:id', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     const targetUserId = req.params.id;
 
-    // Nie pozwól szefowi usunąć samego siebie
     if (parseInt(targetUserId) === req.session.userId) {
         return res.status(400).json({ error: 'Nie możesz usunąć własnego konta administratora.' });
     }
@@ -184,7 +183,7 @@ app.delete('/api/users/:id', async (req, res) => {
     }
 });
 
-// --- TRASY I STATYSTYKI ---
+// --- TRASY I STATYSTYKY (Z POWIADOMIENIAMI DISCORD) ---
 
 app.get('/api/jobs', async (req, res) => {
     try {
@@ -213,6 +212,25 @@ app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), asy
             'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7)',
             [req.session.userId, start_city, end_city, cargo, parseInt(distance), cmrFile, summaryPhoto]
         );
+
+        // Pobieranie nazwy użytkownika do powiadomienia Discord
+        const userRes = await pool.query('SELECT username FROM users WHERE id = $1', [req.session.userId]);
+        const username = userRes.rows[0] ? userRes.rows[0].username : 'Kierowca';
+
+        // Wysyłanie powiadomienia na Discord (skonfiguruj zmienną środowiskową DISCORD_WEBHOOK_URL lub wklej bezpośrednio link)
+        const webhookUrl = process.env.DISCORD_WEBHOOK_URL; 
+        if (webhookUrl) {
+            const discordPayload = {
+                content: `🚛 **Nowa trasa w Mazren Spedition!**\n👤 **Kierowca:** ${username}\n📍 **Trasa:** ${start_city} ➔ ${end_city}\n📦 **Ładunek:** ${cargo}\n📏 **Dystans:** ${distance} km`
+            };
+            
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(discordPayload)
+            }).catch(err => console.log('Błąd wysyłania powiadomienia na Discord:', err));
+        }
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Błąd zapisu trasy' });
