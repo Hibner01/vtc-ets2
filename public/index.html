@@ -27,25 +27,23 @@
 <body class="bg-light">
 
     <div class="container py-4" id="app">
-        <!-- LOGOWANIE -->
+       <!-- LOGOWANIE -->
         <div id="auth-section" class="row justify-content-center" style="display:flex;">
             <div class="col-md-5 mt-5">
                 <div class="card shadow p-4">
                     <h3 class="text-center mb-4">Mazren Spedition - Logowanie</h3>
-                    <form id="auth-form" onsubmit="return false;">
-                        <div class="mb-3">
-                            <label class="form-label">Nazwa użytkownika</label>
-                            <input type="text" id="username" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Hasło</label>
-                            <input type="password" id="password" class="form-control" required>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-primary" onclick="performLogin()">Zaloguj się</button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="performRegister()">Zarejestruj się</button>
-                        </div>
-                    </form>
+                    <div class="mb-3">
+                        <label class="form-label">Nazwa użytkownika</label>
+                        <input type="text" id="username" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hasło</label>
+                        <input type="password" id="password" class="form-control">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" onclick="performLogin()">Zaloguj się</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="performRegister()">Zarejestruj się</button>
+                    </div>
                 </div>
             </div>
         </div>
