@@ -292,8 +292,10 @@
                     document.getElementById('dashboard-section').style.display = 'block';
                     document.getElementById('user-display').innerText = data.username;
                     
-                    // ZAWSZE PRZEKIEROWANIE NA STRONĘ GŁÓWNĄ (TRASY) PO ZALOGOWANIU
-                    switchTab('jobs');
+                    // Zawsze wracamy na stronę główną (trasy) po zalogowaniu
+                    document.getElementById('tab-jobs').style.display = 'block';
+                    document.getElementById('tab-garage').style.display = 'none';
+                    document.getElementById('tab-management').style.display = 'none';
                     
                     if (data.role === 'admin') {
                         document.getElementById('admin-badge').classList.remove('d-none');
@@ -363,4 +365,301 @@
             }
         }
 
-        async
+        async function performRegister() {
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (!usernameInput || !passwordInput) {
+                alert('Wpisz nazwę użytkownika i hasło!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('Konto zostało utworzone pomyślnie! Możesz się teraz zalogować.');
+                } else {
+                    alert(data.error || 'Błąd rejestracji.');
+                }
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
+        }
+
+        async function performLogout() {
+            localStorage.removeItem('vtc_logged_user');
+            await fetch('/api/logout', { method: 'POST' });
+            document.getElementById('auth-section').style.display = 'flex';
+            document.getElementById('dashboard-section').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function loadManagementUsers() {
+            const res = await fetch('/api/users');
+            if (res.ok) {
+                const users = await res.json();
+                const tbody = document.getElementById('management-users-list');
+                tbody.innerHTML = '';
+                users.forEach(u => {
+                    let deleteBtn = '';
+                    if (u.role !== 'admin') {
+                        deleteBtn = `<button class="btn btn-sm btn-danger ms-2" onclick="deleteUser(${u.id}, '${u.username}')">Zwolnij (Usuń)</button>`;
+                    }
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${u.username}</strong></td>
+                            <td><span class="badge bg-${u.role === 'admin' ? 'danger' : 'secondary'}">${u.role}</span></td>
+                            <td>
+                                <div class="input-group input-group-sm" style="max-width: 250px;">
+                                    <input type="password" id="new-pass-${u.id}" class="form-control" placeholder="Nowe hasło">
+                                    <button class="btn btn-outline-warning" onclick="changeUserPassword(${u.id})">Zmień</button>
+                                </div>
+                            </td>
+                            <td>${deleteBtn}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        async function changeUserPassword(userId) {
+            const newPassword = document.getElementById(`new-pass-${userId}`).value;
+            if (!newPassword) {
+                alert('Wpisz nowe hasło!');
+                return;
+            }
+            if (confirm('Czy na pewno chcesz zmienić hasło temu użytkownikowi?')) {
+                const res = await fetch(`/api/users/${userId}/password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newPassword })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Hasło zostało zmienione pomyślnie!');
+                    document.getElementById(`new-pass-${userId}`).value = '';
+                } else {
+                    alert(data.error || 'Błąd zmiany hasła.');
+                }
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            if (confirm(`Czy na pewno chcesz usunąć konto kierowcy "${username}"? Zostaną również usunięte jego trasy.`)) {
+                const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('Kierowca został usunięty z firmy.');
+                    loadManagementUsers();
+                    loadCompanyStats();
+                } else {
+                    alert(data.error || 'Błąd usuwania użytkownika.');
+                }
+            }
+        }
+
+        async function loadCompanyStats() {
+            const res = await fetch('/api/company-stats');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('company-total-km').textContent = data.totalCompanyKm;
+                const rankingList = document.getElementById('drivers-ranking');
+                rankingList.innerHTML = '';
+                if (data.driversRanking.length === 0) {
+                    rankingList.innerHTML = '<li class="text-muted">Brak przejechanych tras.</li>';
+                } else {
+                    data.driversRanking.forEach((d, index) => {
+                        rankingList.innerHTML += `<li>${index + 1}. <strong>${d.username}</strong> - ${d.km} km</li>`;
+                    });
+                }
+            }
+        }
+
+        async function loadJobs() {
+            const res = await fetch('/api/jobs');
+            if (res.ok) {
+                const jobs = await res.json();
+                const tbody = document.getElementById('jobs-table-body');
+                tbody.innerHTML = '';
+                jobs.forEach(job => {
+                    let canModify = (job.user_id === currentUserId || currentUserRole === 'admin');
+                    let actionHtml = '';
+                    if (canModify) {
+                        actionHtml = `
+                            <button class="btn btn-sm btn-warning me-1" onclick="editJob(${job.id}, '${job.start_city}', '${job.end_city}', '${job.cargo}', ${job.distance})">Edytuj</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteJob(${job.id})">Usuń</button>
+                        `;
+                    }
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${job.username}</td>
+                            <td>${job.start_city} ➔ ${job.end_city}</td>
+                            <td>${job.cargo}</td>
+                            <td>${job.distance} km</td>
+                            <td>
+                                ${job.cmr_file ? `<a href="${job.cmr_file}" target="_blank" class="btn btn-sm btn-outline-primary mb-1">CMR</a>` : ''}
+                                ${job.summary_photo ? `<a href="${job.summary_photo}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1">Zdjęcie</a>` : ''}
+                            </td>
+                            <td>${actionHtml}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function editJob(id, start, end, cargo, distance) {
+            document.getElementById('form-title').textContent = 'Edytuj trasę';
+            document.getElementById('edit-job-id').value = id;
+            document.getElementById('start_city').value = start;
+            document.getElementById('end_city').value = end;
+            document.getElementById('cargo').value = cargo;
+            document.getElementById('distance').value = distance;
+            document.getElementById('submit-job-btn').textContent = 'Zapisz zmiany';
+            document.getElementById('cancel-edit-btn').classList.remove('d-none');
+        }
+
+        function resetJobForm() {
+            document.getElementById('form-title').textContent = 'Dodaj nową trasę';
+            document.getElementById('job-form').reset();
+            document.getElementById('edit-job-id').value = '';
+            document.getElementById('submit-job-btn').textContent = 'Wyślij zlecenie';
+            document.getElementById('cancel-edit-btn').classList.add('d-none');
+        }
+
+        document.getElementById('job-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('edit-job-id').value;
+            const formData = new FormData(e.target);
+            
+            let url = '/api/jobs';
+            let method = 'POST';
+            if (editId) {
+                url = `/api/jobs/${editId}`;
+                method = 'PUT';
+            }
+
+            const res = await fetch(url, { method: method, body: formData });
+            if (res.ok) {
+                resetJobForm();
+                checkUser();
+            } else {
+                alert('Błąd zapisu trasy.');
+            }
+        });
+
+        async function deleteJob(id) {
+            if (confirm('Usunąć tę trasę?')) {
+                await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+                checkUser();
+            }
+        }
+
+        async function loadTrucks() {
+            const res = await fetch('/api/trucks');
+            if (res.ok) {
+                const trucks = await res.json();
+                const container = document.getElementById('trucks-container');
+                container.innerHTML = '';
+                if (trucks.length === 0) {
+                    container.innerHTML = '<p class="text-muted">Brak pojazdów we flocie firmy.</p>';
+                    return;
+                }
+                trucks.forEach(t => {
+                    let adminActions = '';
+                    if (currentUserRole === 'admin') {
+                        adminActions = `
+                            <div class="mt-2 pt-2 border-top d-flex justify-content-between">
+                                <button class="btn btn-sm btn-warning" onclick="editTruck(${t.id}, '${t.driver_name}', '${t.truck_model}', '${t.trailer_model || ''}', '${t.plates}')">Edytuj</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTruck(${t.id})">Usuń</button>
+                            </div>
+                        `;
+                    }
+                    container.innerHTML += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <img src="${t.photo}" class="card-img-top" style="height: 140px; object-fit: cover;">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <h5 class="card-title">🚚 ${t.truck_model}</h5>
+                                        <p class="card-text mb-1 text-muted"><strong>Naczepa:</strong> ${t.trailer_model || 'Brak'}</p>
+                                        <p class="card-text mb-1"><strong>Kierowca:</strong> ${t.driver_name}</p>
+                                        <p class="card-text text-muted"><strong>Rejestracja:</strong> ${t.plates}</p>
+                                    </div>
+                                    ${adminActions}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function editTruck(id, driver, truck, trailer, plates) {
+            document.getElementById('truck-form-title').textContent = 'Edytuj pojazd';
+            document.getElementById('edit-truck-id').value = id;
+            document.getElementById('truck_driver_name').value = driver;
+            document.getElementById('truck_model').value = truck;
+            document.getElementById('trailer_model').value = trailer;
+            document.getElementById('truck_plates').value = plates;
+            document.getElementById('truck_photo').removeAttribute('required');
+            document.getElementById('photo-req-text').classList.add('d-none');
+            document.getElementById('submit-truck-btn').textContent = 'Zapisz zmiany';
+            document.getElementById('cancel-truck-edit-btn').classList.remove('d-none');
+        }
+
+        function resetTruckForm() {
+            document.getElementById('truck-form-title').textContent = 'Dodaj do floty';
+            document.getElementById('truck-form').reset();
+            document.getElementById('edit-truck-id').value = '';
+            document.getElementById('truck_photo').setAttribute('required', 'required');
+            document.getElementById('photo-req-text').classList.remove('d-none');
+            document.getElementById('submit-truck-btn').textContent = 'Dodaj pojazd';
+            document.getElementById('cancel-truck-edit-btn').classList.add('d-none');
+        }
+
+        const truckForm = document.getElementById('truck-form');
+        if (truckForm) {
+            truckForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const editId = document.getElementById('edit-truck-id').value;
+                const formData = new FormData(e.target);
+                
+                let url = '/api/trucks';
+                let method = 'POST';
+                if (editId) {
+                    url = `/api/trucks/${editId}`;
+                    method = 'PUT';
+                }
+
+                const res = await fetch(url, { method: method, body: formData });
+                if (res.ok) {
+                    resetTruckForm();
+                    loadTrucks();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Błąd zapisu pojazdu.');
+                }
+            });
+        }
+
+        async function deleteTruck(id) {
+            if (confirm('Usunąć ten pojazd z floty?')) {
+                const res = await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadTrucks();
+                } else {
+                    alert('Błąd podczas usuwania pojazdu.');
+                }
+            }
+        }
+
+        checkUser();
+    </script>
+</body>
+</html>
