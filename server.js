@@ -80,7 +80,6 @@ app.post('/api/register', async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Sprawdzenie, czy to pierwsze konto w bazie (automatyczny szef/admin)
         db.get(`SELECT COUNT(*) as count FROM users`, async (err, row) => {
             if (err) return res.status(500).json({ error: 'Błąd bazy danych.' });
             
@@ -128,7 +127,7 @@ app.get('/api/user', (req, res) => {
     });
 });
 
-// --- STATYSTYKY FIRMY ---
+// --- STATYSTYKI FIRMY ---
 
 app.get('/api/company-stats', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Brak sesji.' });
@@ -292,7 +291,6 @@ app.delete('/api/trucks/:id', (req, res) => {
     });
 });
 
-// Uruchomienie serwera
 app.listen(PORT, () => {
     console.log(`Serwer VTC działa na porcie ${PORT}`);
 });
