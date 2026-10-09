@@ -166,3 +166,35 @@
                                     </thead>
                                     <tbody id="admin-users-list"></tbody>
                                 </table>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function performLogin() {
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (!usernameInput || !passwordInput) {
+                alert('Wpisz nazwę użytkownika i hasło!');
+                return;
+            }
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: usernameInput, password: passwordInput })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Nieprawidłowy login lub hasło.');
+                }
+            })
+            .catch(err => {
+                alert('Błąd połączenia z serwerem.');
+            });
+        }
+    </script>
+</body>
+</html>
