@@ -39,7 +39,7 @@ async function initDB() {
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 start_city VARCHAR(255) NOT NULL,
                 end_city VARCHAR(255) NOT NULL,
-                cargo VARCHAR(255) NOT NULL,
+                cargo VARCHAR(255) DEFAULT 'Standard',
                 distance INTEGER NOT NULL,
                 income INTEGER DEFAULT 0,
                 cmr_file TEXT,
@@ -71,7 +71,7 @@ async function initDB() {
                 assigned_to VARCHAR(255) DEFAULT 'Wszyscy',
                 start_city VARCHAR(255) NOT NULL,
                 end_city VARCHAR(255) NOT NULL,
-                cargo VARCHAR(255) NOT NULL,
+                cargo VARCHAR(255) DEFAULT 'Standard',
                 notes TEXT,
                 status VARCHAR(50) DEFAULT 'W wolnym obiegu',
                 accepted_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -222,11 +222,11 @@ app.post('/api/dispatches', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') {
         return res.status(403).json({ error: 'Brak uprawnień dyspozytora' });
     }
-    const { assigned_to, start_city, end_city, cargo, notes } = req.body;
+    const { assigned_to, start_city, end_city, notes } = req.body;
     try {
         await pool.query(
-            'INSERT INTO dispatches (assigned_to, start_city, end_city, cargo, notes) VALUES ($1, $2, $3, $4, $5)',
-            [assigned_to || 'Wszyscy', start_city, end_city, cargo, notes || '']
+            'INSERT INTO dispatches (assigned_to, start_city, end_city, notes) VALUES ($1, $2, $3, $4)',
+            [assigned_to || 'Wszyscy', start_city, end_city, notes || '']
         );
         res.json({ success: true });
     } catch (err) {
@@ -268,17 +268,16 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name:
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         const disp = dispRes.rows[0];
 
-        // Obsługa wgranych plików przez kierowcę lub domyślne fallbacki
         let cmrFile = req.files && req.files['cmr'] ? `/uploads/${req.files['cmr'][0].originalname}` : 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg';
         let summaryPhoto = req.files && req.files['summary'] ? `/uploads/${req.files['summary'][0].originalname}` : 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
 
         // 1. Zapis trasy
         await pool.query(
             'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-            [req.session.userId, disp.start_city, disp.end_city, disp.cargo, parseInt(distance), parseInt(income), cmrFile, summaryPhoto]
+            [req.session.userId, disp.start_city, disp.end_city, 'Standard', parseInt(distance), parseInt(income), cmrFile, summaryPhoto]
         );
 
-        // 2. Zapis paliwa (jeśli podano)
+        // 2. Zapis paliwa
         if (fuel_amount && parseInt(fuel_amount) > 0) {
             await pool.query(
                 'INSERT INTO expenses (user_id, type, amount, description, liters) VALUES ($1, $2, $3, $4, $5)',
@@ -300,8 +299,6 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name:
                 color: 3447003,
                 fields: [
                     { name: "Trasa", value: `${disp.start_city} ➔ ${disp.end_city}`, inline: true },
-                    { name: "Towar", value: disp.cargo, inline: true },
-                    { name: "\u200b", value: "\u200b", inline: false },
                     { name: "Dystans", value: `${distance} km`, inline: true },
                     { name: "Zysk", value: `${parseInt(income).toLocaleString()} €`, inline: true }
                 ],
