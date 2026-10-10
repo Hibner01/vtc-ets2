@@ -281,7 +281,7 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name:
             [req.session.userId, disp.start_city, disp.end_city, 'Standard', parseInt(distance), parseInt(income), cmrFile, summaryPhoto]
         );
 
-        // 2. Zapis paliwa
+        // 2. Zapis paliwa (jeśli podano kwotę)
         if (fuel_amount && parseInt(fuel_amount) > 0) {
             await pool.query(
                 'INSERT INTO expenses (user_id, type, amount, description, liters) VALUES ($1, $2, $3, $4, $5)',
@@ -371,8 +371,6 @@ app.delete('/api/jobs/:id', async (req, res) => {
 
 // --- FINANSE I WYDATKI ---
 
-// --- FINANSE I WYDATKI ---
-
 app.get('/api/expenses', async (req, res) => {
     try {
         const query = `
@@ -394,6 +392,7 @@ app.post('/api/expenses', async (req, res) => {
     
     const parsedAmount = parseInt(amount) || 0;
     const parsedLiters = parseInt(liters) || 0;
+    const finalDesc = description && description.trim() !== '' ? description.trim() : (type === 'fuel' ? 'Tankowanie' : 'Serwis');
 
     if (parsedAmount <= 0) {
         return res.status(400).json({ error: 'Kwota wydatku musi być większa od 0.' });
@@ -402,12 +401,12 @@ app.post('/api/expenses', async (req, res) => {
     try {
         await pool.query(
             'INSERT INTO expenses (user_id, type, amount, description, liters) VALUES ($1, $2, $3, $4, $5)',
-            [req.session.userId, type, parsedAmount, description, parsedLiters]
+            [req.session.userId, type || 'fuel', parsedAmount, finalDesc, parsedLiters]
         );
         res.json({ success: true });
     } catch (err) {
         console.error('Błąd dodawania wydatku:', err);
-        res.status(500).json({ error: 'Błąd zapisu wydatku w bazie danych.' });
+        res.status(500).json({ error: 'Błąd zapisu wydatku' });
     }
 });
 
@@ -415,6 +414,11 @@ app.put('/api/expenses/:id', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     const expenseId = req.params.id;
     const { amount, description, liters } = req.body;
+    
+    const parsedAmount = parseInt(amount) || 0;
+    const parsedLiters = parseInt(liters) || 0;
+    const finalDesc = description && description.trim() !== '' ? description.trim() : 'Wydatek';
+
     try {
         const expRes = await pool.query('SELECT * FROM expenses WHERE id = $1', [expenseId]);
         if (expRes.rows.length === 0) return res.status(404).json({ error: 'Wydatek nie znaleziony' });
@@ -426,7 +430,7 @@ app.put('/api/expenses/:id', async (req, res) => {
 
         await pool.query(
             'UPDATE expenses SET amount = $1, description = $2, liters = $3 WHERE id = $4',
-            [parseInt(amount) || 0, description, parseInt(liters) || 0, expenseId]
+            [parsedAmount, finalDesc, parsedLiters, expenseId]
         );
         res.json({ success: true });
     } catch (err) {
