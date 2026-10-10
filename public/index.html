@@ -12,16 +12,6 @@
         .logo-hover:hover {
             opacity: 0.8;
         }
-        .example-link {
-            font-size: 0.85rem;
-            cursor: pointer;
-            color: #0d6efd;
-            text-decoration: underline;
-            margin-left: 5px;
-        }
-        .example-link:hover {
-            color: #0a58ca;
-        }
     </style>
 </head>
 <body class="bg-light">
@@ -127,7 +117,6 @@
             <!-- ZAKŁADKA DYSPOZYTOR -->
             <div id="tab-dispatcher" style="display:none;">
                 <div class="row">
-                    <!-- Formularz dla Szefa (Admina) -->
                     <div class="col-md-4" id="dispatcher-admin-form" style="display:none;">
                         <div class="card shadow p-4 border-info mb-4">
                             <h4 class="text-info mb-3">📡 Wystaw nowe zlecenie</h4>
@@ -157,7 +146,6 @@
                         </div>
                     </div>
 
-                    <!-- Lista zleceń dyspozytorskich -->
                     <div id="dispatcher-list-col" class="col-md-12">
                         <div class="card shadow p-4">
                             <h4>📋 Tablica Zleceń Dyspozytora</h4>
@@ -355,24 +343,32 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="complete-dispatch-form">
+                        <form id="complete-dispatch-form" enctype="multipart/form-data">
                             <input type="hidden" id="complete-dispatch-id">
                             <p class="mb-3 text-muted" id="complete-modal-route-info"></p>
                             <div class="mb-3">
                                 <label class="form-label">Faktyczny dystans z gry (km)</label>
-                                <input type="number" id="comp_distance" class="form-control" required placeholder="np. 1420">
+                                <input type="number" id="comp_distance" name="distance" class="form-control" required placeholder="np. 1420">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Zarobek z trasy (€)</label>
-                                <input type="number" id="comp_income" class="form-control" required placeholder="np. 34500">
+                                <input type="number" id="comp_income" name="income" class="form-control" required placeholder="np. 34500">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Koszt paliwa zatankowanego na trasie (€) [Opcjonalnie]</label>
-                                <input type="number" id="comp_fuel_amount" class="form-control" placeholder="np. 450">
+                                <input type="number" id="comp_fuel_amount" name="fuel_amount" class="form-control" placeholder="np. 450">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Ilość spalonego/zatankowanego paliwa (litry)</label>
-                                <input type="number" id="comp_fuel_liters" class="form-control" placeholder="np. 380">
+                                <input type="number" id="comp_fuel_liters" name="fuel_liters" class="form-control" placeholder="np. 380">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Wypełniony plik CMR (zdjęcie/skan)</label>
+                                <input type="file" id="comp_cmr" name="cmr" class="form-control" accept="image/*,.pdf">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Zdjęcie z podsumowania ETS2</label>
+                                <input type="file" id="comp_summary" name="summary" class="form-control" accept="image/*">
                             </div>
                             <button type="submit" class="btn btn-success w-100">Potwierdź i wyślij rozliczenie</button>
                         </form>
@@ -640,6 +636,8 @@
             document.getElementById('comp_income').value = '';
             document.getElementById('comp_fuel_amount').value = '';
             document.getElementById('comp_fuel_liters').value = '';
+            document.getElementById('comp_cmr').value = '';
+            document.getElementById('comp_summary').value = '';
             
             const modal = new bootstrap.Modal(document.getElementById('completeDispatchModal'));
             modal.show();
@@ -648,20 +646,16 @@
         document.getElementById('complete-dispatch-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('complete-dispatch-id').value;
-            const distance = document.getElementById('comp_distance').value;
-            const income = document.getElementById('comp_income').value;
-            const fuel_amount = document.getElementById('comp_fuel_amount').value;
-            const fuel_liters = document.getElementById('comp_fuel_liters').value;
+            const formData = new FormData(e.target);
 
             const res = await fetch(`/api/dispatches/${id}/complete`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ distance, income, fuel_amount, fuel_liters })
+                body: formData
             });
 
             if (res.ok) {
                 bootstrap.Modal.getInstance(document.getElementById('completeDispatchModal')).hide();
-                alert('Zlecenie zostało pomyślnie ukończone i rozliczone! Zapisano trasę oraz finanse.');
+                alert('Zlecenie zostało pomyślnie ukończone i rozliczone! Zapisano trasę, zdjęcia oraz finanse.');
                 checkUser();
                 loadDispatches();
             } else {
