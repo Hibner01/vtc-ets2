@@ -59,9 +59,10 @@
                 </div>
                 <div>
                     <button class="btn btn-outline-primary me-2" onclick="switchTab('jobs')">Trasy i Firma</button>
+                    <button class="btn btn-outline-info me-2" onclick="switchTab('dispatcher')">🌐 Dyspozytor</button>
                     <button class="btn btn-outline-success me-2" onclick="switchTab('finances')">💰 Finanse</button>
                     <button class="btn btn-outline-secondary me-2" onclick="switchTab('documents')">📄 Dokumenty</button>
-                    <button class="btn btn-outline-info me-2" onclick="switchTab('garage')">Garaż VTC</button>
+                    <button class="btn btn-outline-dark me-2" onclick="switchTab('garage')">Garaż VTC</button>
                     <button id="admin-tab-btn" class="btn btn-outline-warning me-2 d-none" onclick="switchTab('management')">Zarządzanie</button>
                     <button class="btn btn-outline-danger" onclick="performLogout()">Wyloguj</button>
                 </div>
@@ -99,50 +100,11 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="card shadow p-4 mb-4">
-                            <h4 id="form-title">Dodaj nową trasę</h4>
-                            <form id="job-form">
-                                <input type="hidden" id="edit-job-id">
-                                <div class="mb-3">
-                                    <label class="form-label">Skąd (Miasto)</label>
-                                    <input type="text" id="start_city" name="start_city" class="form-control" placeholder="np. Warszawa" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Dokąd (Miasto)</label>
-                                    <input type="text" id="end_city" name="end_city" class="form-control" placeholder="np. Berlin" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Ładunek</label>
-                                    <input type="text" id="cargo" name="cargo" class="form-control" placeholder="np. Świeże ryby" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Dystans (km)</label>
-                                    <input type="number" id="distance" name="distance" class="form-control" placeholder="np. 1250" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="income" class="form-label">Zysk z trasy (€):</label>
-                                    <input type="number" class="form-control" id="income" name="income" required placeholder="np. 22885">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Plik CMR <span class="example-link" onclick="showExample('cmr')">[Przykład]</span></label>
-                                    <input type="file" name="cmr" class="form-control" accept="image/*,.pdf">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Zdjęcie z ETS2 (Podsumowanie) <span class="example-link" onclick="showExample('summary')">[Przykład]</span></label>
-                                    <input type="file" name="summary" class="form-control" accept="image/*">
-                                </div>
-                                <button type="submit" class="btn btn-success w-100" id="submit-job-btn">Wyślij zlecenie</button>
-                                <button type="button" class="btn btn-secondary w-100 mt-2 d-none" id="cancel-edit-btn" onclick="resetJobForm()">Anuluj edycję</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         <div class="card shadow p-4">
-                            <h4>Wszystkie trasy w firmie</h4>
+                            <h4>Wszystkie wykonane trasy w firmie</h4>
                             <div class="table-responsive">
-                                <table class="table table-striped align-middle">
+                                <table class="table table-striped align-middle mt-2">
                                    <thead>
                                        <tr>
                                            <th>Kierowca</th>
@@ -155,6 +117,64 @@
                                        </tr>
                                    </thead>
                                    <tbody id="jobs-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ZAKŁADKA DYSPOZYTOR -->
+            <div id="tab-dispatcher" style="display:none;">
+                <div class="row">
+                    <!-- Formularz dla Szefa (Admina) -->
+                    <div class="col-md-4" id="dispatcher-admin-form" style="display:none;">
+                        <div class="card shadow p-4 border-info mb-4">
+                            <h4 class="text-info mb-3">📡 Wystaw nowe zlecenie</h4>
+                            <form id="dispatch-form">
+                                <div class="mb-3">
+                                    <label class="form-label">Przypisz do kierowcy</label>
+                                    <input type="text" id="dispatch_assigned" class="form-control" placeholder="Wpisz nick lub 'Wszyscy'">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Skąd (Miasto startowe)</label>
+                                    <input type="text" id="dispatch_start" class="form-control" required placeholder="np. Warszawa">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Dokąd (Miasto docelowe)</label>
+                                    <input type="text" id="dispatch_end" class="form-control" required placeholder="np. Berlin">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Ładunek</label>
+                                    <input type="text" id="dispatch_cargo" class="form-control" required placeholder="np. Elektronika">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Uwagi dyspozytora</label>
+                                    <textarea id="dispatch_notes" class="form-control" rows="2" placeholder="np. Pilny transport, max 90 km/h"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-info text-white w-100">Opublikuj zlecenie</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Lista zleceń dyspozytorskich -->
+                    <div id="dispatcher-list-col" class="col-md-12">
+                        <div class="card shadow p-4">
+                            <h4>📋 Tablica Zleceń Dyspozytora</h4>
+                            <p class="text-muted">Wybierz zlecenie z listy, wykonaj je w ETS2, a następnie rozlicz z poziomu panelu.</p>
+                            <div class="table-responsive">
+                                <table class="table table-striped align-middle mt-2">
+                                    <thead>
+                                        <tr>
+                                            <th>Dla kogo</th>
+                                            <th>Trasa</th>
+                                            <th>Ładunek</th>
+                                            <th>Uwagi</th>
+                                            <th>Status</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dispatches-table-body"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -202,6 +222,10 @@
                                     <label class="form-label">Kwota (€)</label>
                                     <input type="number" id="expense_amount" class="form-control" placeholder="np. 450" required>
                                 </div>
+                                <div class="mb-3" id="liters-group">
+                                    <label class="form-label">Ilość paliwa (litry)</label>
+                                    <input type="number" id="expense_liters" class="form-control" placeholder="np. 400">
+                                </div>
                                 <div class="mb-3">
                                     <label class="form-label">Opis / Stacja / Trasa</label>
                                     <input type="text" id="expense_desc" class="form-control" placeholder="np. Tankowanie w Berlinie" required>
@@ -222,7 +246,7 @@
                                             <th>Kierowca</th>
                                             <th>Typ</th>
                                             <th>Opis</th>
-                                            <th>Kwota</th>
+                                            <th>Kwota / Litry</th>
                                             <th>Akcje</th>
                                         </tr>
                                     </thead>
@@ -322,17 +346,36 @@
             </div>
         </div>
 
-        <!-- MODAL DO WYŚWIETLANIA PRZYKŁADÓW -->
-        <div class="modal fade" id="exampleModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
+        <!-- MODAL DO UKOŃCZENIA ZLECENIA DYSPOZYTORA -->
+        <div class="modal fade" id="completeDispatchModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalTitle">Wzorcowy przykład</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">🏁 Rozliczenie Zlecenia Dyspozytora</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body text-center">
-                        <p id="exampleModalDesc" class="text-muted mb-3"></p>
-                        <div id="exampleModalContent"></div>
+                    <div class="modal-body">
+                        <form id="complete-dispatch-form">
+                            <input type="hidden" id="complete-dispatch-id">
+                            <p class="mb-3 text-muted" id="complete-modal-route-info"></p>
+                            <div class="mb-3">
+                                <label class="form-label">Faktyczny dystans z gry (km)</label>
+                                <input type="number" id="comp_distance" class="form-control" required placeholder="np. 1420">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Zarobek z trasy (€)</label>
+                                <input type="number" id="comp_income" class="form-control" required placeholder="np. 34500">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Koszt paliwa zatankowanego na trasie (€) [Opcjonalnie]</label>
+                                <input type="number" id="comp_fuel_amount" class="form-control" placeholder="np. 450">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ilość spalonego/zatankowanego paliwa (litry)</label>
+                                <input type="number" id="comp_fuel_liters" class="form-control" placeholder="np. 380">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Potwierdź i wyślij rozliczenie</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -350,33 +393,27 @@
         let currentUserId = null;
         let currentUserRole = '';
 
-        function showExample(type) {
-            const title = document.getElementById('exampleModalTitle');
-            const desc = document.getElementById('exampleModalDesc');
-            const content = document.getElementById('exampleModalContent');
-
-            if (type === 'summary') {
-                title.textContent = 'Przykład: Podsumowanie z końca zlecenia';
-                desc.textContent = 'Zrzut ekranu z gry ETS2 prezentujący ekran podsumowania trasy.';
-                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg" alt="Przykład z ETS2" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
-            } else if (type === 'cmr') {
-                title.textContent = 'Przykład: Dokument CMR';
-                desc.textContent = 'Zdjęcie lub skan listu przewozowego CMR.';
-                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg" alt="Przykład CMR" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
+        document.getElementById('expense_type').addEventListener('change', function() {
+            const litersGroup = document.getElementById('liters-group');
+            if (this.value === 'fuel') {
+                litersGroup.style.display = 'block';
+            } else {
+                litersGroup.style.display = 'none';
+                document.getElementById('expense_liters').value = '';
             }
-
-            const modal = new bootstrap.Modal(document.getElementById('exampleModal'));
-            modal.show();
-        }
+        });
 
         function switchTab(tab) {
             document.getElementById('tab-jobs').style.display = (tab === 'jobs') ? 'block' : 'none';
+            document.getElementById('tab-dispatcher').style.display = (tab === 'dispatcher') ? 'block' : 'none';
             document.getElementById('tab-finances').style.display = (tab === 'finances') ? 'block' : 'none';
             document.getElementById('tab-documents').style.display = (tab === 'documents') ? 'block' : 'none';
             document.getElementById('tab-garage').style.display = (tab === 'garage') ? 'block' : 'none';
             document.getElementById('tab-management').style.display = (tab === 'management') ? 'block' : 'none';
             
-            if (tab === 'finances') {
+            if (tab === 'dispatcher') {
+                loadDispatches();
+            } else if (tab === 'finances') {
                 loadExpenses();
             } else if (tab === 'garage') {
                 loadTrucks();
@@ -404,6 +441,7 @@
                     document.getElementById('user-display').innerText = data.username;
                     
                     document.getElementById('tab-jobs').style.display = 'block';
+                    document.getElementById('tab-dispatcher').style.display = 'none';
                     document.getElementById('tab-finances').style.display = 'none';
                     document.getElementById('tab-documents').style.display = 'none';
                     document.getElementById('tab-garage').style.display = 'none';
@@ -412,11 +450,15 @@
                     if (data.role === 'admin') {
                         document.getElementById('admin-badge').classList.remove('d-none');
                         document.getElementById('admin-tab-btn').classList.remove('d-none');
+                        document.getElementById('dispatcher-admin-form').style.display = 'block';
+                        document.getElementById('dispatcher-list-col').className = 'col-md-8';
                         document.getElementById('truck-form-column').style.display = 'block';
                         document.getElementById('trucks-list-column').className = 'col-md-8';
                     } else {
                         document.getElementById('admin-badge').classList.add('d-none');
                         document.getElementById('admin-tab-btn').classList.add('d-none');
+                        document.getElementById('dispatcher-admin-form').style.display = 'none';
+                        document.getElementById('dispatcher-list-col').className = 'col-md-12';
                         document.getElementById('truck-form-column').style.display = 'none';
                         document.getElementById('trucks-list-column').className = 'col-md-12';
                     }
@@ -512,6 +554,129 @@
             document.getElementById('password').value = '';
         }
 
+        // --- ZLECENIA DYSPOZYTORA ---
+        async function loadDispatches() {
+            const res = await fetch('/api/dispatches');
+            if (res.ok) {
+                const dispatches = await res.json();
+                const tbody = document.getElementById('dispatches-table-body');
+                tbody.innerHTML = '';
+                if (dispatches.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">Brak aktywnych zleceń od dyspozytora.</td></tr>';
+                    return;
+                }
+                dispatches.forEach(d => {
+                    let actionHtml = '';
+                    let statusBadge = '';
+
+                    if (d.status === 'W wolnym obiegu') {
+                        statusBadge = '<span class="badge bg-success">W wolnym obiegu</span>';
+                        actionHtml = `<button class="btn btn-sm btn-primary" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                    } else if (d.status === 'W trakcie') {
+                        statusBadge = `<span class="badge bg-warning text-dark">W trakcie (${d.accepted_by_username})</span>`;
+                        if (d.accepted_by_id === currentUserId || currentUserRole === 'admin') {
+                            actionHtml = `<button class="btn btn-sm btn-success" onclick="openCompleteDispatchModal(${d.id}, '${d.start_city}', '${d.end_city}', '${d.cargo}')">Ukończ zlecenie</button>`;
+                        } else {
+                            actionHtml = '<span class="text-muted small">Realizuje kolega</span>';
+                        }
+                    } else {
+                        statusBadge = '<span class="badge bg-secondary">Zakończone</span>';
+                        actionHtml = '<span class="text-muted small">Rozliczone</span>';
+                    }
+
+                    let deleteBtn = (currentUserRole === 'admin') ? `<button class="btn btn-sm btn-danger ms-1" onclick="deleteDispatch(${d.id})">Usuń</button>` : '';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="badge bg-secondary">${d.assigned_to}</span></td>
+                            <td><strong>${d.start_city}</strong> ➔ <strong>${d.end_city}</strong></td>
+                            <td>${d.cargo}</td>
+                            <td><small class="text-muted">${d.notes || 'Brak'}</small></td>
+                            <td>${statusBadge}</td>
+                            <td>${actionHtml} ${deleteBtn}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        document.getElementById('dispatch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const assigned_to = document.getElementById('dispatch_assigned').value;
+            const start_city = document.getElementById('dispatch_start').value;
+            const end_city = document.getElementById('dispatch_end').value;
+            const cargo = document.getElementById('dispatch_cargo').value;
+            const notes = document.getElementById('dispatch_notes').value;
+
+            const res = await fetch('/api/dispatches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assigned_to, start_city, end_city, cargo, notes })
+            });
+
+            if (res.ok) {
+                document.getElementById('dispatch-form').reset();
+                loadDispatches();
+            } else {
+                alert('Błąd dodawania zlecenia.');
+            }
+        });
+
+        async function acceptDispatch(id) {
+            const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
+            if (res.ok) {
+                loadDispatches();
+                alert('Przyjęto zlecenie! Po zakończeniu trasy w grze kliknij "Ukończ zlecenie".');
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Błąd przyjmowania zlecenia.');
+            }
+        }
+
+        function openCompleteDispatchModal(id, start, end, cargo) {
+            document.getElementById('complete-dispatch-id').value = id;
+            document.getElementById('complete-modal-route-info').textContent = `Trasa: ${start} ➔ ${end} | Towar: ${cargo}`;
+            document.getElementById('comp_distance').value = '';
+            document.getElementById('comp_income').value = '';
+            document.getElementById('comp_fuel_amount').value = '';
+            document.getElementById('comp_fuel_liters').value = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('completeDispatchModal'));
+            modal.show();
+        }
+
+        document.getElementById('complete-dispatch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('complete-dispatch-id').value;
+            const distance = document.getElementById('comp_distance').value;
+            const income = document.getElementById('comp_income').value;
+            const fuel_amount = document.getElementById('comp_fuel_amount').value;
+            const fuel_liters = document.getElementById('comp_fuel_liters').value;
+
+            const res = await fetch(`/api/dispatches/${id}/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ distance, income, fuel_amount, fuel_liters })
+            });
+
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('completeDispatchModal')).hide();
+                alert('Zlecenie zostało pomyślnie ukończone i rozliczone! Zapisano trasę oraz finanse.');
+                checkUser();
+                loadDispatches();
+            } else {
+                alert('Błąd podczas kończenia zlecenia.');
+            }
+        });
+
+        async function deleteDispatch(id) {
+            if (confirm('Usunąć to zlecenie?')) {
+                await fetch(`/api/dispatches/${id}`, { method: 'DELETE' });
+                loadDispatches();
+            }
+        }
+
+        // --- ZARZĄDZANIE KIEROWCAMI ---
         async function loadManagementUsers() {
             const res = await fetch('/api/users');
             if (res.ok) {
@@ -521,7 +686,7 @@
                 users.forEach(u => {
                     let deleteBtn = '';
                     if (u.role !== 'admin') {
-                        deleteBtn = `<button class="btn btn-sm btn-danger ms-2" onclick="deleteUser(${u.id}, '${u.username}')">Zwolnij (Usuń)</button>`;
+                        deleteBtn = `<button class="btn btn-sm btn-danger ms-2" onclick="deleteUser(${u.id}, '${u.username}')">Zwolnij</button>`;
                     }
                     tbody.innerHTML += `
                         <tr>
@@ -554,24 +719,23 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Hasło zostało zmienione pomyślnie!');
+                    alert('Hasło zostało zmienione!');
                     document.getElementById(`new-pass-${userId}`).value = '';
                 } else {
-                    alert(data.error || 'Błąd zmiany hasła.');
+                    alert(data.error || 'Błąd.');
                 }
             }
         }
 
         async function deleteUser(userId, username) {
-            if (confirm(`Czy na pewno chcesz usunąć konto kierowcy "${username}"? Zostaną również usunięte jego trasy.`)) {
+            if (confirm(`Usunąć kierowcę "${username}"?`)) {
                 const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    alert('Kierowca został usunięty z firmy.');
                     loadManagementUsers();
                     loadCompanyStats();
                 } else {
-                    alert(data.error || 'Błąd usuwania użytkownika.');
+                    alert(data.error || 'Błąd.');
                 }
             }
         }
@@ -590,7 +754,7 @@
                 const rankingList = document.getElementById('drivers-ranking');
                 rankingList.innerHTML = '';
                 if (data.driversRanking.length === 0) {
-                    rankingList.innerHTML = '<li class="text-muted">Brak przejechanych tras.</li>';
+                    rankingList.innerHTML = '<li class="text-muted">Brak tras.</li>';
                 } else {
                     data.driversRanking.forEach((d, index) => {
                         rankingList.innerHTML += `<li>${index + 1}. <strong>${d.username}</strong> - ${d.km} km</li>`;
@@ -609,10 +773,7 @@
                     let canModify = (job.user_id === currentUserId || currentUserRole === 'admin');
                     let actionHtml = '';
                     if (canModify) {
-                        actionHtml = `
-                            <button class="btn btn-sm btn-warning me-1" onclick="editJob(${job.id}, '${job.start_city}', '${job.end_city}', '${job.cargo}', ${job.distance}, ${job.income || 0})">Edytuj</button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteJob(${job.id})">Usuń</button>
-                        `;
+                        actionHtml = `<button class="btn btn-sm btn-danger" onclick="deleteJob(${job.id})">Usuń</button>`;
                     }
                     tbody.innerHTML += `
                         <tr>
@@ -632,47 +793,6 @@
             }
         }
 
-        function editJob(id, start, end, cargo, distance, income) {
-            document.getElementById('form-title').textContent = 'Edytuj trasę';
-            document.getElementById('edit-job-id').value = id;
-            document.getElementById('start_city').value = start;
-            document.getElementById('end_city').value = end;
-            document.getElementById('cargo').value = cargo;
-            document.getElementById('distance').value = distance;
-            document.getElementById('income').value = income;
-            document.getElementById('submit-job-btn').textContent = 'Zapisz zmiany';
-            document.getElementById('cancel-edit-btn').classList.remove('d-none');
-        }
-
-        function resetJobForm() {
-            document.getElementById('form-title').textContent = 'Dodaj nową trasę';
-            document.getElementById('job-form').reset();
-            document.getElementById('edit-job-id').value = '';
-            document.getElementById('submit-job-btn').textContent = 'Wyślij zlecenie';
-            document.getElementById('cancel-edit-btn').classList.add('d-none');
-        }
-
-        document.getElementById('job-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const editId = document.getElementById('edit-job-id').value;
-            const formData = new FormData(e.target);
-            
-            let url = '/api/jobs';
-            let method = 'POST';
-            if (editId) {
-                url = `/api/jobs/${editId}`;
-                method = 'PUT';
-            }
-
-            const res = await fetch(url, { method: method, body: formData });
-            if (res.ok) {
-                resetJobForm();
-                checkUser();
-            } else {
-                alert('Błąd zapisu trasy.');
-            }
-        });
-
         async function deleteJob(id) {
             if (confirm('Usunąć tę trasę?')) {
                 await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
@@ -680,6 +800,7 @@
             }
         }
 
+        // --- FINANSE ---
         async function loadExpenses() {
             const res = await fetch('/api/expenses');
             if (res.ok) {
@@ -687,7 +808,7 @@
                 const tbody = document.getElementById('expenses-table-body');
                 tbody.innerHTML = '';
                 if (expenses.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">Brak zgłoszonych wydatków.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">Brak wydatków.</td></tr>';
                     return;
                 }
                 expenses.forEach(exp => {
@@ -700,12 +821,13 @@
                         `;
                     }
                     let badgeType = exp.type === 'fuel' ? '<span class="badge bg-warning text-dark">⛽ Paliwo</span>' : '<span class="badge bg-danger">🔧 Serwis</span>';
+                    let litersInfo = exp.liters ? ` (${exp.liters} L)` : '';
                     tbody.innerHTML += `
                         <tr>
                             <td>${exp.username}</td>
                             <td>${badgeType}</td>
                             <td>${exp.description}</td>
-                            <td><strong>-${exp.amount.toLocaleString()} €</strong></td>
+                            <td><strong>-${exp.amount.toLocaleString()} €</strong>${litersInfo}</td>
                             <td>${actionHtml}</td>
                         </tr>
                     `;
@@ -718,6 +840,7 @@
             const editId = document.getElementById('edit-expense-id').value;
             const type = document.getElementById('expense_type').value;
             const amount = document.getElementById('expense_amount').value;
+            const liters = document.getElementById('expense_liters').value;
             const description = document.getElementById('expense_desc').value;
 
             let url = '/api/expenses';
@@ -730,7 +853,7 @@
             const res = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, amount, description })
+                body: JSON.stringify({ type, amount, description, liters })
             });
 
             if (res.ok) {
@@ -761,17 +884,16 @@
         }
 
         async function deleteExpense(id) {
-            if (confirm('Czy na pewno chcesz usunąć ten wydatek?')) {
+            if (confirm('Usunąć ten wydatek?')) {
                 const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
                 if (res.ok) {
                     loadExpenses();
                     loadCompanyStats();
-                } else {
-                    alert('Błąd podczas usuwania wydatku.');
                 }
             }
         }
 
+        // --- GARAŻ ---
         async function loadTrucks() {
             const res = await fetch('/api/trucks');
             if (res.ok) {
@@ -779,7 +901,7 @@
                 const container = document.getElementById('trucks-container');
                 container.innerHTML = '';
                 if (trucks.length === 0) {
-                    container.innerHTML = '<p class="text-muted">Brak pojazdów we flocie firmy.</p>';
+                    container.innerHTML = '<p class="text-muted">Brak pojazdów.</p>';
                     return;
                 }
                 trucks.forEach(t => {
@@ -854,19 +976,16 @@
                     resetTruckForm();
                     loadTrucks();
                 } else {
-                    const data = await res.json();
-                    alert(data.error || 'Błąd zapisu pojazdu.');
+                    alert('Błąd zapisu pojazdu.');
                 }
             });
         }
 
         async function deleteTruck(id) {
-            if (confirm('Usunąć ten pojazd z floty?')) {
+            if (confirm('Usunąć ten pojazd?')) {
                 const res = await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
                 if (res.ok) {
                     loadTrucks();
-                } else {
-                    alert('Błąd podczas usuwania pojazdu.');
                 }
             }
         }
