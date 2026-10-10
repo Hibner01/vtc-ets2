@@ -225,8 +225,8 @@ app.post('/api/dispatches', async (req, res) => {
     const { assigned_to, start_city, end_city, notes } = req.body;
     try {
         await pool.query(
-            'INSERT INTO dispatches (assigned_to, start_city, end_city, notes) VALUES ($1, $2, $3, $4)',
-            [assigned_to || 'Wszyscy', start_city, end_city, notes || '']
+            'INSERT INTO dispatches (assigned_to, start_city, end_city, cargo, notes) VALUES ($1, $2, $3, $4, $5)',
+            [assigned_to || 'Wszyscy', start_city, end_city, 'Standard', notes || '']
         );
         res.json({ success: true });
     } catch (err) {
@@ -247,6 +247,10 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
 
         const userRes = await pool.query('SELECT username FROM users WHERE id = $1', [req.session.userId]);
         const username = userRes.rows[0].username;
+
+        if (disp.assigned_to !== 'Wszyscy' && disp.assigned_to !== username) {
+            return res.status(403).json({ error: `To zlecenie jest przeznaczone dla kierowcy: ${disp.assigned_to}` });
+        }
 
         await pool.query(
             'UPDATE dispatches SET status = $1, accepted_by_id = $2, accepted_by_username = $3 WHERE id = $4',
