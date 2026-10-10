@@ -371,6 +371,8 @@ app.delete('/api/jobs/:id', async (req, res) => {
 
 // --- FINANSE I WYDATKI ---
 
+// --- FINANSE I WYDATKI ---
+
 app.get('/api/expenses', async (req, res) => {
     try {
         const query = `
@@ -389,21 +391,30 @@ app.get('/api/expenses', async (req, res) => {
 app.post('/api/expenses', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     const { type, amount, description, liters } = req.body;
+    
+    const parsedAmount = parseInt(amount) || 0;
+    const parsedLiters = parseInt(liters) || 0;
+
+    if (parsedAmount <= 0) {
+        return res.status(400).json({ error: 'Kwota wydatku musi być większa od 0.' });
+    }
+
     try {
         await pool.query(
             'INSERT INTO expenses (user_id, type, amount, description, liters) VALUES ($1, $2, $3, $4, $5)',
-            [req.session.userId, type, parseInt(amount), description, parseInt(liters || 0)]
+            [req.session.userId, type, parsedAmount, description, parsedLiters]
         );
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: 'Błąd zapisu wydatku' });
+        console.error('Błąd dodawania wydatku:', err);
+        res.status(500).json({ error: 'Błąd zapisu wydatku w bazie danych.' });
     }
 });
 
 app.put('/api/expenses/:id', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     const expenseId = req.params.id;
-    const { amount, description } = req.body;
+    const { amount, description, liters } = req.body;
     try {
         const expRes = await pool.query('SELECT * FROM expenses WHERE id = $1', [expenseId]);
         if (expRes.rows.length === 0) return res.status(404).json({ error: 'Wydatek nie znaleziony' });
@@ -413,7 +424,10 @@ app.put('/api/expenses/:id', async (req, res) => {
             return res.status(403).json({ error: 'Brak uprawnień' });
         }
 
-        await pool.query('UPDATE expenses SET amount = $1, description = $2 WHERE id = $3', [parseInt(amount), description, expenseId]);
+        await pool.query(
+            'UPDATE expenses SET amount = $1, description = $2, liters = $3 WHERE id = $4',
+            [parseInt(amount) || 0, description, parseInt(liters) || 0, expenseId]
+        );
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Błąd edycji wydatku' });
