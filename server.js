@@ -202,26 +202,58 @@ app.get('/api/jobs', async (req, res) => {
 
 app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    const { start_city, end_city, cargo, distance } = req.body;
+    const { start_city, end_city, cargo, distance, income } = req.body;
     
     const cmrFile = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/cmr_przyklad.jpg';
     const summaryPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
 
     try {
+        // Zapis trasy wraz z zyskiem (income)
         await pool.query(
-            'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [req.session.userId, start_city, end_city, cargo, parseInt(distance), cmrFile, summaryPhoto]
+            'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [req.session.userId, start_city, end_city, cargo, parseInt(distance), parseInt(income || 0), cmrFile, summaryPhoto]
         );
 
-        // Pobieranie nazwy użytkownika do powiadomienia Discord
+        // Pobieranie nazwy użytkownika
         const userRes = await pool.query('SELECT username FROM users WHERE id = $1', [req.session.userId]);
         const username = userRes.rows[0] ? userRes.rows[0].username : 'Kierowca';
 
-        // Wbudowany bezpośrednio link do Discorda
+        // Obliczanie aktualnej pozycji w rankingu firmy dla tego kierowcy
+        const rankingRes = await pool.query(`
+            SELECT users.username, SUM(jobs.distance) as total_km 
+            FROM jobs 
+            JOIN users ON jobs.user_id = users.id 
+            GROUP BY users.username 
+            ORDER BY total_km DESC
+        `);
+        
+        let driverRank = 1;
+        for (let i = 0; i < rankingRes.rows.length; i++) {
+            if (rankingRes.rows[i].username === username) {
+                driverRank = i + 1;
+                break;
+            }
+        }
+
+        // Wbudowany link do Discorda
         const webhookUrl = "https://discord.com/api/webhooks/1558211120228073512/xYLNti0-1Q0Pn32oHAI_v0XJogBTw6LPnqNp6hbHNKK5qdbbtkjDKrdoKUWaBARI3m9J";
         
+        // Nowoczesny format Discord Embed (podobny do TrucksBooka)
         const discordPayload = {
-            content: `🚛 **Nowa trasa w Mazren Spedition!**\n👤 **Kierowca:** ${username}\n📍 **Trasa:** ${start_city} ➔ ${end_city}\n📦 **Ładunek:** ${cargo}\n📏 **Dystans:** ${distance} km`
+            embeds: [{
+                title: `Dostawa od ${username}`,
+                color: 3447003, // Niebieski kolor paska bocznego
+                fields: [
+                    { name: "Z", value: `🇩🇪 ${start_city}`, inline: true },
+                    { name: "Do", value: `🇩🇪 ${end_city}`, inline: true },
+                    { name: "\u200b", value: "\u200b", inline: false }, // Odstęp
+                    { name: "Towar", value: cargo, inline: true },
+                    { name: "Dystans", value: `${distance} km`, inline: true },
+                    { name: "Zysk", value: `${parseInt(income || 0).toLocaleString()} €`, inline: true },
+                    { name: "Pozycja w firmie", value: `${driverRank}. ⬆️`, inline: false }
+                ],
+                footer: { text: "Mazren Spedition VTC" }
+            }]
         };
         
         await fetch(webhookUrl, {
@@ -232,6 +264,7 @@ app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), asy
 
         res.json({ success: true });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Błąd zapisu trasy' });
     }
 });
@@ -316,4 +349,15 @@ app.delete('/api/trucks/:id', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Serwer VTC działa na porcie ${PORT}`);
+app.get('/api/finances', async (req, res) => {
+    try {
+        const totalIncomeRes = await pool.query('SELECT SUM(income) as total_income FROM jobs');
+        const totalIncome = parseInt(totalIncomeRes.rows[0].total_income || 0);
+
+        res.json({
+            totalCompanyBudget: totalIncome
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd pobierania danych finansowych' });
+    }
 });
