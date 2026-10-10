@@ -12,6 +12,16 @@
         .logo-hover:hover {
             opacity: 0.8;
         }
+        .example-link {
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #0d6efd;
+            text-decoration: underline;
+            margin-left: 5px;
+        }
+        .example-link:hover {
+            color: #0a58ca;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -99,7 +109,6 @@
                                        <tr>
                                            <th>Kierowca</th>
                                            <th>Trasa</th>
-                                           <th>Ładunek</th>
                                            <th>Dystans</th>
                                            <th>Zysk</th>
                                            <th>Dowody</th>
@@ -134,10 +143,6 @@
                                     <input type="text" id="dispatch_end" class="form-control" required placeholder="np. Berlin">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Ładunek</label>
-                                    <input type="text" id="dispatch_cargo" class="form-control" required placeholder="np. Elektronika">
-                                </div>
-                                <div class="mb-3">
                                     <label class="form-label">Uwagi dyspozytora</label>
                                     <textarea id="dispatch_notes" class="form-control" rows="2" placeholder="np. Pilny transport, max 90 km/h"></textarea>
                                 </div>
@@ -156,7 +161,6 @@
                                         <tr>
                                             <th>Dla kogo</th>
                                             <th>Trasa</th>
-                                            <th>Ładunek</th>
                                             <th>Uwagi</th>
                                             <th>Status</th>
                                             <th>Akcje</th>
@@ -363,15 +367,31 @@
                                 <input type="number" id="comp_fuel_liters" name="fuel_liters" class="form-control" placeholder="np. 380">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Wypełniony plik CMR (zdjęcie/skan)</label>
+                                <label class="form-label">Wypełniony plik CMR <span class="example-link" onclick="showExample('cmr')">[Przykład]</span></label>
                                 <input type="file" id="comp_cmr" name="cmr" class="form-control" accept="image/*,.pdf">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Zdjęcie z podsumowania ETS2</label>
+                                <label class="form-label">Zdjęcie z podsumowania ETS2 <span class="example-link" onclick="showExample('summary')">[Przykład]</span></label>
                                 <input type="file" id="comp_summary" name="summary" class="form-control" accept="image/*">
                             </div>
                             <button type="submit" class="btn btn-success w-100">Potwierdź i wyślij rozliczenie</button>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DO WYŚWIETLANIA PRZYKŁADÓW (WZORCÓW) -->
+        <div class="modal fade" id="exampleModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalTitle">Wzorcowy przykład</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p id="exampleModalDesc" class="text-muted mb-3"></p>
+                        <div id="exampleModalContent"></div>
                     </div>
                 </div>
             </div>
@@ -388,6 +408,25 @@
     <script>
         let currentUserId = null;
         let currentUserRole = '';
+
+        function showExample(type) {
+            const title = document.getElementById('exampleModalTitle');
+            const desc = document.getElementById('exampleModalDesc');
+            const content = document.getElementById('exampleModalContent');
+
+            if (type === 'summary') {
+                title.textContent = 'Przykład: Podsumowanie z końca zlecenia';
+                desc.textContent = 'Zrzut ekranu z gry ETS2 prezentujący ekran podsumowania trasy z ilością spalonego paliwa i dystansem.';
+                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg" alt="Przykład z ETS2" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
+            } else if (type === 'cmr') {
+                title.textContent = 'Przykład: Dokument CMR';
+                desc.textContent = 'Wypełniony list przewozowy CMR z pieczątką firmy.';
+                content.innerHTML = `<img src="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg" alt="Przykład CMR" class="img-fluid rounded border shadow-sm" style="max-height: 450px; width: auto;">`;
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('exampleModal'));
+            modal.show();
+        }
 
         document.getElementById('expense_type').addEventListener('change', function() {
             const litersGroup = document.getElementById('liters-group');
@@ -558,7 +597,7 @@
                 const tbody = document.getElementById('dispatches-table-body');
                 tbody.innerHTML = '';
                 if (dispatches.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">Brak aktywnych zleceń od dyspozytora.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">Brak aktywnych zleceń od dyspozytora.</td></tr>';
                     return;
                 }
                 dispatches.forEach(d => {
@@ -571,7 +610,7 @@
                     } else if (d.status === 'W trakcie') {
                         statusBadge = `<span class="badge bg-warning text-dark">W trakcie (${d.accepted_by_username})</span>`;
                         if (d.accepted_by_id === currentUserId || currentUserRole === 'admin') {
-                            actionHtml = `<button class="btn btn-sm btn-success" onclick="openCompleteDispatchModal(${d.id}, '${d.start_city}', '${d.end_city}', '${d.cargo}')">Ukończ zlecenie</button>`;
+                            actionHtml = `<button class="btn btn-sm btn-success" onclick="openCompleteDispatchModal(${d.id}, '${d.start_city}', '${d.end_city}')">Ukończ zlecenie</button>`;
                         } else {
                             actionHtml = '<span class="text-muted small">Realizuje kolega</span>';
                         }
@@ -586,7 +625,6 @@
                         <tr>
                             <td><span class="badge bg-secondary">${d.assigned_to}</span></td>
                             <td><strong>${d.start_city}</strong> ➔ <strong>${d.end_city}</strong></td>
-                            <td>${d.cargo}</td>
                             <td><small class="text-muted">${d.notes || 'Brak'}</small></td>
                             <td>${statusBadge}</td>
                             <td>${actionHtml} ${deleteBtn}</td>
@@ -601,13 +639,12 @@
             const assigned_to = document.getElementById('dispatch_assigned').value;
             const start_city = document.getElementById('dispatch_start').value;
             const end_city = document.getElementById('dispatch_end').value;
-            const cargo = document.getElementById('dispatch_cargo').value;
             const notes = document.getElementById('dispatch_notes').value;
 
             const res = await fetch('/api/dispatches', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ assigned_to, start_city, end_city, cargo, notes })
+                body: JSON.stringify({ assigned_to, start_city, end_city, notes })
             });
 
             if (res.ok) {
@@ -629,9 +666,9 @@
             }
         }
 
-        function openCompleteDispatchModal(id, start, end, cargo) {
+        function openCompleteDispatchModal(id, start, end) {
             document.getElementById('complete-dispatch-id').value = id;
-            document.getElementById('complete-modal-route-info').textContent = `Trasa: ${start} ➔ ${end} | Towar: ${cargo}`;
+            document.getElementById('complete-modal-route-info').textContent = `Trasa: ${start} ➔ ${end}`;
             document.getElementById('comp_distance').value = '';
             document.getElementById('comp_income').value = '';
             document.getElementById('comp_fuel_amount').value = '';
@@ -773,7 +810,6 @@
                         <tr>
                             <td>${job.username}</td>
                             <td>${job.start_city} ➔ ${job.end_city}</td>
-                            <td>${job.cargo}</td>
                             <td>${job.distance} km</td>
                             <td><strong>${(job.income || 0).toLocaleString()} €</strong></td>
                             <td>
