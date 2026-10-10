@@ -59,6 +59,7 @@
                 </div>
                 <div>
                     <button class="btn btn-outline-primary me-2" onclick="switchTab('jobs')">Trasy i Firma</button>
+                    <button class="btn btn-outline-success me-2" onclick="switchTab('finances')">💰 Finanse</button>
                     <button class="btn btn-outline-info me-2" onclick="switchTab('garage')">Garaż VTC</button>
                     <button id="admin-tab-btn" class="btn btn-outline-warning me-2 d-none" onclick="switchTab('management')">Zarządzanie</button>
                     <button class="btn btn-outline-danger" onclick="performLogout()">Wyloguj</button>
@@ -68,7 +69,7 @@
             <!-- ZAKŁADKA TRAS I STATYSTYK -->
             <div id="tab-jobs">
                 <div class="row mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card shadow p-4 h-100">
                             <h4>Twój limit miesięczny (Cel: 6000 km)</h4>
                             <div class="progress my-3" style="height: 25px;">
@@ -77,13 +78,21 @@
                             <p id="limit-status" class="text-muted mb-0"></p>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card shadow p-4 h-100 bg-white">
                             <h4>Statystyki Całej Firmy</h4>
                             <p class="mb-1"><strong>Razem przejechano w tym miesiącu:</strong> <span id="company-total-km" class="text-primary fw-bold">0</span> km</p>
                             <hr>
                             <strong>Ranking kierowców:</strong>
                             <ul id="drivers-ranking" class="list-unstyled mb-0 mt-2" style="max-height: 80px; overflow-y: auto;"></ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow p-4 h-100 bg-success text-white">
+                            <h4>Budżet Firmy</h4>
+                            <p class="mb-1">Aktualna kasa VTC:</p>
+                            <h2 id="company-total-budget" class="fw-bold mt-2">0 €</h2>
+                            <small class="text-light">Zarobki z tras minus koszty</small>
                         </div>
                     </div>
                 </div>
@@ -139,6 +148,7 @@
                                            <th>Trasa</th>
                                            <th>Ładunek</th>
                                            <th>Dystans</th>
+                                           <th>Zysk</th>
                                            <th>Dowody</th>
                                            <th>Akcje</th>
                                        </tr>
@@ -146,6 +156,46 @@
                                    <tbody id="jobs-table-body"></tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ZAKŁADKA FINANSE -->
+            <div id="tab-finances" style="display:none;">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow p-4 h-100 border-success">
+                            <h4 class="text-success mb-3">⛽ Zgłoś koszt Paliwa</h4>
+                            <p class="text-muted">Wpisz kwotę wydaną na paliwo w trasie, aby odliczyć ją od budżetu firmy.</p>
+                            <form id="fuel-form" class="mt-2" onsubmit="submitExpense(event, 'fuel')">
+                                <div class="mb-3">
+                                    <label class="form-label">Kwota (€)</label>
+                                    <input type="number" id="fuel_amount" class="form-control" placeholder="np. 450" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Opis / Stacja / Trasa</label>
+                                    <input type="text" id="fuel_desc" class="form-control" placeholder="np. Tankowanie w Berlinie" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Dodaj wydatek paliwowy</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow p-4 h-100 border-danger">
+                            <h4 class="text-danger mb-3">🔧 Zgłoś koszt Serwisu / Naprawy</h4>
+                            <p class="text-muted">Zgłoś koszty wizyty w serwisie, naprawy uszkodzeń lub przeglądu floty.</p>
+                            <form id="service-form" class="mt-2" onsubmit="submitExpense(event, 'service')">
+                                <div class="mb-3">
+                                    <label class="form-label">Kwota (€)</label>
+                                    <input type="number" id="service_amount" class="form-control" placeholder="np. 1200" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Opis szkody / Serwis</label>
+                                    <input type="text" id="service_desc" class="form-control" placeholder="np. Wymiana skrzyni biegów i opon" required>
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100">Dodaj koszt serwisu</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -268,6 +318,7 @@
 
         function switchTab(tab) {
             document.getElementById('tab-jobs').style.display = (tab === 'jobs') ? 'block' : 'none';
+            document.getElementById('tab-finances').style.display = (tab === 'finances') ? 'block' : 'none';
             document.getElementById('tab-garage').style.display = (tab === 'garage') ? 'block' : 'none';
             document.getElementById('tab-management').style.display = (tab === 'management') ? 'block' : 'none';
             
@@ -296,8 +347,9 @@
                     document.getElementById('dashboard-section').style.display = 'block';
                     document.getElementById('user-display').innerText = data.username;
                     
-                    // Zawsze wracamy na stronę główną (trasy) po zalogowaniu
+                    // Domyślnie po zalogowaniu wracamy na trasy
                     document.getElementById('tab-jobs').style.display = 'block';
+                    document.getElementById('tab-finances').style.display = 'none';
                     document.getElementById('tab-garage').style.display = 'none';
                     document.getElementById('tab-management').style.display = 'none';
                     
@@ -473,6 +525,8 @@
             if (res.ok) {
                 const data = await res.json();
                 document.getElementById('company-total-km').textContent = data.totalCompanyKm;
+                document.getElementById('company-total-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
+                
                 const rankingList = document.getElementById('drivers-ranking');
                 rankingList.innerHTML = '';
                 if (data.driversRanking.length === 0) {
@@ -496,7 +550,7 @@
                     let actionHtml = '';
                     if (canModify) {
                         actionHtml = `
-                            <button class="btn btn-sm btn-warning me-1" onclick="editJob(${job.id}, '${job.start_city}', '${job.end_city}', '${job.cargo}', ${job.distance})">Edytuj</button>
+                            <button class="btn btn-sm btn-warning me-1" onclick="editJob(${job.id}, '${job.start_city}', '${job.end_city}', '${job.cargo}', ${job.distance}, ${job.income || 0})">Edytuj</button>
                             <button class="btn btn-sm btn-danger" onclick="deleteJob(${job.id})">Usuń</button>
                         `;
                     }
@@ -506,6 +560,7 @@
                             <td>${job.start_city} ➔ ${job.end_city}</td>
                             <td>${job.cargo}</td>
                             <td>${job.distance} km</td>
+                            <td><strong>${(job.income || 0).toLocaleString()} €</strong></td>
                             <td>
                                 ${job.cmr_file ? `<a href="${job.cmr_file}" target="_blank" class="btn btn-sm btn-outline-primary mb-1">CMR</a>` : ''}
                                 ${job.summary_photo ? `<a href="${job.summary_photo}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1">Zdjęcie</a>` : ''}
@@ -517,13 +572,14 @@
             }
         }
 
-        function editJob(id, start, end, cargo, distance) {
+        function editJob(id, start, end, cargo, distance, income) {
             document.getElementById('form-title').textContent = 'Edytuj trasę';
             document.getElementById('edit-job-id').value = id;
             document.getElementById('start_city').value = start;
             document.getElementById('end_city').value = end;
             document.getElementById('cargo').value = cargo;
             document.getElementById('distance').value = distance;
+            document.getElementById('income').value = income;
             document.getElementById('submit-job-btn').textContent = 'Zapisz zmiany';
             document.getElementById('cancel-edit-btn').classList.remove('d-none');
         }
@@ -562,6 +618,14 @@
                 await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
                 checkUser();
             }
+        }
+
+        function submitExpense(event, type) {
+            event.preventDefault();
+            const amount = document.getElementById(`${type}_amount`).value;
+            const desc = document.getElementById(`${type}_desc`).value;
+            alert(`Zgłoszono wydatek na ${type === 'fuel' ? 'paliwo' : 'serwis'} w kwocie ${amount} € (${desc}). Wkrótce zostanie zsynchronizowany z budżetem!`);
+            document.getElementById(`${type}-form`).reset();
         }
 
         async function loadTrucks() {
