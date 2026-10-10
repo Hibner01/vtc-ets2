@@ -60,6 +60,7 @@
                 <div>
                     <button class="btn btn-outline-primary me-2" onclick="switchTab('jobs')">Trasy i Firma</button>
                     <button class="btn btn-outline-success me-2" onclick="switchTab('finances')">💰 Finanse</button>
+                    <button class="btn btn-outline-secondary me-2" onclick="switchTab('documents')">📄 Dokumenty</button>
                     <button class="btn btn-outline-info me-2" onclick="switchTab('garage')">Garaż VTC</button>
                     <button id="admin-tab-btn" class="btn btn-outline-warning me-2 d-none" onclick="switchTab('management')">Zarządzanie</button>
                     <button class="btn btn-outline-danger" onclick="performLogout()">Wyloguj</button>
@@ -163,7 +164,6 @@
 
             <!-- ZAKŁADKA FINANSE -->
             <div id="tab-finances" style="display:none;">
-                <!-- Podsumowanie finansowe (Przychody vs Wydatki) -->
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <div class="card shadow p-3 bg-primary text-white text-center">
@@ -186,7 +186,6 @@
                 </div>
 
                 <div class="row">
-                    <!-- Formularz dodawania/edycji wydatku -->
                     <div class="col-md-4">
                         <div class="card shadow p-4 mb-4">
                             <h4 id="expense-form-title">Zgłoś wydatek</h4>
@@ -213,7 +212,6 @@
                         </div>
                     </div>
 
-                    <!-- Historia wydatków widoczna dla wszystkich -->
                     <div class="col-md-8">
                         <div class="card shadow p-4">
                             <h4>Rejestr wydatków firmy (Paliwo i Serwis)</h4>
@@ -231,6 +229,26 @@
                                     <tbody id="expenses-table-body"></tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ZAKŁADKA DOKUMENTY -->
+            <div id="tab-documents" style="display:none;">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card shadow p-4 text-center">
+                            <h3 class="mb-3">📄 Oficjalne Dokumenty Mazren Spedition</h3>
+                            <p class="text-muted">Pobierz czysty wzór listu przewozowego CMR z pieczątką firmową, gotowy do wypełnienia pod Twoją trasę.</p>
+                            
+                            <div class="mb-4">
+                                <img src="/uploads/wzor.jpg" alt="Wzór CMR Mazren Spedition" class="img-fluid rounded border shadow-sm" style="max-height: 450px; object-fit: contain;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
+                            </div>
+
+                            <a href="/uploads/wzor.jpg" download="CMR_Mazren_Spedition_Wzor.jpg" class="btn btn-primary btn-lg w-50 mx-auto">
+                                📥 Pobierz czysty CMR (JPG)
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -354,6 +372,7 @@
         function switchTab(tab) {
             document.getElementById('tab-jobs').style.display = (tab === 'jobs') ? 'block' : 'none';
             document.getElementById('tab-finances').style.display = (tab === 'finances') ? 'block' : 'none';
+            document.getElementById('tab-documents').style.display = (tab === 'documents') ? 'block' : 'none';
             document.getElementById('tab-garage').style.display = (tab === 'garage') ? 'block' : 'none';
             document.getElementById('tab-management').style.display = (tab === 'management') ? 'block' : 'none';
             
@@ -386,6 +405,7 @@
                     
                     document.getElementById('tab-jobs').style.display = 'block';
                     document.getElementById('tab-finances').style.display = 'none';
+                    document.getElementById('tab-documents').style.display = 'none';
                     document.getElementById('tab-garage').style.display = 'none';
                     document.getElementById('tab-management').style.display = 'none';
                     
@@ -563,7 +583,6 @@
                 document.getElementById('company-total-km').textContent = data.totalCompanyKm;
                 document.getElementById('company-total-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
                 
-                // Aktualizacja w zakładce Finanse
                 document.getElementById('finance-total-income').textContent = (data.totalIncome || 0).toLocaleString() + ' €';
                 document.getElementById('finance-total-expenses').textContent = (data.totalExpenses || 0).toLocaleString() + ' €';
                 document.getElementById('finance-net-balance').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
@@ -661,7 +680,6 @@
             }
         }
 
-        // --- OBSŁUGA WYDATKÓW ---
         async function loadExpenses() {
             const res = await fetch('/api/expenses');
             if (res.ok) {
