@@ -268,8 +268,9 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name:
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         const disp = dispRes.rows[0];
 
-        const cmrFile = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg';
-        const summaryPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
+        // Obsługa wgranych plików przez kierowcę lub domyślne fallbacki
+        let cmrFile = req.files && req.files['cmr'] ? `/uploads/${req.files['cmr'][0].originalname}` : 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg';
+        let summaryPhoto = req.files && req.files['summary'] ? `/uploads/${req.files['summary'][0].originalname}` : 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg';
 
         // 1. Zapis trasy
         await pool.query(
@@ -295,7 +296,7 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name:
         const webhookUrl = "https://discord.com/api/webhooks/1558211120228073512/xYLNti0-1Q0Pn32oHAI_v0XJogBTw6LPnqNp6hbHNKK5qdbbtkjDKrdoKUWaBARI3m9J";
         const discordPayload = {
             embeds: [{
-                title: `🚚 Dostawa z Dyspozytorni: ${username}`,
+                title: `🚚 Rozliczono Zlecenie Dyspozytora: ${username}`,
                 color: 3447003,
                 fields: [
                     { name: "Trasa", value: `${disp.start_city} ➔ ${disp.end_city}`, inline: true },
