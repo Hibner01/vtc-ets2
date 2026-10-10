@@ -132,7 +132,9 @@
                             <form id="dispatch-form">
                                 <div class="mb-3">
                                     <label class="form-label">Przypisz do kierowcy</label>
-                                    <input type="text" id="dispatch_assigned" class="form-control" placeholder="Wpisz nick lub 'Wszyscy'">
+                                    <select id="dispatch_assigned" class="form-select">
+                                        <option value="Wszyscy">Wszyscy (W wolnym obiegu)</option>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Skąd (Miasto startowe)</label>
@@ -448,12 +450,25 @@
             
             if (tab === 'dispatcher') {
                 loadDispatches();
+                if (currentUserRole === 'admin') loadDriversDropdown();
             } else if (tab === 'finances') {
                 loadExpenses();
             } else if (tab === 'garage') {
                 loadTrucks();
             } else if (tab === 'management' && currentUserRole === 'admin') {
                 loadManagementUsers();
+            }
+        }
+
+        async function loadDriversDropdown() {
+            const res = await fetch('/api/users');
+            if (res.ok) {
+                const users = await res.json();
+                const select = document.getElementById('dispatch_assigned');
+                select.innerHTML = '<option value="Wszyscy">Wszyscy (W wolnym obiegu)</option>';
+                users.forEach(u => {
+                    select.innerHTML += `<option value="${u.username}">${u.username}</option>`;
+                });
             }
         }
 
@@ -600,13 +615,21 @@
                     tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">Brak aktywnych zleceń od dyspozytora.</td></tr>';
                     return;
                 }
+
+                let currentUsername = localStorage.getItem('vtc_logged_user');
+
                 dispatches.forEach(d => {
                     let actionHtml = '';
                     let statusBadge = '';
+                    let isAssignedToMe = (d.assigned_to === 'Wszyscy' || d.assigned_to === currentUsername);
 
                     if (d.status === 'W wolnym obiegu') {
                         statusBadge = '<span class="badge bg-success">W wolnym obiegu</span>';
-                        actionHtml = `<button class="btn btn-sm btn-primary" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                        if (isAssignedToMe) {
+                            actionHtml = `<button class="btn btn-sm btn-primary" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                        } else {
+                            actionHtml = `<span class="text-muted small">Dla innego kierowcy</span>`;
+                        }
                     } else if (d.status === 'W trakcie') {
                         statusBadge = `<span class="badge bg-warning text-dark">W trakcie (${d.accepted_by_username})</span>`;
                         if (d.accepted_by_id === currentUserId || currentUserRole === 'admin') {
