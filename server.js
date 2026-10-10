@@ -47,6 +47,15 @@ async function initDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS expenses (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                type VARCHAR(50) NOT NULL,
+                amount INTEGER NOT NULL,
+                description TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE TABLE IF NOT EXISTS trucks (
                 id SERIAL PRIMARY KEY,
                 driver_name VARCHAR(255) NOT NULL,
@@ -184,7 +193,7 @@ app.delete('/api/users/:id', async (req, res) => {
     }
 });
 
-// --- TRASY, FINANSE I DISCORD EMBED ---
+// --- TRASY I DISCORD EMBED ---
 
 app.get('/api/jobs', async (req, res) => {
     try {
@@ -214,11 +223,9 @@ app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), asy
             [req.session.userId, start_city, end_city, cargo, parseInt(distance), parseInt(income || 0), cmrFile, summaryPhoto]
         );
 
-        // Nazwa użytkownika
         const userRes = await pool.query('SELECT username FROM users WHERE id = $1', [req.session.userId]);
         const username = userRes.rows[0] ? userRes.rows[0].username : 'Kierowca';
 
-        // Obliczanie pozycji w rankingu firmy
         const rankingRes = await pool.query(`
             SELECT users.username, SUM(jobs.distance) as total_km 
             FROM jobs 
@@ -235,7 +242,6 @@ app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), asy
             }
         }
 
-        // Webhook do Discorda (Embed)
         const webhookUrl = "https://discord.com/api/webhooks/1558211120228073512/xYLNti0-1Q0Pn32oHAI_v0XJogBTw6LPnqNp6hbHNKK5qdbbtkjDKrdoKUWaBARI3m9J";
         
         const discordPayload = {
@@ -268,6 +274,30 @@ app.post('/api/jobs', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), asy
     }
 });
 
+app.put('/api/jobs/:id', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    const jobId = req.params.id;
+    const { start_city, end_city, cargo, distance, income } = req.body;
+
+    try {
+        const jobRes = await pool.query('SELECT * FROM jobs WHERE id = $1', [jobId]);
+        if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Trasa nie znaleziona' });
+
+        const job = jobRes.rows[0];
+        if (job.user_id !== req.session.userId && req.session.role !== 'admin') {
+            return res.status(403).json({ error: 'Brak uprawnień' });
+        }
+
+        await pool.query(
+            'UPDATE jobs SET start_city = $1, end_city = $2, cargo = $3, distance = $4, income = $5 WHERE id = $6',
+            [start_city, end_city, cargo, parseInt(distance), parseInt(income || 0), jobId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd edycji trasy' });
+    }
+});
+
 app.delete('/api/jobs/:id', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
@@ -287,13 +317,88 @@ app.delete('/api/jobs/:id', async (req, res) => {
     }
 });
 
+// --- FINANSE I WYDATKI ---
+
+app.get('/api/expenses', async (req, res) => {
+    try {
+        const query = `
+            SELECT expenses.*, users.username 
+            FROM expenses 
+            JOIN users ON expenses.user_id = users.id 
+            ORDER BY expenses.id DESC
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd pobierania wydatków' });
+    }
+});
+
+app.post('/api/expenses', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    const { type, amount, description } = req.body;
+    try {
+        await pool.query(
+            'INSERT INTO expenses (user_id, type, amount, description) VALUES ($1, $2, $3, $4)',
+            [req.session.userId, type, parseInt(amount), description]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd zapisu wydatku' });
+    }
+});
+
+app.put('/api/expenses/:id', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    const expenseId = req.params.id;
+    const { amount, description } = req.body;
+    try {
+        const expRes = await pool.query('SELECT * FROM expenses WHERE id = $1', [expenseId]);
+        if (expRes.rows.length === 0) return res.status(404).json({ error: 'Wydatek nie znaleziony' });
+        
+        const exp = expRes.rows[0];
+        if (exp.user_id !== req.session.userId && req.session.role !== 'admin') {
+            return res.status(403).json({ error: 'Brak uprawnień' });
+        }
+
+        await pool.query('UPDATE expenses SET amount = $1, description = $2 WHERE id = $3', [parseInt(amount), description, expenseId]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd edycji wydatku' });
+    }
+});
+
+app.delete('/api/expenses/:id', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    const expenseId = req.params.id;
+    try {
+        const expRes = await pool.query('SELECT * FROM expenses WHERE id = $1', [expenseId]);
+        if (expRes.rows.length === 0) return res.status(404).json({ error: 'Wydatek nie znaleziony' });
+        
+        const exp = expRes.rows[0];
+        if (exp.user_id !== req.session.userId && req.session.role !== 'admin') {
+            return res.status(403).json({ error: 'Brak uprawnień' });
+        }
+
+        await pool.query('DELETE FROM expenses WHERE id = $1', [expenseId]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd usuwania wydatku' });
+    }
+});
+
+// --- STATYSTYKI FIRMY ---
+
 app.get('/api/company-stats', async (req, res) => {
     try {
         const totalKmRes = await pool.query('SELECT SUM(distance) as total FROM jobs');
         const totalIncomeRes = await pool.query('SELECT SUM(income) as total_income FROM jobs');
+        const totalExpensesRes = await pool.query('SELECT SUM(amount) as total_expenses FROM expenses');
         
         const totalCompanyKm = parseInt(totalKmRes.rows[0].total || 0);
-        const totalCompanyBudget = parseInt(totalIncomeRes.rows[0].total_income || 0);
+        const totalIncome = parseInt(totalIncomeRes.rows[0].total_income || 0);
+        const totalExpenses = parseInt(totalExpensesRes.rows[0].total_expenses || 0);
+        const totalCompanyBudget = totalIncome - totalExpenses;
 
         const rankingRes = await pool.query(`
             SELECT users.username, SUM(jobs.distance) as km 
@@ -305,6 +410,8 @@ app.get('/api/company-stats', async (req, res) => {
 
         res.json({
             totalCompanyKm,
+            totalIncome,
+            totalExpenses,
             totalCompanyBudget,
             driversRanking: rankingRes.rows
         });
@@ -337,6 +444,20 @@ app.post('/api/trucks', upload.single('truck_photo'), async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Błąd dodawania pojazdu' });
+    }
+});
+
+app.put('/api/trucks/:id', upload.single('truck_photo'), async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    const { driver_name, truck_model, trailer_model, plates } = req.body;
+    try {
+        await pool.query(
+            'UPDATE trucks SET driver_name = $1, truck_model = $2, trailer_model = $3, plates = $4 WHERE id = $5',
+            [driver_name, truck_model, trailer_model || '', plates, req.params.id]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd edycji pojazdu' });
     }
 });
 
