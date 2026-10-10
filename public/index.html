@@ -795,27 +795,38 @@
         }
 
         async function loadCompanyStats() {
-            const res = await fetch('/api/company-stats');
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('company-total-km').textContent = data.totalCompanyKm;
-                document.getElementById('company-total-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
-                
-                document.getElementById('finance-total-income').textContent = (data.totalIncome || 0).toLocaleString() + ' €';
-                document.getElementById('finance-total-expenses').textContent = (data.totalExpenses || 0).toLocaleString() + ' €';
-                document.getElementById('finance-net-balance').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
+    const res = await fetch('/api/company-stats');
+    if (res.ok) {
+        const data = await res.json();
+        document.getElementById('company-total-km').textContent = data.totalCompanyKm;
+        
+        const budget = data.totalCompanyBudget || 0;
+        const budgetElem = document.getElementById('company-total-budget');
+        budgetElem.textContent = budget.toLocaleString() + ' €';
 
-                const rankingList = document.getElementById('drivers-ranking');
-                rankingList.innerHTML = '';
-                if (data.driversRanking.length === 0) {
-                    rankingList.innerHTML = '<li class="text-muted">Brak tras.</li>';
-                } else {
-                    data.driversRanking.forEach((d, index) => {
-                        rankingList.innerHTML += `<li>${index + 1}. <strong>${d.username}</strong> - ${d.km} km</li>`;
-                    });
-                }
-            }
+        // Zmiana koloru w zależności od tego czy firma jest na plusie czy minusie
+        const budgetCard = budgetElem.closest('.card');
+        if (budget < 0) {
+            budgetCard.className = 'card shadow p-4 h-100 bg-danger text-white';
+        } else {
+            budgetCard.className = 'card shadow p-4 h-100 bg-success text-white';
         }
+
+        document.getElementById('finance-total-income').textContent = (data.totalIncome || 0).toLocaleString() + ' €';
+        document.getElementById('finance-total-expenses').textContent = (data.totalExpenses || 0).toLocaleString() + ' €';
+        document.getElementById('finance-net-balance').textContent = budget.toLocaleString() + ' €';
+
+        const rankingList = document.getElementById('drivers-ranking');
+        rankingList.innerHTML = '';
+        if (data.driversRanking.length === 0) {
+            rankingList.innerHTML = '<li class="text-muted">Brak tras.</li>';
+        } else {
+            data.driversRanking.forEach((d, index) => {
+                rankingList.innerHTML += `<li>${index + 1}. <strong>${d.username}</strong> - ${d.km} km</li>`;
+            });
+        }
+    }
+}
 
         async function loadJobs() {
             const res = await fetch('/api/jobs');
