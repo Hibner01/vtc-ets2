@@ -55,10 +55,10 @@ async function initDB() {
                 plates VARCHAR(50) NOT NULL,
                 photo TEXT NOT NULL,
                 photo_back TEXT,
-                cabin VARCHAR(255) DEFAULT 'Globetrotter XL',
-                chassis VARCHAR(255) DEFAULT '4x2',
-                engine VARCHAR(255) DEFAULT '500 KM',
-                gearbox VARCHAR(255) DEFAULT 'Automatic',
+                cabin VARCHAR(255) DEFAULT 'Globetrotter XL (dolne)',
+                chassis VARCHAR(255) DEFAULT '4x2 (górne)',
+                engine VARCHAR(255) DEFAULT 'D13A500',
+                gearbox VARCHAR(255) DEFAULT 'I-Shift ATO3512D R',
                 interior VARCHAR(255) DEFAULT 'Standard',
                 accessories VARCHAR(255) DEFAULT 'Własne',
                 max_drivers INTEGER DEFAULT 4
@@ -158,7 +158,7 @@ app.get('/api/user', async (req, res) => {
             limitKm: 6000
         });
     } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania danych użytkownika' });
+        res.status(500).json({ error: 'Błąd pobierania danych' });
     }
 });
 
@@ -239,72 +239,7 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
     }
 });
 
-app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    const { distance, income, cargo, fuel_amount } = req.body;
-    try {
-        await pool.query(
-            'UPDATE dispatches SET status = $1, reported_distance = $2, reported_income = $3, cargo = $4 WHERE id = $5',
-            ['Oczekuje na zatwierdzenie', parseInt(distance), parseInt(income), cargo || 'Towar', req.params.id]
-        );
-
-        if (fuel_amount && parseInt(fuel_amount) > 0) {
-            await pool.query(
-                'INSERT INTO expenses (user_id, type, amount, description) VALUES ($1, $2, $3, $4)',
-                [req.session.userId, 'fuel', parseInt(fuel_amount), 'Tankowanie w trasie']
-            );
-        }
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd rozliczania' });
-    }
-});
-
-app.put('/api/dispatches/:id/approve', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    try {
-        const dispRes = await pool.query('SELECT * FROM dispatches WHERE id = $1', [req.params.id]);
-        const disp = dispRes.rows[0];
-
-        await pool.query(
-            'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income) VALUES ($1, $2, $3, $4, $5, $6)',
-            [disp.accepted_by_id, disp.start_city, disp.end_city, disp.cargo, disp.reported_distance, disp.reported_income]
-        );
-
-        await pool.query('UPDATE dispatches SET status = $1 WHERE id = $2', ['Zakończone', req.params.id]);
-
-        // Discord Webhook
-        const webhookUrl = "https://discord.com/api/webhooks/1558211120228073512/xYLNti0-1Q0Pn32oHAI_v0XJogBTw6LPnqNp6hbHNKK5qdbbtkjDKrdoKUWaBARI3m9J";
-        await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                embeds: [{
-                    title: `Dostawa #${disp.id}`,
-                    description: `**[Rzeczywiste]** - ${disp.reported_distance} km\n\n**Z**\n🏙️ ${disp.start_city}\n**Do**\n🏙️ ${disp.end_city}\n\n**Detale**\nTowar: ${disp.cargo}\nZaakceptowany dystans: ${disp.reported_distance} km\nZysk: ${disp.reported_income.toLocaleString()} €\nCiągnik: ${disp.truck_name || 'Scania/Volvo'}`,
-                    color: 3447003,
-                    author: { name: disp.accepted_by_username }
-                }]
-            })
-        }).catch(e => console.log('Discord Error:', e));
-
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd zatwierdzania trasy' });
-    }
-});
-
-app.delete('/api/dispatches/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    try {
-        await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd usuwania zlecenia' });
-    }
-});
-
-// --- FINANSE I WYDATKI (SERWIS, PALIWO, MANDATY) ---
+// --- FINANSE (PALIWO, SERWIS, MANDATY) ---
 
 app.get('/api/expenses', async (req, res) => {
     try {
@@ -359,6 +294,14 @@ app.post('/api/trucks', upload.fields([{ name: 'photo' }, { name: 'photo_back' }
     const { driver_name, truck_model, trailer_model, plates, cabin, chassis, engine, gearbox, interior, accessories } = req.body;
     const defaultPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg';
 
+    let photoUrl = defaultPhoto;
+    let photoBackUrl = defaultPhoto;
+
+    if (req.files) {
+        if (req.files['photo']) photoUrl = defaultPhoto;
+        if (req.files['photo_back']) photoBackUrl = defaultPhoto;
+    }
+
     try {
         await pool.query(
             `INSERT INTO trucks (driver_name, truck_model, trailer_model, plates, photo, photo_back, cabin, chassis, engine, gearbox, interior, accessories) 
@@ -368,8 +311,8 @@ app.post('/api/trucks', upload.fields([{ name: 'photo' }, { name: 'photo_back' }
                 truck_model,
                 trailer_model || '',
                 plates,
-                defaultPhoto,
-                defaultPhoto,
+                photoUrl,
+                photoBackUrl,
                 cabin || 'Globetrotter XL (dolne)',
                 chassis || '4x2 (górne)',
                 engine || 'D13A500',
