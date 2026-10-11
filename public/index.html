@@ -623,14 +623,43 @@
                                 <div class="bg-card-bms p-4 border-success">
                                     <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-paper-plane me-2"></i> Wyślij raport z ukończonego zlecenia</h5>
                                     <form id="job-report-form" onsubmit="submitJobReport(event)" class="row g-3">
-                                        <input type="hidden" id="report_dispatch_id">
-                                        <div class="col-md-3"><label class="form-label text-white">Skąd</label><input type="text" id="report_start" class="form-control bg-dark text-white border-secondary" required readonly></div>
-                                        <div class="col-md-3"><label class="form-label text-white">Dokąd</label><input type="text" id="report_end" class="form-control bg-dark text-white border-secondary" required readonly></div>
-                                        <div class="col-md-3"><label class="form-label text-white">Dystans (km)</label><input type="number" id="report_distance" class="form-control bg-dark text-white border-secondary" required placeholder="np. 1250"></div>
-                                        <div class="col-md-3"><label class="form-label text-white">Zarobek (€)</label><input type="number" id="report_income" class="form-control bg-dark text-white border-secondary" required placeholder="np. 45000"></div>
-                                        <div class="col-md-6"><label class="form-label text-white">Ładunek / Uwagi</label><input type="text" id="report_cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Palety / Części samochodowe"></div>
-                                        <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-success fw-bold w-100">Zatwierdź i wyślij raport trasy</button></div>
-                                    </form>
+    <input type="hidden" id="report_dispatch_id">
+    
+    <div class="col-md-3">
+        <label class="form-label text-white">Skąd</label>
+        <input type="text" id="report_start" class="form-control bg-dark text-white border-secondary" required readonly>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label text-white">Dokąd</label>
+        <input type="text" id="report_end" class="form-control bg-dark text-white border-secondary" required readonly>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label text-white">Dystans (km)</label>
+        <input type="number" id="report_distance" class="form-control bg-dark text-white border-secondary" required placeholder="np. 1250">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label text-white">Zarobek (€)</label>
+        <input type="number" id="report_income" class="form-control bg-dark text-white border-secondary" required placeholder="np. 45000">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label text-white">Ładunek / Uwagi</label>
+        <input type="text" id="report_cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Palety / Części samochodowe">
+    </div>
+
+    <!-- DODANE OKIENKA NA PLIKI: CMR oraz Podsumowanie -->
+    <div class="col-md-6">
+        <label class="form-label text-info fw-semibold"><i class="fa-solid fa-file-invoice me-1"></i> Zdjęcie / Skan CMR</label>
+        <input type="file" id="report_cmr" class="form-control bg-dark text-white border-secondary" accept="image/*">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label text-info fw-semibold"><i class="fa-solid fa-image me-1"></i> Zdjęcie Podsumowania Trasy</label>
+        <input type="file" id="report_summary" class="form-control bg-dark text-white border-secondary" accept="image/*">
+    </div>
+
+    <div class="col-md-6 d-flex align-items-end">
+        <button type="submit" class="btn btn-success fw-bold w-100">Zatwierdź i wyślij raport trasy</button>
+    </div>
+</form>
                                 </div>
                             </div>
                         </div>
@@ -1201,32 +1230,51 @@
         }
 
         async function submitJobReport(e) {
-            e.preventDefault();
-            const data = {
-                start_city: document.getElementById('report_start').value,
-                end_city: document.getElementById('report_end').value,
-                distance: document.getElementById('report_distance').value,
-                income: document.getElementById('report_income').value,
-                cargo: document.getElementById('report_cargo').value || 'Standard'
-            };
+    e.preventDefault();
+    
+    const dispatchId = document.getElementById('report_dispatch_id').value;
+    const startCity = document.getElementById('report_start').value;
+    const endCity = document.getElementById('report_end').value;
+    const distance = document.getElementById('report_distance').value;
+    const income = document.getElementById('report_income').value;
+    const cargo = document.getElementById('report_cargo').value || 'Standard';
 
-            const res = await fetch('/api/jobs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+    // Pobranie plików z nowych okienek CMR i Podsumowania
+    const cmrFile = document.getElementById('report_cmr').files[0];
+    const summaryFile = document.getElementById('report_summary').files[0];
 
-            if (res.ok) {
-                document.getElementById('job-report-form').reset();
-                document.getElementById('driver-report-section').style.display = 'none';
-                alert('Raport trasy został pomyślnie wysłany i dodany do statystyk firmy!');
-                loadMyJobs();
-                loadDispatches();
-                loadCompanyStats();
-            } else {
-                alert('Błąd podczas wysyłania raportu trasy.');
-            }
+    const formData = new FormData();
+    formData.append('dispatch_id', dispatchId);
+    formData.append('start_city', startCity);
+    formData.append('end_city', endCity);
+    formData.append('distance', distance);
+    formData.append('income', income);
+    formData.append('cargo', cargo);
+
+    if (cmrFile) formData.append('cmr', cmrFile);
+    if (summaryFile) formData.append('summary', summaryFile);
+
+    try {
+        const res = await fetch('/api/jobs', {
+            method: 'POST',
+            body: formData // Wysyłamy jako FormData bez ręcznego nagłówka Content-Type
+        });
+
+        if (res.ok) {
+            document.getElementById('job-report-form').reset();
+            document.getElementById('driver-report-section').style.display = 'none';
+            alert('Raport trasy został pomyślnie wysłany i dodany do statystyk firmy!');
+            loadMyJobs();
+            loadDispatches();
+            loadCompanyStats();
+        } else {
+            alert('Błąd podczas wysyłania raportu trasy.');
         }
+    } catch (err) {
+        console.error(err);
+        alert('Wystąpił błąd połączenia z serwerem.');
+    }
+}
 
         async function loadGarage() {
             const grid = document.getElementById('garage-grid');
