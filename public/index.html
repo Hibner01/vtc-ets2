@@ -15,12 +15,12 @@
         }
 
         .auth-bg-main { 
-            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.png') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvoprzod.jpg') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
         .auth-bg-side { 
-            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvo2.png') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvotyl.jpg') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
@@ -149,7 +149,6 @@
             z-index: 10;
         }
 
-        /* POPRAWIONA CZYTELNOŚĆ POL FORMULARZY I PODPOWIEDZI */
         .form-control, .form-select {
             background-color: #22262c !important;
             border: 1px solid #3c424c !important;
@@ -163,15 +162,10 @@
             width: 100%;
         }
 
-        /* JADNY, CZYTELNY KOLOR PODPOWIEDZI (PLACEHOLDERÓW) */
         ::placeholder {
             color: #9ca3af !important;
             opacity: 1 !important;
         }
-
-        ::-webkit-input-placeholder { color: #9ca3af !important; opacity: 1 !important; }
-        ::-moz-placeholder { color: #9ca3af !important; opacity: 1 !important; }
-        :-ms-input-placeholder { color: #9ca3af !important; opacity: 1 !important; }
 
         .btn-pill-white { 
             background-color: #ffffff;
@@ -247,7 +241,6 @@
                 </button>
             </div>
 
-            <!-- EKRAN LOGOWANIA -->
             <div id="auth-login-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
                 <h3 class="fw-bold mb-1 text-white" data-i18n="welcomeBack">Witaj ponownie!</h3>
                 <p class="text-light small mb-4" data-i18n="loginSubtitle">Zaloguj się do Mazren Control System</p>
@@ -272,7 +265,6 @@
                 <div class="text-white small"><span data-i18n="noAccount">Nie masz jeszcze konta?</span> <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('register')" data-i18n="registerBtn">Zarejestruj się</a></div>
             </div>
 
-            <!-- EKRAN REJESTRACJI -->
             <div id="auth-register-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
                 <h3 class="fw-bold mb-1 text-white" data-i18n="createAccount">Rejestracja konta</h3>
                 <p class="text-light small mb-4" data-i18n="registerSubtitle">Stwórz konto w Mazren Control System</p>
@@ -399,7 +391,6 @@
 
                 <main class="container-fluid p-4 flex-grow-1">
 
-                    <!-- PULPIT -->
                     <div id="tab-dashboard">
                         <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #6b21a8 0%, #9333ea 100%); border-radius: 20px; padding: 28px 32px;">
                             <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> <span data-i18n="welcomeBackBanner">WITAJ Z POWROTEM</span></div>
@@ -469,7 +460,6 @@
                         </div>
                     </div>
 
-                    <!-- STATYSTYKI FIRMY -->
                     <div id="tab-company-stats" style="display:none;">
                         <div class="row g-4 mb-4">
                             <div class="col-md-4">
@@ -508,7 +498,6 @@
                         </div>
                     </div>
 
-                    <!-- FINANSE -->
                     <div id="tab-finances" style="display:none;">
                         <div class="row g-4">
                             <div class="col-md-4">
@@ -557,7 +546,6 @@
                         </div>
                     </div>
 
-                    <!-- DYSPOZYTOR -->
                     <div id="tab-dispatcher" style="display:none;">
                         <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
                             <div class="col-md-12">
@@ -581,7 +569,6 @@
                         </div>
                     </div>
 
-                    <!-- GARAŻ -->
                     <div id="tab-garage" style="display:none;">
                         <div id="garage-main-view">
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -599,7 +586,6 @@
                         </div>
                     </div>
 
-                    <!-- DOKUMENTY -->
                     <div id="tab-documents" style="display:none;">
                         <div class="bg-card-bms p-4">
                             <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="documentsHeader">Dokumenty i Regulaminy Firmowe</span></h4>
@@ -607,7 +593,6 @@
                         </div>
                     </div>
 
-                    <!-- O NAS -->
                     <div id="tab-about" style="display:none;">
                         <div class="bg-card-bms p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
                             <p class="fs-5 leading-relaxed text-white" data-i18n="aboutText">
@@ -616,7 +601,6 @@
                         </div>
                     </div>
 
-                    <!-- ZARZĄDZANIE -->
                     <div id="tab-management" style="display:none;">
                         <div class="bg-card-bms p-4">
                             <h4 class="fw-bold mb-3 text-warning" data-i18n="managementHeader">Zarządzanie Kontami Kierowców</h4>
@@ -650,6 +634,147 @@
         let currentUsername = '';
         let currentLang = 'pl';
         let groupedTrucksData = {};
+
+        // Wbudowane dane ciężarówek zgodnie z Twoim opisem (Volvo ze zaktualizowanymi zdjęciami)
+        const staticTrucksSpecs = {
+            "SCANIA R500": {
+                cabin: "Highline",
+                chassis: "4x2 type 2",
+                engine: "DC13 165 500 Euro 6",
+                gearbox: "G33CMR",
+                interior: "Exclusive Dark Eu",
+                accessories: "Własne",
+                photo: "/scaniarprzod.jpg",
+                photoBack: "/scaniartyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 8001S", driver_name: "" },
+                    { plates: "WRA 8002S", driver_name: "" },
+                    { plates: "WRA 8003S", driver_name: "" }
+                ]
+            },
+            "SCANIA PGR 520": {
+                cabin: "CR19T Topline 2008-2018",
+                chassis: "4x2 4000mm",
+                engine: "DC16 101 520 Euro 6",
+                gearbox: "GRSO900R",
+                interior: "Treated New Gauges Radio 2010-2018",
+                accessories: "Własne",
+                photo: "/scaniapgrprzod.jpg",
+                photoBack: "/scaniapgrtyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 6614S", driver_name: "" },
+                    { plates: "WRA 6615S", driver_name: "" },
+                    { plates: "WRA 6616S", driver_name: "" }
+                ]
+            },
+            "RENAULT PRIVILEGE 400": {
+                cabin: "High Roof",
+                chassis: "4x2",
+                engine: "400 Euro2",
+                gearbox: "Optidriver R",
+                interior: "Privilege",
+                accessories: "Własne",
+                photo: "/renaultprzod.jpg",
+                photoBack: "/renaulttyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 5024S", driver_name: "" },
+                    { plates: "WRA 5025S", driver_name: "" },
+                    { plates: "WRA 5026S", driver_name: "" }
+                ]
+            },
+            "VOLVO FH2 500": {
+                cabin: "Globetrotter XL (dolne)",
+                chassis: "4x2 (górne)",
+                engine: "D13A500",
+                gearbox: "I-Shift ATO3512D R",
+                interior: "Standard",
+                accessories: "Własne",
+                photo: "/volvoprzod.jpg",
+                photoBack: "/volvotyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 6509S", driver_name: "" },
+                    { plates: "WRA 6510S", driver_name: "" },
+                    { plates: "WRA 6511S", driver_name: "" },
+                    { plates: "WRA 6512S", driver_name: "" }
+                ]
+            },
+            "RENAULT T 480": {
+                cabin: "High Sleeper",
+                chassis: "4x2",
+                engine: "DTI 13 480 Euro 6",
+                gearbox: "Optidriver AT2612F R",
+                interior: "Exclusive Black 2019",
+                accessories: "Własne",
+                photo: "/renaulttprzod.jpg",
+                photoBack: "/renaultttyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 7945S", driver_name: "" },
+                    { plates: "WRA 7946S", driver_name: "" },
+                    { plates: "WRA 7947S", driver_name: "" }
+                ]
+            },
+            "MERCEDES MP4 476": {
+                cabin: "GigaSpace",
+                chassis: "4x2",
+                engine: "OM 471 Euro VI 350 476KM",
+                gearbox: "PowerShift G281-12 R",
+                interior: "Comfortline GigaSpace (EU)",
+                accessories: "Własne",
+                photo: "/mercedesprzod.jpg",
+                photoBack: "/mercedestyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 7217S", driver_name: "" },
+                    { plates: "WRA 7218S", driver_name: "" },
+                    { plates: "WRA 7219S", driver_name: "" }
+                ]
+            },
+            "MAN TGX E6 480": {
+                cabin: "Cabin XXL",
+                chassis: "4x2 BLS",
+                engine: "D2676 LF25 353 Euro 6 480KM",
+                gearbox: "TipMatic 12AS2331 DD R",
+                interior: "Beige 2019",
+                accessories: "Własne",
+                photo: "/manprzod.jpg",
+                photoBack: "/mantyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 7707S", driver_name: "" },
+                    { plates: "WRA 7708S", driver_name: "" },
+                    { plates: "WRA 7709S", driver_name: "" }
+                ]
+            },
+            "DAF XF106 510": {
+                cabin: "Super Space Cab",
+                chassis: "4x2",
+                engine: "MX-13 375 Euro 6 510KM",
+                gearbox: "ZF AS Tronic R",
+                interior: "Standard",
+                accessories: "Własne",
+                photo: "/dafprzod.jpg",
+                photoBack: "/daftyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 6196S", driver_name: "" },
+                    { plates: "WRA 6197S", driver_name: "" },
+                    { plates: "WRA 6198S", driver_name: "" },
+                    { plates: "WRA 6199S", driver_name: "" }
+                ]
+            },
+            "VOLVO FH4 500": {
+                cabin: "Globetrotter XL",
+                chassis: "4x2",
+                engine: "DC13C500 EEV 500KM",
+                gearbox: "VT2514B 12+2 Retarder",
+                interior: "Exclusive",
+                accessories: "Własne",
+                photo: "/volvo4przod.jpg",
+                photoBack: "/volvo4tyl.jpg",
+                defaultUnits: [
+                    { plates: "WRA 7605S", driver_name: "" },
+                    { plates: "WRA 7606S", driver_name: "" },
+                    { plates: "WRA 7607S", driver_name: "" }
+                ]
+            }
+        };
 
         const i18n = {
             pl: {
@@ -1069,13 +1194,7 @@
                     if (!groupedTrucksData[t.truck_model]) {
                         groupedTrucksData[t.truck_model] = {
                             model: t.truck_model,
-                            photo: t.photo,
-                            cabin: t.cabin,
-                            chassis: t.chassis,
-                            engine: t.engine,
-                            gearbox: t.gearbox,
-                            interior: t.interior,
-                            accessories: t.accessories,
+                            ...staticTrucksSpecs[t.truck_model],
                             units: []
                         };
                     }
@@ -1083,18 +1202,19 @@
                 });
 
                 const grid = document.getElementById('garage-grid');
-                grid.innerHTML = '';
+                    grid.innerHTML = '';
 
-                const modelsList = ['MAN TGX E6', 'DAF XF106', 'RENAULT T480', 'SCANIA R', 'VOLVO FH2', 'SCANIA PGR', 'VOLVO FH4', 'MERCEDES MP4'];
+                const modelsList = Object.keys(staticTrucksSpecs);
                 
                 modelsList.forEach(modelName => {
+                    const spec = staticTrucksSpecs[modelName];
                     const group = groupedTrucksData[modelName] || {
                         model: modelName,
-                        photo: '',
+                        ...spec,
                         units: []
                     };
 
-                    let photoHtml = group.photo ? `<img src="${group.photo}" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : (modelName === 'VOLVO FH2' ? `<img src="/volvo1.png" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : `<div style="height: 100px;"></div>`);
+                    let photoHtml = spec.photo ? `<img src="${spec.photo}" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : `<div style="height: 100px;"></div>`;
 
                     grid.innerHTML += `
                         <div class="col-md-3">
@@ -1110,28 +1230,17 @@
         }
 
         function openTruckGroupDetail(modelName) {
+            const spec = staticTrucksSpecs[modelName] || {};
             const group = groupedTrucksData[modelName] || {
                 model: modelName,
-                cabin: 'Globetrotter XL (dolne)',
-                chassis: '4x2 (górne)',
-                engine: 'D13A500',
-                gearbox: 'I-Shift ATO3512D R',
-                interior: 'Standard',
-                accessories: 'Własne',
+                ...spec,
                 units: []
             };
 
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
-            let defaultUnits = [
-                { plates: 'WRA 6509S', driver_name: '' },
-                { plates: 'WRA 6510S', driver_name: '' },
-                { plates: 'WRA 6511S', driver_name: '' },
-                { plates: 'WRA 6512S', driver_name: '' }
-            ];
-
-            let displayUnits = group.units.length > 0 ? group.units : defaultUnits;
+            let displayUnits = group.units.length > 0 ? group.units : (spec.defaultUnits || []);
 
             let unitsHtml = displayUnits.map(u => `
                 <div class="mb-2 text-white fs-6">
@@ -1144,20 +1253,20 @@
                     <div class="col-md-6">
                         <h2 class="fw-bold text-white mb-4">${group.model}</h2>
                         <div class="mb-3">
-                            <img src="${group.photo || '/volvo1.png'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                            <img src="${spec.photo || '/volvo1.png'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
                         </div>
                         <div>
-                            <img src="/volvo2.png" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                            <img src="${spec.photoBack || '/volvo2.png'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
                         </div>
                     </div>
                     <div class="col-md-6 border-start border-secondary ps-md-4">
                         <ul class="list-unstyled lh-lg text-white fs-5 mb-4">
-                            <li><strong>Kabina:</strong> ${group.cabin || 'Globetrotter XL (dolne)'}</li>
-                            <li><strong>Podwozie:</strong> ${group.chassis || '4x2 (górne)'}</li>
-                            <li><strong>Silnik:</strong> ${group.engine || 'D13A500'}</li>
-                            <li><strong>Skrzynia biegów:</strong> ${group.gearbox || 'I-Shift ATO3512D R'}</li>
-                            <li><strong>Wnętrze:</strong> ${group.interior || 'Standard'}</li>
-                            <li><strong>Akcesoria wnętrza:</strong> ${group.accessories || 'Własne'}</li>
+                            <li><strong>Kabina:</strong> ${spec.cabin || 'Standard'}</li>
+                            <li><strong>Podwozie:</strong> ${spec.chassis || '4x2'}</li>
+                            <li><strong>Silnik:</strong> ${spec.engine || 'Standard'}</li>
+                            <li><strong>Skrzynia biegów:</strong> ${spec.gearbox || 'Standard'}</li>
+                            <li><strong>Wnętrze:</strong> ${spec.interior || 'Standard'}</li>
+                            <li><strong>Akcesoria wnętrza:</strong> ${spec.accessories || 'Własne'}</li>
                         </ul>
                         <hr class="border-secondary my-4">
                         <h5 class="fw-bold mb-3 text-white">Kierowcy (${displayUnits.filter(u => u.driver_name).length}/${displayUnits.length}):</h5>
