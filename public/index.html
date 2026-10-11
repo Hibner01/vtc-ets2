@@ -7,7 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { 
-            background-color: #121417; 
+            background-color: #111316; 
             color: #ffffff; 
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             min-height: 100vh; 
@@ -22,20 +22,19 @@
         }
 
         .nav-link-custom { 
-            color: #8a8f99; 
+            color: #b0b6c2; 
             text-decoration: none; 
             font-weight: 500; 
             padding: 8px 16px; 
-            transition: color 0.2s; 
+            transition: all 0.2s; 
             cursor: pointer; 
             font-size: 1.05rem;
         }
 
         .nav-link-custom:hover, .nav-link-custom.active { 
-            color: #ffffff; 
+            color: #ffffff !important; 
             font-weight: 700;
-            text-decoration: underline;
-            text-underline-offset: 6px;
+            border-bottom: 2px solid #ffffff;
         }
 
         .user-pill-btn {
@@ -50,10 +49,13 @@
         }
 
         .auth-bg { 
-            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.85)), url('https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg'); 
-            background-size: cover; 
-            background-position: center; 
+            background-color: #0f1113;
             min-height: 100vh; 
+        }
+
+        .form-label {
+            color: #ffffff !important;
+            font-weight: 500;
         }
 
         .form-control-dark { 
@@ -95,11 +97,6 @@
             padding: 12px 24px;
         }
 
-        .btn-pill-dark:hover {
-            background-color: #323740;
-            color: #ffffff;
-        }
-
         .truck-card { 
             background-color: #1a1d21; 
             border: 1px solid #2d3238; 
@@ -139,21 +136,12 @@
             max-height: 350px; 
             overflow-y: auto; 
         }
-
-        .custom-file-box {
-            background-color: #24282e;
-            border: 1px dashed #404752;
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
 
     <div id="app" class="w-100 flex-grow-1 d-flex flex-column">
-        <!-- EKRAN LOGOWANIA / REJESTRACJI -->
+        <!-- EKRAN LOGOWANIA -->
         <div id="auth-section" class="auth-bg flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
             <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 100px;" onerror="this.style.display='none'"></div>
             
@@ -163,39 +151,39 @@
             </div>
 
             <div id="auth-login-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 440px;">
-                <h3 class="fw-bold mb-1">Witaj ponownie!</h3>
-                <p class="text-muted small mb-4">Zaloguj się do Mazren Control System</p>
+                <h3 class="fw-bold mb-1 text-white">Witaj ponownie!</h3>
+                <p class="text-light small mb-4">Zaloguj się do Mazren Control System</p>
                 <div class="mb-3 text-start">
-                    <label class="form-label text-muted small">Adres e-mail / Login</label>
+                    <label class="form-label">Adres e-mail / Login</label>
                     <input type="text" id="login-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
                 </div>
                 <div class="mb-4 text-start">
-                    <label class="form-label text-muted small">Hasło</label>
+                    <label class="form-label">Hasło</label>
                     <input type="password" id="login-password" class="form-control form-control-dark" placeholder="••••••••">
                 </div>
                 <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()">Zaloguj się</button>
-                <div class="text-muted small">Nie masz jeszcze konta? <a href="#" class="text-light fw-bold" onclick="showAuthForm('register')">Zarejestruj się</a></div>
+                <div class="text-light small">Nie masz jeszcze konta? <a href="#" class="text-white fw-bold" onclick="showAuthForm('register')">Zarejestruj się</a></div>
             </div>
 
             <div id="auth-register-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 440px;">
-                <h3 class="fw-bold mb-1">Rejestracja konta</h3>
-                <p class="text-muted small mb-4">Stwórz konto w Mazren Control System</p>
+                <h3 class="fw-bold mb-1 text-white">Rejestracja konta</h3>
+                <p class="text-light small mb-4">Stwórz konto w Mazren Control System</p>
                 <div class="mb-3 text-start">
-                    <label class="form-label text-muted small">Nick / Login</label>
+                    <label class="form-label">Nick / Login</label>
                     <input type="text" id="reg-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
                 </div>
                 <div class="mb-3 text-start">
-                    <label class="form-label text-muted small">Hasło</label>
+                    <label class="form-label">Hasło</label>
                     <input type="password" id="reg-password" class="form-control form-control-dark" placeholder="••••••••">
                 </div>
                 <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()">Stwórz konto</button>
-                <div class="text-muted small">Masz już konto? <a href="#" class="text-light fw-bold" onclick="showAuthForm('login')">Zaloguj się</a></div>
+                <div class="text-light small">Masz już konto? <a href="#" class="text-white fw-bold" onclick="showAuthForm('login')">Zaloguj się</a></div>
             </div>
 
-            <div class="text-muted small">© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
+            <div class="text-light small">© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
         </div>
 
-        <!-- PANEL GŁÓWNY APLIKACJI -->
+        <!-- PANEL GŁÓWNY -->
         <div id="dashboard-section" class="flex-grow-1 flex-column" style="display:none;">
             <nav class="navbar navbar-expand-lg border-bottom border-dark py-3" style="background-color: #141619;">
                 <div class="container">
@@ -228,11 +216,11 @@
                     </div>
 
                     <div class="navbar-nav ms-auto me-auto flex-row gap-2">
-                        <a class="nav-link-custom active" onclick="switchTab('jobs')">Strona Główna</a>
-                        <a class="nav-link-custom" onclick="switchTab('finances')">Finanse</a>
-                        <a class="nav-link-custom" onclick="switchTab('dispatcher')">Dyspozytornia</a>
-                        <a class="nav-link-custom" onclick="switchTab('garage')">Garaż</a>
-                        <a class="nav-link-custom" onclick="switchTab('about')">O nas</a>
+                        <a id="nav-jobs" class="nav-link-custom active" onclick="switchTab('jobs')">Strona Główna</a>
+                        <a id="nav-finances" class="nav-link-custom" onclick="switchTab('finances')">Finanse</a>
+                        <a id="nav-dispatcher" class="nav-link-custom" onclick="switchTab('dispatcher')">Dyspozytornia</a>
+                        <a id="nav-garage" class="nav-link-custom" onclick="switchTab('garage')">Garaż</a>
+                        <a id="nav-about" class="nav-link-custom" onclick="switchTab('about')">O nas</a>
                         <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" onclick="switchTab('management')">Zarządzanie</a>
                     </div>
                 </div>
@@ -244,22 +232,22 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-12">
                             <div class="bg-card p-4">
-                                <h5 class="text-muted mb-1">Budżet firmy:</h5>
-                                <h1 id="company-total-budget" class="fw-bold text-light display-5 mb-0">12848 EURO</h1>
+                                <h5 class="text-light mb-1">Budżet firmy:</h5>
+                                <h1 id="company-total-budget" class="fw-bold text-white display-5 mb-0">12848 EURO</h1>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="bg-card p-4">
-                                <h5 class="text-muted mb-2">Twoje statystyki: (cel 6000km)</h5>
-                                <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-light border border-secondary" id="my-km-status">
+                                <h5 class="text-light mb-2">Twoje statystyki: (cel 6000km)</h5>
+                                <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-white border border-secondary" id="my-km-status">
                                     0 / 6000 km
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="bg-card p-4">
-                                <h5 class="text-muted mb-2">Statystyki firmy:</h5>
-                                <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-light border border-secondary" id="company-total-km">
+                                <h5 class="text-light mb-2">Statystyki firmy:</h5>
+                                <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-white border border-secondary" id="company-total-km">
                                     0 km
                                 </div>
                             </div>
@@ -269,17 +257,17 @@
                     <div class="row g-4">
                         <div class="col-md-7">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Wykonane trasy:</h5>
+                                <h5 class="fw-bold mb-3 text-white">Wykonane trasy:</h5>
                                 <div class="table-responsive">
                                     <table class="table table-dark align-middle mb-0">
                                         <thead>
-                                            <tr class="text-muted border-secondary">
+                                            <tr class="text-light border-secondary">
                                                 <th>Kierowca</th>
                                                 <th>Trasa / Pliki</th>
                                                 <th>Dystans</th>
                                                 <th>Zarobek</th>
                                                 <th>Towar</th>
-                                                <th id="jobs-actions-header" class="d-none">Akcje</th>
+                                                <th id="jobs-actions-header" class="d-none">Akcje Szefa</th>
                                             </tr>
                                         </thead>
                                         <tbody id="jobs-table-body"></tbody>
@@ -289,25 +277,25 @@
                         </div>
                         <div class="col-md-5">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Ranking kierowców:</h5>
+                                <h5 class="fw-bold mb-3 text-white">Ranking kierowców:</h5>
                                 <ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- DYSPOZYTOR / ZGŁASZANIE TRAS -->
+                <!-- DYSPOZYTOR -->
                 <div id="tab-dispatcher" style="display:none;">
                     <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
                         <div class="col-md-12">
                             <div class="bg-card p-4 border-info">
                                 <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> Nowe Zlecenie w Dyspozytorni</h5>
                                 <form id="dispatch-form" class="row g-3">
-                                    <div class="col-md-3"><label class="form-label small text-muted">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-3"><label class="form-label small text-muted">Zestaw z garażu</label><select id="dispatch_truck" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-3"><label class="form-label small text-muted">Skąd</label><input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)"></div>
-                                    <div class="col-md-3"><label class="form-label small text-muted">Dokąd</label><input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)"></div>
-                                    <div class="col-md-12"><label class="form-label small text-muted">Uwagi</label><input type="text" id="dispatch_notes" class="form-control form-control-dark" placeholder="Dodatkowe informacje..."></div>
+                                    <div class="col-md-3"><label class="form-label">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-3"><label class="form-label">Zestaw z garażu</label><select id="dispatch_truck" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-3"><label class="form-label">Skąd</label><input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)"></div>
+                                    <div class="col-md-3"><label class="form-label">Dokąd</label><input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)"></div>
+                                    <div class="col-md-12"><label class="form-label">Uwagi</label><input type="text" id="dispatch_notes" class="form-control form-control-dark" placeholder="Dodatkowe informacje..."></div>
                                     <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold">Opublikuj zlecenie</button></div>
                                 </form>
                             </div>
@@ -315,7 +303,7 @@
                     </div>
 
                     <div class="bg-card p-4">
-                        <h4 class="fw-bold mb-4">! Dostępne trasy w Dyspozytorni:</h4>
+                        <h4 class="fw-bold mb-4 text-white">! Dostępne trasy w Dyspozytorni:</h4>
                         <div id="dispatches-container" class="row g-3"></div>
                     </div>
                 </div>
@@ -325,10 +313,10 @@
                     <div class="row g-4">
                         <div class="col-md-4">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Zgłoś wydatek</h5>
+                                <h5 class="fw-bold mb-3 text-white">Zgłoś wydatek</h5>
                                 <form id="expense-form">
                                     <div class="mb-3">
-                                        <label class="form-label small text-muted">Typ wydatku</label>
+                                        <label class="form-label">Typ wydatku</label>
                                         <select id="expense_type" class="form-select form-control-dark" required>
                                             <option value="fuel">⛽ Paliwo</option>
                                             <option value="service">🔧 Serwis / Naprawa</option>
@@ -336,11 +324,11 @@
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label small text-muted">Kwota (€)</label>
+                                        <label class="form-label">Kwota (€)</label>
                                         <input type="number" id="expense_amount" class="form-control form-control-dark" placeholder="np. 450" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label small text-muted">Opis / Miejsce</label>
+                                        <label class="form-label">Opis / Miejsce</label>
                                         <input type="text" id="expense_desc" class="form-control form-control-dark" placeholder="np. Tankowanie">
                                     </div>
                                     <button type="submit" class="btn btn-pill-white w-100 fw-bold">+ Dodaj Wydatek</button>
@@ -349,11 +337,11 @@
                         </div>
                         <div class="col-md-8">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Rejestr wydatków firmy</h5>
+                                <h5 class="fw-bold mb-3 text-white">Rejestr wydatków firmy</h5>
                                 <div class="table-responsive">
                                     <table class="table table-dark align-middle mb-0">
                                         <thead>
-                                            <tr class="text-muted border-secondary">
+                                            <tr class="text-light border-secondary">
                                                 <th>Kierowca</th>
                                                 <th>Typ</th>
                                                 <th>Opis</th>
@@ -373,7 +361,7 @@
                 <div id="tab-garage" style="display:none;">
                     <div id="garage-main-view">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold mb-0">Ciężarówki</h3>
+                            <h3 class="fw-bold mb-0 text-white">Ciężarówki</h3>
                             <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> Dodaj do Garażu</button>
                         </div>
 
@@ -381,15 +369,15 @@
                             <h5 class="fw-bold text-warning mb-3">Dodaj nowy zestaw do Floty</h5>
                             <form id="truck-form">
                                 <div class="row g-3">
-                                    <div class="col-md-4"><label class="form-label small text-muted">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Kabina</label><input type="text" name="cabin" class="form-control form-control-dark" placeholder="np. Globetrotter XL"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Podwozie</label><input type="text" name="chassis" class="form-control form-control-dark" placeholder="np. 4x2"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Silnik</label><input type="text" name="engine" class="form-control form-control-dark" placeholder="np. D13A500"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control form-control-dark" placeholder="np. I-Shift"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Wnętrze</label><input type="text" name="interior" class="form-control form-control-dark" placeholder="np. Standard"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Akcesoria</label><input type="text" name="accessories" class="form-control form-control-dark" placeholder="np. Własne"></div>
+                                    <div class="col-md-4"><label class="form-label">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
+                                    <div class="col-md-4"><label class="form-label">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-4"><label class="form-label">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
+                                    <div class="col-md-4"><label class="form-label">Kabina</label><input type="text" name="cabin" class="form-control form-control-dark" placeholder="np. Globetrotter XL"></div>
+                                    <div class="col-md-4"><label class="form-label">Podwozie</label><input type="text" name="chassis" class="form-control form-control-dark" placeholder="np. 4x2"></div>
+                                    <div class="col-md-4"><label class="form-label">Silnik</label><input type="text" name="engine" class="form-control form-control-dark" placeholder="np. D13A500"></div>
+                                    <div class="col-md-4"><label class="form-label">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control form-control-dark" placeholder="np. I-Shift"></div>
+                                    <div class="col-md-4"><label class="form-label">Wnętrze</label><input type="text" name="interior" class="form-control form-control-dark" placeholder="np. Standard"></div>
+                                    <div class="col-md-4"><label class="form-label">Akcesoria</label><input type="text" name="accessories" class="form-control form-control-dark" placeholder="np. Własne"></div>
                                 </div>
                                 <button type="submit" class="btn btn-pill-white fw-bold mt-3">Zapisz w Garażu</button>
                             </form>
@@ -407,7 +395,7 @@
                 <!-- O NAS -->
                 <div id="tab-about" style="display:none;">
                     <div class="bg-card p-5 text-center my-4" style="max-width: 900px; margin: 0 auto; border-radius: 28px;">
-                        <p class="fs-5 leading-relaxed text-light">
+                        <p class="fs-5 leading-relaxed text-white">
                             <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!
                         </p>
                     </div>
@@ -420,7 +408,7 @@
                         <div class="table-responsive">
                             <table class="table table-dark align-middle">
                                 <thead>
-                                    <tr>
+                                    <tr class="text-light">
                                         <th>Kierowca</th>
                                         <th>Rola</th>
                                         <th>Status</th>
@@ -434,12 +422,12 @@
                 </div>
             </div>
 
-            <!-- MODAL UKOŃCZENIA ZLECENIA SEKCJA STWÓRZ TRASĘ -->
+            <!-- MODAL UKOŃCZENIA ZLECENIA -->
             <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content bg-card border-secondary text-light">
                         <div class="modal-header border-secondary">
-                            <h5 class="modal-title fw-bold text-light"><i class="fa-solid fa-flag-checkered me-2"></i> Potwierdzenie i przesyłanie trasy</h5>
+                            <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-flag-checkered me-2"></i> Potwierdzenie i przesyłanie trasy</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <form id="complete-dispatch-form">
@@ -447,17 +435,17 @@
                                 <input type="hidden" id="modal_dispatch_id" name="dispatch_id">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <div class="mb-3"><label class="form-label small text-muted">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
-                                        <div class="mb-3"><label class="form-label small text-muted">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
-                                        <div class="mb-3"><label class="form-label small text-muted">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
+                                        <div class="mb-3"><label class="form-label">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
+                                        <div class="mb-3"><label class="form-label">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
+                                        <div class="mb-3"><label class="form-label">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label small text-muted">Dowód (zdjęcie z ETS2)</label>
+                                            <label class="form-label">Dowód (zdjęcie z ETS2)</label>
                                             <input type="file" id="modal_summary" name="summary_photo" accept="image/*" class="form-control form-control-dark">
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label small text-muted">CMR (plik)</label>
+                                            <label class="form-label">CMR (plik)</label>
                                             <input type="file" id="modal_cmr" name="cmr_file" accept="image/*" class="form-control form-control-dark">
                                         </div>
                                     </div>
@@ -472,6 +460,29 @@
                 </div>
             </div>
 
+            <!-- MODAL ODRZUCENIA TRASY PRZEZ SZEFA Z POWODEM -->
+            <div class="modal fade" id="rejectJobModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content bg-card border-secondary text-light">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i> Odrzucenie raportu trasy</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <input type="hidden" id="reject_job_id">
+                            <div class="mb-3">
+                                <label class="form-label">Podaj powód odrzucenia trasy:</label>
+                                <textarea id="reject_reason_text" class="form-control form-control-dark" rows="3" placeholder="np. Nieczytelne zdjęcie CMR, błędny dystans itp."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal">Anuluj</button>
+                            <button type="button" class="btn btn-danger btn-sm fw-bold px-4" onclick="confirmRejectJob()">Odrzuć i wyślij powiadomienie</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- MODAL EDYCJI ZLECENIA PRZEZ SZEFA -->
             <div class="modal fade" id="editDispatchModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
@@ -482,11 +493,11 @@
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="edit_dispatch_id">
-                            <div class="mb-3"><label class="form-label small text-muted">Przypisz kierowcę</label><select id="edit_dispatch_assigned" class="form-select form-control-dark"></select></div>
-                            <div class="mb-3"><label class="form-label small text-muted">Zestaw z garażu</label><select id="edit_dispatch_truck" class="form-select form-control-dark"></select></div>
-                            <div class="mb-3"><label class="form-label small text-muted">Skąd</label><input type="text" id="edit_dispatch_start" class="form-control form-control-dark" required></div>
-                            <div class="mb-3"><label class="form-label small text-muted">Dokąd</label><input type="text" id="edit_dispatch_end" class="form-control form-control-dark" required></div>
-                            <div class="mb-3"><label class="form-label small text-muted">Uwagi</label><textarea id="edit_dispatch_notes" class="form-control form-control-dark" rows="2"></textarea></div>
+                            <div class="mb-3"><label class="form-label">Przypisz kierowcę</label><select id="edit_dispatch_assigned" class="form-select form-control-dark"></select></div>
+                            <div class="mb-3"><label class="form-label">Zestaw z garażu</label><select id="edit_dispatch_truck" class="form-select form-control-dark"></select></div>
+                            <div class="mb-3"><label class="form-label">Skąd</label><input type="text" id="edit_dispatch_start" class="form-control form-control-dark" required></div>
+                            <div class="mb-3"><label class="form-label">Dokąd</label><input type="text" id="edit_dispatch_end" class="form-control form-control-dark" required></div>
+                            <div class="mb-3"><label class="form-label">Uwagi</label><textarea id="edit_dispatch_notes" class="form-control form-control-dark" rows="2"></textarea></div>
                         </div>
                         <div class="modal-footer border-secondary">
                             <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal">Anuluj</button>
@@ -496,7 +507,7 @@
                 </div>
             </div>
 
-            <footer class="py-3 text-muted small">
+            <footer class="py-3 text-light small">
                 <div class="container d-flex justify-content-between align-items-center">
                     <div>© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
                     <div class="fw-bold">Mazren Control System</div>
@@ -530,7 +541,12 @@
         function switchTab(tab) {
             ['jobs', 'dispatcher', 'finances', 'garage', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
+                const nav = document.getElementById('nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
+                if (nav) {
+                    if (tab === t) nav.classList.add('active');
+                    else nav.classList.remove('active');
+                }
             });
             if (tab === 'dispatcher') { loadDispatches(); if (currentUserRole === 'admin') loadDispatcherOptions(); }
             else if (tab === 'finances') loadExpenses();
@@ -625,7 +641,6 @@
             showLogin();
         }
 
-        // GARAŻ VTC
         async function loadGarage() {
             const res = await fetch('/api/trucks');
             if (res.ok) {
@@ -666,9 +681,9 @@
                     grid.innerHTML += `
                         <div class="col-md-3">
                             <div class="truck-card p-4 text-center" onclick="openTruckGroupDetail('${modelName}')">
-                                <h5 class="fw-bold text-light mb-3">${modelName}</h5>
+                                <h5 class="fw-bold text-white mb-3">${modelName}</h5>
                                 ${hasPhoto}
-                                <div class="text-muted small"><u>Więcej informacji</u></div>
+                                <div class="text-light small"><u>Więcej informacji</u></div>
                             </div>
                         </div>
                     `;
@@ -696,18 +711,18 @@
                     <span><strong>${u.plates}</strong> - @${u.driver_name}</span>
                     ${currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm py-0 px-2" onclick="deleteTruckUnit(${u.id})">Usuń</button>` : ''}
                 </div>
-            `).join('') : '<div class="text-muted small">Brak przypisanych kierowców.</div>';
+            `).join('') : '<div class="text-light small">Brak przypisanych kierowców.</div>';
 
             document.getElementById('truck-detail-content').innerHTML = `
                 <div class="row g-4">
                     <div class="col-md-5">
-                        <h2 class="fw-bold text-light mb-4">${group.model}</h2>
+                        <h2 class="fw-bold text-white mb-4">${group.model}</h2>
                         <div class="bg-dark p-3 rounded text-center border border-secondary mb-3" style="min-height: 200px; display:flex; align-items:center; justify-content:center;">
-                            ${group.photo ? `<img src="${group.photo}" class="img-fluid rounded">` : '<span class="text-muted">Brak zdjęcia głównego</span>'}
+                            ${group.photo ? `<img src="${group.photo}" class="img-fluid rounded">` : '<span class="text-light">Brak zdjęcia głównego</span>'}
                         </div>
                     </div>
                     <div class="col-md-7 fs-5">
-                        <ul class="list-unstyled lh-lg">
+                        <ul class="list-unstyled lh-lg text-white">
                             <li><strong>Kabina:</strong> ${group.cabin || 'Standard'}</li>
                             <li><strong>Podwozie:</strong> ${group.chassis || 'Standard'}</li>
                             <li><strong>Silnik:</strong> ${group.engine || 'Standard'}</li>
@@ -716,8 +731,8 @@
                             <li><strong>Akcesoria wnętrza:</strong> ${group.accessories || 'Standard'}</li>
                         </ul>
                         <hr class="border-secondary my-4">
-                        <h5 class="fw-bold mb-3">Kierowcy (${group.units.length}/4):</h5>
-                        <div class="text-light fs-6">${unitsHtml}</div>
+                        <h5 class="fw-bold mb-3 text-white">Kierowcy (${group.units.length}/4):</h5>
+                        <div class="text-white fs-6">${unitsHtml}</div>
                     </div>
                 </div>
             `;
@@ -759,7 +774,6 @@
             }
         }
 
-        // DYSPOZYTOR
         async function loadDispatches() {
             const res = await fetch('/api/dispatches');
             if (res.ok) {
@@ -768,7 +782,7 @@
                 container.innerHTML = '';
 
                 if (allDispatchesCache.length === 0) {
-                    container.innerHTML = '<div class="text-muted p-3">Brak dostępnych zleceń w tej chwili.</div>';
+                    container.innerHTML = '<div class="text-light p-3">Brak dostępnych zleceń w tej chwili.</div>';
                     return;
                 }
 
@@ -801,12 +815,12 @@
                     container.innerHTML += `
                         <div class="col-md-6">
                             <div class="bg-card p-4">
-                                <h4 class="fw-bold text-light mb-2">${d.start_city} ➔ ${d.end_city}</h4>
+                                <h4 class="fw-bold text-white mb-2">${d.start_city} ➔ ${d.end_city}</h4>
                                 <p class="small text-info mb-2">Przydział: <strong>${d.assigned_to}</strong></p>
                                 <hr class="border-secondary">
-                                <p class="mb-1"><strong>Zestaw:</strong> ${d.truck_name || 'Standard'}</p>
-                                <p class="mb-1"><strong>Uwagi:</strong> ${d.notes || 'Brak'}</p>
-                                <p class="mb-2"><strong>Status:</strong> <span class="text-warning">${d.status}</span> ${d.accepted_by_username ? '(@' + d.accepted_by_username + ')' : ''}</p>
+                                <p class="mb-1 text-white"><strong>Zestaw:</strong> ${d.truck_name || 'Standard'}</p>
+                                <p class="mb-1 text-white"><strong>Uwagi:</strong> ${d.notes || 'Brak'}</p>
+                                <p class="mb-2 text-white"><strong>Status:</strong> <span class="text-warning">${d.status}</span> ${d.accepted_by_username ? '(@' + d.accepted_by_username + ')' : ''}</p>
                                 <div class="mt-3">${actionHtml}</div>
                                 ${adminControls}
                             </div>
@@ -833,9 +847,6 @@
                 document.getElementById('dispatch-form').reset();
                 loadDispatches();
                 alert('Zlecenie opublikowane pomyślnie!');
-            } else {
-                const err = await res.json();
-                alert(err.error || 'Błąd publikowania zlecenia');
             }
         });
 
@@ -868,12 +879,7 @@
 
         async function acceptDispatch(id) {
             const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
-            if (res.ok) {
-                loadDispatches();
-            } else {
-                const data = await res.json();
-                alert(data.error || 'Nie możesz przyjąć tego zlecenia.');
-            }
+            if (res.ok) loadDispatches();
         }
 
         function openEditDispatchModal(id) {
@@ -944,17 +950,13 @@
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 modal.hide();
 
-                alert('Trasa przesłana pomyślnie!');
+                alert('Trasa przesłana pomyślnie do weryfikacji przez Szefa!');
                 loadDispatches();
                 loadCompanyStats();
                 loadJobs();
-            } else {
-                const err = await res.json();
-                alert(err.error || 'Błąd przesyłania trasy.');
             }
         });
 
-        // FINANSE & STATYSTYKI
         async function loadExpenses() {
             const res = await fetch('/api/expenses');
             if (res.ok) {
@@ -964,7 +966,7 @@
                 expenses.forEach(exp => {
                     let typeBadge = exp.type === 'fuel' ? '⛽ Paliwo' : (exp.type === 'fine' ? '🚨 Mandat' : '🔧 Serwis');
                     let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm py-0 px-2" onclick="deleteExpense(${exp.id})">Usuń</button>` : '';
-                    tbody.innerHTML += `<tr><td>${exp.username}</td><td>${typeBadge}</td><td>${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>${delBtn}</td></tr>`;
+                    tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${typeBadge}</td><td class="text-white">${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>${delBtn}</td></tr>`;
                 });
             }
         }
@@ -996,7 +998,7 @@
                 const rankList = document.getElementById('drivers-ranking-list');
                 rankList.innerHTML = '';
                 data.driversRanking.forEach((d, idx) => {
-                    rankList.innerHTML += `<li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between align-items-center"><span>${d.username}</span><span class="badge bg-dark border border-secondary">${idx+1} miejsce</span><span class="fw-bold">${d.km} km</span></li>`;
+                    rankList.innerHTML += `<li class="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center"><span class="text-white">${d.username}</span><span class="badge bg-dark border border-secondary">${idx+1} miejsce</span><span class="fw-bold text-white">${d.km} km</span></li>`;
                 });
             }
         }
@@ -1011,33 +1013,70 @@
                     let cmrLink = j.cmr_file ? `<a href="${j.cmr_file}" target="_blank" class="badge bg-secondary text-decoration-none ms-1"><i class="fa-solid fa-image"></i> CMR</a>` : '';
                     let summaryLink = j.summary_photo ? `<a href="${j.summary_photo}" target="_blank" class="badge bg-info text-decoration-none ms-1"><i class="fa-solid fa-camera"></i> Dowód</a>` : '';
                     
-                    let deleteBtnCell = '';
+                    let actionsCell = '';
                     if (currentUserRole === 'admin') {
-                        deleteBtnCell = `<td><button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="deleteJob(${j.id})"><i class="fa-solid fa-trash me-1"></i> Usuń</button></td>`;
+                        if (j.status === 'pending') {
+                            actionsCell = `
+                                <td>
+                                    <button class="btn btn-success btn-sm py-0 px-2 fw-bold me-1" onclick="approveJob(${j.id})"><i class="fa-solid fa-check"></i></button>
+                                    <button class="btn btn-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-xmark"></i></button>
+                                </td>
+                            `;
+                        } else {
+                            actionsCell = `<td><button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-trash"></i></button></td>`;
+                        }
                     }
+
+                    let statusBadge = j.status === 'pending' ? `<span class="badge bg-warning text-dark ms-1">Oczekuje</span>` : '';
 
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${j.username}</strong></td>
-                            <td>${j.start_city} ➔ ${j.end_city} ${cmrLink} ${summaryLink}</td>
-                            <td>${j.distance} km</td>
+                            <td class="text-white"><strong>${j.username}</strong></td>
+                            <td class="text-white">${j.start_city} ➔ ${j.end_city} ${cmrLink} ${summaryLink} ${statusBadge}</td>
+                            <td class="text-white">${j.distance} km</td>
                             <td class="text-success">${j.income} €</td>
-                            <td>${j.cargo}</td>
-                            ${deleteBtnCell}
+                            <td class="text-white">${j.cargo}</td>
+                            ${actionsCell}
                         </tr>
                     `;
                 });
             }
         }
 
-        async function deleteJob(id) {
-            if (confirm('Czy na pewno chcesz usunąć tę trasę z historii?')) {
-                const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    loadJobs();
-                    loadCompanyStats();
-                    checkUser();
-                }
+        async function approveJob(id) {
+            const res = await fetch(`/api/jobs/${id}/approve`, { method: 'PUT' });
+            if (res.ok) {
+                loadJobs();
+                loadCompanyStats();
+                checkUser();
+            }
+        }
+
+        function openRejectJobModal(id) {
+            document.getElementById('reject_job_id').value = id;
+            document.getElementById('reject_reason_text').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('rejectJobModal'));
+            modal.show();
+        }
+
+        async function confirmRejectJob() {
+            const id = document.getElementById('reject_job_id').value;
+            const reason = document.getElementById('reject_reason_text').value.trim();
+
+            const res = await fetch(`/api/jobs/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+
+            if (res.ok) {
+                const modalEl = document.getElementById('rejectJobModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                loadJobs();
+                loadCompanyStats();
+                checkUser();
+                alert('Trasa została odrzucona i usunięta.');
             }
         }
 
@@ -1049,7 +1088,7 @@
                 tbody.innerHTML = '';
                 users.forEach(u => {
                     let action = u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser(${u.id})">Zatwierdź</button>` : '<span class="badge bg-success">Aktywny</span>';
-                    tbody.innerHTML += `<tr><td>${u.username}</td><td>${u.role}</td><td>${action}</td><td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Usuń</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td class="text-white">${u.username}</td><td class="text-white">${u.role}</td><td>${action}</td><td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Usuń</button></td></tr>`;
                 });
             }
         }
@@ -1071,8 +1110,8 @@
 
                     list.innerHTML = notifs.length === 0 ? '<li class="text-center text-muted small py-2">Brak powiadomień</li>' : notifs.map(n => `
                         <li class="p-2 border-bottom border-secondary">
-                            <div class="fw-bold text-light small">${n.title}</div>
-                            <div class="text-muted small">${n.message}</div>
+                            <div class="fw-bold text-white small">${n.title}</div>
+                            <div class="text-light small">${n.message}</div>
                         </li>
                     `).join('');
                 }
