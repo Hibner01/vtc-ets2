@@ -125,7 +125,7 @@
                             </div>
                         </div>
                         <div class="col-md-8">
-                            <div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="expenseRegistry">Rejestr wydatków firmy</h5><div class="table-responsive"><table class="table table-dark table-hover align-middle mb-0"><thead><tr class="text-muted border-secondary"><th data-i18n="tableDriver">Kierowca</th><th data-i18n="tableType">Typ</th><th data-i18n="tableDesc">Opis</th><th data-i18n="tableAmount">Kwota</th><th data-i18n="tableAction">Akcja</th></tr></thead><tbody id="expenses-table-body"></tbody></table></div></div>
+                            <div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="expenseRegistry">Rejestr wydatków firmy</h5><div class="table-responsive"><table class="table table-dark table-hover align-middle mb-0"><thead><tr class="text-muted border-secondary"><th data-i18n="tableDriver">Kierowca</th><th data-i18n="tableType">Typ</th><th data-i18n="tableDesc">Opis</th><th data-i18n="tableAmount">Kwota</th><th data-i18n="tableAction">Akcje</th></tr></thead><tbody id="expenses-table-body"></tbody></table></div></div>
                         </div>
                     </div>
                 </div>
@@ -137,6 +137,8 @@
                             <h4 class="fw-bold mb-0" data-i18n="garageTitle">Ciężarówki</h4>
                             <button id="add-truck-btn" class="btn btn-outline-light btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> <span data-i18n="addTruckBtn">Dodaj do Garażu</span></button>
                         </div>
+
+                        <!-- FORMULARZ Z RĘCZNYMI DANYMI SPECYFIKACJI -->
                         <div id="truck-add-form" class="bg-card p-4 mb-4 d-none">
                             <h5 class="fw-bold text-warning mb-3" data-i18n="addNewTruckTitle">Dodaj nowy zestaw do Floty</h5>
                             <form id="truck-form">
@@ -144,6 +146,12 @@
                                     <div class="col-md-4"><label class="form-label small text-muted" data-i18n="truckModel">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
                                     <div class="col-md-4"><label class="form-label small text-muted" data-i18n="assignedDriver">Przypisany Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
                                     <div class="col-md-4"><label class="form-label small text-muted" data-i18n="plates">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Kabina</label><input type="text" name="cabin" class="form-control form-control-dark" placeholder="np. Globetrotter XL (dolne)"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Podwozie</label><input type="text" name="chassis" class="form-control form-control-dark" placeholder="np. 4x2 (górne)"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Silnik</label><input type="text" name="engine" class="form-control form-control-dark" placeholder="np. D13A500"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control form-control-dark" placeholder="np. I-Shift ATO3512D R"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Wnętrze</label><input type="text" name="interior" class="form-control form-control-dark" placeholder="np. Standard"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Akcesoria wnętrza</label><input type="text" name="accessories" class="form-control form-control-dark" placeholder="np. Własne"></div>
                                 </div>
                                 <button type="submit" class="btn btn-warning w-100 fw-bold mt-3" data-i18n="saveTruckBtn">Zapisz w Garażu</button>
                             </form>
@@ -375,12 +383,12 @@
                     </div>
                     <div class="col-md-6">
                         <ul class="list-unstyled lh-lg">
-                            <li><strong>Kabina:</strong> ${t.cabin}</li>
-                            <li><strong>Podwozie:</strong> ${t.chassis}</li>
-                            <li><strong>Silnik:</strong> ${t.engine}</li>
-                            <li><strong>Skrzynia biegów:</strong> ${t.gearbox}</li>
-                            <li><strong>Wnętrze:</strong> ${t.interior}</li>
-                            <li><strong>Akcesoria wnętrza:</strong> ${t.accessories}</li>
+                            <li><strong>Kabina:</strong> ${t.cabin || 'Standard'}</li>
+                            <li><strong>Podwozie:</strong> ${t.chassis || 'Standard'}</li>
+                            <li><strong>Silnik:</strong> ${t.engine || 'Standard'}</li>
+                            <li><strong>Skrzynia biegów:</strong> ${t.gearbox || 'Standard'}</li>
+                            <li><strong>Wnętrze:</strong> ${t.interior || 'Standard'}</li>
+                            <li><strong>Akcesoria wnętrza:</strong> ${t.accessories || 'Standard'}</li>
                         </ul>
                         <hr class="border-secondary">
                         <h6 class="fw-bold mb-2">Kierowcy (1/4):</h6>
