@@ -4,14 +4,35 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const { Pool } = require('pg');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// Konfiguracja bazy danych
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
+
+// Upewniamy się, że katalog na przesłane zdjęcia istnieje
+const uploadDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Konfiguracja zapisu plików przez Multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+});
+const upload = multer({ storage: storage });
 
 async function initDB() {
     try {
@@ -259,7 +280,6 @@ app.post('/api/dispatches', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd dodawania zlecenia' }); }
 });
 
-// EDYCJA ZLECENIA PRZEZ SZEFA
 app.put('/api/dispatches/:id', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     const { assigned_to, start_city, end_city, truck_name, notes } = req.body;
@@ -280,7 +300,6 @@ app.put('/api/dispatches/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd edycji zlecenia' }); }
 });
 
-// USUWANIE ZLECENIA PRZEZ SZEFA
 app.delete('/api/dispatches/:id', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
@@ -308,13 +327,25 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji' }); }
 });
 
-app.post('/api/dispatches/:id/complete', async (req, res) => {
+// WGRYWANIE RAPORTU TRASY ZE ZDJĘCIAMI (MULTER UPLOAD)
+app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { name: 'summary_photo' }]), async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    const { distance, income, cargo, cmr_file, summary_photo } = req.body;
+    
+    const { distance, income, cargo } = req.body;
     const parsedDist = parseInt(distance) || 0;
     const parsedInc = parseInt(income) || 0;
 
     if (parsedDist <= 0) return res.status(400).json({ error: 'Podaj prawidłowy dystans w km.' });
+
+    let cmrPath = '';
+    let summaryPath = '';
+
+    if (req.files && req.files['cmr_file']) {
+        cmrPath = '/uploads/' + req.files['cmr_file'][0].filename;
+    }
+    if (req.files && req.files['summary_photo']) {
+        summaryPath = '/uploads/' + req.files['summary_photo'][0].filename;
+    }
 
     try {
         const dispRes = await pool.query('SELECT * FROM dispatches WHERE id = $1', [req.params.id]);
@@ -323,7 +354,7 @@ app.post('/api/dispatches/:id/complete', async (req, res) => {
 
         await pool.query(
             'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-            [req.session.userId, disp.start_city, disp.end_city, cargo || 'Standard', parsedDist, parsedInc, cmr_file || '', summary_photo || '']
+            [req.session.userId, disp.start_city, disp.end_city, cargo || 'Standard', parsedDist, parsedInc, cmrPath, summaryPath]
         );
 
         await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
