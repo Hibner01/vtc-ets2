@@ -528,3 +528,173 @@
                         <ul class="list-unstyled lh-lg">
                             <li><strong>Kabina:</strong> ${t.cabin}</li>
                             <li><strong>Podwozie:</strong> ${t.chassis}</li>
+                            <li><strong>Silnik:</strong> ${t.engine}</li>
+                            <li><strong>Skrzynia biegów:</strong> ${t.gearbox}</li>
+                            <li><strong>Wnętrze:</strong> ${t.interior}</li>
+                            <li><strong>Akcesoria wnętrza:</strong> ${t.accessories}</li>
+                        </ul>
+                        <hr class="border-secondary">
+                        <h6 class="fw-bold mb-2">Kierowca:</h6>
+                        <p class="text-muted small">${t.plates} - @${t.driver_name}</p>
+                        ${deleteBtn}
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeTruckDetail() {
+            document.getElementById('garage-main-view').style.display = 'block';
+            document.getElementById('garage-detail-view').style.display = 'none';
+        }
+
+        function toggleTruckForm() {
+            const form = document.getElementById('truck-add-form');
+            form.classList.toggle('d-none');
+            if (!form.classList.contains('d-none')) {
+                fetch('/api/users').then(r => r.json()).then(users => {
+                    const sel = document.getElementById('truck_driver_select');
+                    sel.innerHTML = '<option value="Wolne">Wolne</option>';
+                    users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
+                });
+            }
+        }
+
+        document.getElementById('truck-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const res = await fetch('/api/trucks', { method: 'POST', body: new FormData(e.target) });
+            if (res.ok) { toggleTruckForm(); loadGarage(); }
+        });
+
+        async function deleteTruck(id) {
+            if (confirm('Usunąć pojazd?')) {
+                await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
+                closeTruckDetail();
+                loadGarage();
+            }
+        }
+
+        async function loadExpenses() {
+            const res = await fetch('/api/expenses');
+            if (res.ok) {
+                const expenses = await res.json();
+                const tbody = document.getElementById('expenses-table-body');
+                tbody.innerHTML = '';
+                expenses.forEach(exp => {
+                    let typeBadge = exp.type === 'fuel' ? '⛽ Paliwo' : (exp.type === 'fine' ? '🚨 Mandat' : '🔧 Serwis');
+                    let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteExpense(${exp.id})">Usuń</button>` : '';
+                    tbody.innerHTML += `<tr><td>${exp.username}</td><td>${typeBadge}</td><td>${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>${delBtn}</td></tr>`;
+                });
+            }
+        }
+
+        document.getElementById('expense-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const res = await fetch('/api/expenses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: document.getElementById('expense_type').value,
+                    amount: document.getElementById('expense_amount').value,
+                    description: document.getElementById('expense_desc').value
+                })
+            });
+            if (res.ok) { document.getElementById('expense-form').reset(); loadExpenses(); loadCompanyStats(); }
+        });
+
+        async function deleteExpense(id) {
+            if (confirm('Usunąć wydatek?')) { await fetch(`/api/expenses/${id}`, { method: 'DELETE' }); loadExpenses(); loadCompanyStats(); }
+        }
+
+        async function loadDispatches() {
+            const res = await fetch('/api/dispatches');
+            if (res.ok) {
+                const dispatches = await res.json();
+                const container = document.getElementById('dispatches-container');
+                container.innerHTML = '';
+                dispatches.forEach(d => {
+                    container.innerHTML += `
+                        <div class="col-md-6">
+                            <div class="bg-card p-4">
+                                <h5 class="fw-bold text-light">${d.start_city} - ${d.end_city}</h5>
+                                <hr class="border-secondary">
+                                <p class="mb-1"><strong>Zestaw:</strong> ${d.truck_name || 'Standard'}</p>
+                                <p class="mb-1"><strong>Uwagi:</strong> ${d.notes || 'Brak'}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="badge bg-secondary">${d.status}</span>
+                                    <button class="btn btn-light btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        async function loadDispatcherOptions() {
+            const uRes = await fetch('/api/users');
+            if (uRes.ok) {
+                const users = await uRes.json();
+                const sel = document.getElementById('dispatch_assigned');
+                sel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
+                users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
+            }
+            const tRes = await fetch('/api/trucks');
+            if (tRes.ok) {
+                const trucks = await tRes.json();
+                const tSel = document.getElementById('dispatch_truck');
+                tSel.innerHTML = '';
+                trucks.forEach(t => tSel.innerHTML += `<option value="${t.truck_model}">${t.truck_model}</option>`);
+            }
+        }
+
+        async function acceptDispatch(id) {
+            const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
+            if (res.ok) loadDispatches();
+        }
+
+        async function loadCompanyStats() {
+            const res = await fetch('/api/company-stats');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('company-total-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' EURO';
+                document.getElementById('company-total-km').textContent = data.totalCompanyKm + ' km';
+                const rankList = document.getElementById('drivers-ranking-list');
+                rankList.innerHTML = '';
+                data.driversRanking.forEach((d, idx) => {
+                    rankList.innerHTML += `<li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between"><span>${d.username}</span><span>${idx+1} miejsce</span><span>${d.km}km</span></li>`;
+                });
+            }
+        }
+
+        async function loadJobs() {
+            const res = await fetch('/api/jobs');
+            if (res.ok) {
+                const jobs = await res.json();
+                const tbody = document.getElementById('jobs-table-body');
+                tbody.innerHTML = '';
+                jobs.forEach(j => {
+                    tbody.innerHTML += `<tr><td>${j.username}</td><td>${j.start_city} - ${j.end_city}</td><td>${j.distance}km</td><td>${j.income} Euro</td><td>${j.cargo}</td></tr>`;
+                });
+            }
+        }
+
+        async function loadManagementUsers() {
+            const res = await fetch('/api/users');
+            if (res.ok) {
+                const users = await res.json();
+                const tbody = document.getElementById('management-users-list');
+                tbody.innerHTML = '';
+                users.forEach(u => {
+                    let action = u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser(${u.id})">Zatwierdź</button>` : '<span class="badge bg-success">Aktywny</span>';
+                    tbody.innerHTML += `<tr><td>${u.username}</td><td>${u.role}</td><td>${action}</td><td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Usuń</button></td></tr>`;
+                });
+            }
+        }
+
+        async function approveUser(id) { await fetch(`/api/users/${id}/approve`, { method: 'PUT' }); loadManagementUsers(); }
+        async function deleteUser(id) { if (confirm('Usunąć konto?')) { await fetch(`/api/users/${id}`, { method: 'DELETE' }); loadManagementUsers(); } }
+
+        checkUser();
+    </script>
+</body>
+</html>
