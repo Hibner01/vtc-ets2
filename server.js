@@ -70,7 +70,7 @@ async function initDB() {
                 truck_model VARCHAR(255) NOT NULL,
                 driver_name VARCHAR(255) DEFAULT 'Wolne',
                 plates VARCHAR(50) NOT NULL,
-                photo TEXT NOT NULL,
+                photo TEXT,
                 cabin VARCHAR(255) DEFAULT 'Standard',
                 chassis VARCHAR(255) DEFAULT 'Standard',
                 engine VARCHAR(255) DEFAULT 'Standard',
@@ -200,7 +200,17 @@ app.get('/api/user', async (req, res) => {
         if (userRes.rows.length === 0) return res.status(401).json({ error: 'Użytkownik nie istnieje' });
         
         const user = userRes.rows[0];
-        const kmRes = await pool.query("SELECT SUM(distance) as total FROM jobs WHERE user_id = $1 AND status = 'approved'", [user.id]);
+
+        // Zliczanie kilometrów TYLKO z bieżącego miesiąca (automatyczny reset co miesiąc)
+        const kmRes = await pool.query(`
+            SELECT SUM(distance) as total, COUNT(*) as deliveries 
+            FROM jobs 
+            WHERE user_id = $1 AND status = 'approved' 
+            AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_TIMESTAMP)
+        `, [user.id]);
+
+        // Pobranie przypisanego zestawu z Garażu
+        const truckRes = await pool.query('SELECT * FROM trucks WHERE LOWER(driver_name) = LOWER($1) LIMIT 1', [user.username]);
 
         res.json({
             id: user.id,
@@ -208,7 +218,9 @@ app.get('/api/user', async (req, res) => {
             email: user.email,
             role: user.role,
             monthlyKm: parseInt(kmRes.rows[0].total || 0),
-            limitKm: 6000
+            monthlyDeliveries: parseInt(kmRes.rows[0].deliveries || 0),
+            limitKm: 6000,
+            assignedTruck: truckRes.rows.length > 0 ? truckRes.rows[0] : null
         });
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania danych' }); }
 });
@@ -537,15 +549,17 @@ app.delete('/api/jobs/:id', async (req, res) => {
 app.get('/api/company-stats', async (req, res) => {
     try {
         const totalKmRes = await pool.query("SELECT SUM(distance) as total FROM jobs WHERE status = 'approved'");
+        const totalDeliveriesRes = await pool.query("SELECT COUNT(*) as total FROM jobs WHERE status = 'approved'");
         const totalIncomeRes = await pool.query("SELECT SUM(income) as total_income FROM jobs WHERE status = 'approved'");
         const totalExpensesRes = await pool.query('SELECT SUM(amount) as total_expenses FROM expenses');
         
         const totalCompanyKm = parseInt(totalKmRes.rows[0].total || 0);
+        const totalDeliveries = parseInt(totalDeliveriesRes.rows[0].total || 0);
         const totalIncome = parseInt(totalIncomeRes.rows[0].total_income || 0);
         const totalExpenses = parseInt(totalExpensesRes.rows[0].total_expenses || 0);
 
         const rankingRes = await pool.query(`
-            SELECT users.username, SUM(jobs.distance) as km 
+            SELECT users.username, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries 
             FROM jobs JOIN users ON jobs.user_id = users.id 
             WHERE jobs.status = 'approved'
             GROUP BY users.username ORDER BY km DESC
@@ -553,6 +567,7 @@ app.get('/api/company-stats', async (req, res) => {
 
         res.json({
             totalCompanyKm,
+            totalDeliveries,
             totalIncome,
             totalExpenses,
             totalCompanyBudget: totalIncome - totalExpenses,
