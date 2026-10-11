@@ -52,6 +52,7 @@ async function initDB() {
                 income INTEGER DEFAULT 0,
                 cmr_file TEXT,
                 summary_photo TEXT,
+                status VARCHAR(50) DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -178,7 +179,7 @@ app.get('/api/user', async (req, res) => {
         if (userRes.rows.length === 0) return res.status(401).json({ error: 'Użytkownik nie istnieje' });
         
         const user = userRes.rows[0];
-        const kmRes = await pool.query('SELECT SUM(distance) as total FROM jobs WHERE user_id = $1', [user.id]);
+        const kmRes = await pool.query("SELECT SUM(distance) as total FROM jobs WHERE user_id = $1 AND status = 'approved'", [user.id]);
 
         res.json({
             id: user.id,
@@ -348,12 +349,19 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zlecenia' });
         const disp = dispRes.rows[0];
 
+        // Zapisujemy trasę ze statusem 'pending' (oczekuje na weryfikację Szefa)
         await pool.query(
-            'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-            [req.session.userId, disp.start_city, disp.end_city, cargo || 'Standard', parsedDist, parsedInc, cmrPath, summaryPath]
+            'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+            [req.session.userId, disp.start_city, disp.end_city, cargo || 'Standard', parsedDist, parsedInc, cmrPath, summaryPath, 'pending']
         );
 
         await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
+
+        // Powiadomienie dla Szefów
+        const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
+        for (let adm of admins.rows) {
+            await addNotification(adm.id, '📑 Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`);
+        }
 
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd raportowania trasy' }); }
@@ -404,7 +412,7 @@ app.get('/api/trucks', async (req, res) => {
 app.post('/api/trucks', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     const { truck_model, driver_name, plates, cabin, chassis, engine, gearbox, interior, accessories } = req.body;
-    const defaultPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg';
+    const defaultPhoto = '';
 
     try {
         await pool.query(
@@ -433,19 +441,35 @@ app.get('/api/jobs', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania tras' }); }
 });
 
-// USUWANIE WYKONANEJ TRASY PRZEZ SZEFA
+// AKCEPTACJA TRASY PRZEZ SZEFA
+app.put('/api/jobs/:id/approve', async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    try {
+        const jobRes = await pool.query('SELECT user_id, start_city, end_city FROM jobs WHERE id = $1', [req.params.id]);
+        if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono trasy' });
+
+        const job = jobRes.rows[0];
+        await pool.query("UPDATE jobs SET status = 'approved' WHERE id = $1", [req.params.id]);
+        
+        await addNotification(job.user_id, '✅ Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
+});
+
+// USUWANIE / ODRZUCENIE TRASY PRZEZ SZEFA
 app.delete('/api/jobs/:id', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('DELETE FROM jobs WHERE id = $1', [req.params.id]);
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Błąd usuwania wykonanej trasy' }); }
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania trasy' }); }
 });
 
 app.get('/api/company-stats', async (req, res) => {
     try {
-        const totalKmRes = await pool.query('SELECT SUM(distance) as total FROM jobs');
-        const totalIncomeRes = await pool.query('SELECT SUM(income) as total_income FROM jobs');
+        // Zliczamy tylko zatwierdzone trasy ('approved')
+        const totalKmRes = await pool.query("SELECT SUM(distance) as total FROM jobs WHERE status = 'approved'");
+        const totalIncomeRes = await pool.query("SELECT SUM(income) as total_income FROM jobs WHERE status = 'approved'");
         const totalExpensesRes = await pool.query('SELECT SUM(amount) as total_expenses FROM expenses');
         
         const totalCompanyKm = parseInt(totalKmRes.rows[0].total || 0);
@@ -455,6 +479,7 @@ app.get('/api/company-stats', async (req, res) => {
         const rankingRes = await pool.query(`
             SELECT users.username, SUM(jobs.distance) as km 
             FROM jobs JOIN users ON jobs.user_id = users.id 
+            WHERE jobs.status = 'approved'
             GROUP BY users.username ORDER BY km DESC
         `);
 
