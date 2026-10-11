@@ -149,14 +149,29 @@
             z-index: 10;
         }
 
-        .form-control-icon {
-            background-color: #22262c;
-            border: 1px solid #3c424c;
+        /* POPRAWIONA CZYTELNOŚĆ POL FORMULARZY I PODPOWIEDZI */
+        .form-control, .form-select {
+            background-color: #22262c !important;
+            border: 1px solid #3c424c !important;
             color: #ffffff !important;
+            border-radius: 12px;
+        }
+
+        .form-control-icon {
             border-radius: 30px !important;
             padding: 12px 20px 12px 48px;
             width: 100%;
         }
+
+        /* JADNY, CZYTELNY KOLOR PODPOWIEDZI (PLACEHOLDERÓW) */
+        ::placeholder {
+            color: #9ca3af !important;
+            opacity: 1 !important;
+        }
+
+        ::-webkit-input-placeholder { color: #9ca3af !important; opacity: 1 !important; }
+        ::-moz-placeholder { color: #9ca3af !important; opacity: 1 !important; }
+        :-ms-input-placeholder { color: #9ca3af !important; opacity: 1 !important; }
 
         .btn-pill-white { 
             background-color: #ffffff;
