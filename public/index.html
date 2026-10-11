@@ -1255,7 +1255,7 @@
     if (summaryFile) formData.append('summary', summaryFile);
 
     try {
-        const res = await fetch('/api/jobs', {
+        const res = await fetch('/api/reports', {
             method: 'POST',
             body: formData // Wysyłamy jako FormData bez ręcznego nagłówka Content-Type
         });
