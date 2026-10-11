@@ -34,7 +34,8 @@ async function initDB() {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
-                username VARCHAR(255) UNIQUE NOT NULL,
+                username VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(50) DEFAULT 'driver',
                 status VARCHAR(50) DEFAULT 'approved'
@@ -112,6 +113,7 @@ async function initDB() {
             );
         `);
 
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
 
@@ -139,8 +141,9 @@ async function addNotification(userId, title, message, actionTab = 'jobs') {
 }
 
 app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Uzupełnij login i hasło.' });
+    const { username, email, password, confirmPassword } = req.body;
+    if (!username || !email || !password) return res.status(400).json({ error: 'Uzupełnij wszystkie pola.' });
+    if (password !== confirmPassword) return res.status(400).json({ error: 'Hasła nie są identyczne!' });
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -150,30 +153,32 @@ app.post('/api/register', async (req, res) => {
         const role = count === 0 ? 'admin' : 'driver';
         const status = count === 0 ? 'approved' : 'pending';
 
-        await pool.query('INSERT INTO users (username, password, role, status) VALUES ($1, $2, $3, $4)', [username, hashedPassword, role, status]);
+        await pool.query('INSERT INTO users (username, email, password, role, status) VALUES ($1, $2, $3, $4, $5)', [username, email.toLowerCase().trim(), hashedPassword, role, status]);
         
         if (status === 'pending') {
             const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
             for (let adm of admins.rows) {
-                await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`, 'management');
+                await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} (${email}) zarejestrował się i oczekuje na zatwierdzenie konta.`, 'management');
             }
         }
 
         res.json({ success: true, message: status === 'pending' ? 'Konto oczekuje na akceptację Szefa!' : 'Konto Szefa utworzone!' });
-    } catch (err) { res.status(400).json({ error: 'Użytkownik już istnieje.' }); }
+    } catch (err) { res.status(400).json({ error: 'Użytkownik z tym adresem e-mail już istnieje.' }); }
 });
 
 app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Uzupełnij e-mail i hasło.' });
+
     try {
-        const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        if (result.rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowy login lub hasło.' });
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase().trim()]);
+        if (result.rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowy e-mail lub hasło.' });
 
         const user = result.rows[0];
         if (user.status === 'pending') return res.status(403).json({ error: 'Konto oczekuje na akceptację Szefa!' });
 
         const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(401).json({ error: 'Nieprawidłowy login lub hasło.' });
+        if (!match) return res.status(401).json({ error: 'Nieprawidłowy e-mail lub hasło.' });
 
         req.session.userId = user.id;
         req.session.username = user.username;
@@ -185,7 +190,7 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/user', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const userRes = await pool.query('SELECT id, username, role FROM users WHERE id = $1', [req.session.userId]);
+        const userRes = await pool.query('SELECT id, username, email, role FROM users WHERE id = $1', [req.session.userId]);
         if (userRes.rows.length === 0) return res.status(401).json({ error: 'Użytkownik nie istnieje' });
         
         const user = userRes.rows[0];
@@ -194,6 +199,7 @@ app.get('/api/user', async (req, res) => {
         res.json({
             id: user.id,
             username: user.username,
+            email: user.email,
             role: user.role,
             monthlyKm: parseInt(kmRes.rows[0].total || 0),
             limitKm: 6000
@@ -222,7 +228,7 @@ app.put('/api/notifications/read', async (req, res) => {
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
-        const result = await pool.query('SELECT id, username, role, status FROM users ORDER BY id DESC');
+        const result = await pool.query('SELECT id, username, email, role, status FROM users ORDER BY id DESC');
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: 'Błąd użytkowników' }); }
 });
