@@ -1392,6 +1392,26 @@ async function submitExpenseForm(e) {
     }
 }        
 
+        async function deleteExpense(id) {
+    if (!confirm('Czy na pewno chcesz usunąć ten wydatek?')) return;
+
+    try {
+        const res = await fetch(`/api/expenses/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            loadExpenses();
+            loadCompanyStats();
+            alert('Wydatek został usunięty.');
+        } else {
+            alert('Nie udało się usunąć wydatku.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Wystąpił błąd połączenia.');
+    }
+}
         checkUser();
     </script>
 </body>
