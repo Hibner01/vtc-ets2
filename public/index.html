@@ -7,14 +7,32 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { 
-            background-color: #0b0c0e; 
+            background-color: #111316; 
             color: #ffffff; 
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             min-height: 100vh; 
             overflow-x: hidden;
         }
 
-        /* BOCZNY SIDEBAR (MENU) */
+        /* TŁA EKRANÓW AUTORYZACJI */
+        .auth-bg-main { 
+            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.jpg') center/cover no-repeat fixed;
+            min-height: 100vh; 
+        }
+
+        .auth-bg-side { 
+            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvo2.jpg') center/cover no-repeat fixed;
+            min-height: 100vh; 
+        }
+
+        .bg-card-bms { 
+            background-color: rgba(26, 29, 33, 0.92); 
+            border: 1px solid #323842; 
+            border-radius: 20px; 
+            backdrop-filter: blur(8px);
+        }
+
+        /* SIDEBAR & NAV */
         .sidebar {
             width: 250px;
             background-color: #121418;
@@ -29,15 +47,15 @@
         }
 
         .sidebar-brand {
-            padding: 24px 20px;
+            padding: 20px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: center;
             border-bottom: 1px solid #1f2329;
         }
 
         .sidebar-user {
-            padding: 16px 20px;
+            padding: 14px 18px;
             background-color: #181b20;
             margin: 12px 16px;
             border-radius: 12px;
@@ -53,11 +71,11 @@
         }
 
         .nav-item-bms {
-            color: #8c93a0;
+            color: #d1d5db;
             text-decoration: none;
             padding: 12px 16px;
             border-radius: 10px;
-            font-weight: 500;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -71,7 +89,6 @@
             background-color: #21252d;
         }
 
-        /* GŁÓWNA ZAWARTOŚĆ */
         .main-wrapper {
             margin-left: 250px;
             display: flex;
@@ -79,7 +96,6 @@
             min-height: 100vh;
         }
 
-        /* TOPBAR (GÓRNY PASEK) */
         .topbar {
             background-color: #121418;
             border-bottom: 1px solid #1f2329;
@@ -102,46 +118,24 @@
             gap: 8px;
         }
 
-        .bg-card-bms {
-            background-color: #14171c;
-            border: 1px solid #21262f;
-            border-radius: 18px;
-        }
-
-        .welcome-banner {
-            background: linear-gradient(135deg, #7012ce 0%, #a020f0 100%);
-            border-radius: 20px;
-            padding: 28px 32px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-box {
-            background-color: #14171c;
-            border: 1px solid #21262f;
-            border-radius: 16px;
+        /* KARTY CIĘŻARÓWEK W GARAŻU */
+        .truck-card { 
+            background-color: #1a1d21; 
+            border: 1px solid #2d3238; 
+            border-radius: 20px; 
             padding: 20px;
+            text-center: center;
+            transition: transform 0.2s, border-color 0.2s; 
+            min-height: 220px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: space-between;
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background-color: #1f242d;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            color: #00d26a;
-            font-size: 1.2rem;
         }
 
-        /* TŁO EKRANU AUTORYZACJI */
-        .auth-bg { 
-            background-color: #0c0d0e;
-            min-height: 100vh; 
+        .truck-card:hover { 
+            transform: translateY(-4px); 
+            border-color: #ffffff; 
         }
 
         .input-group-custom {
@@ -153,25 +147,22 @@
         .input-group-custom i {
             position: absolute;
             left: 18px;
-            color: #6c757d;
+            color: #9ca3af;
             font-size: 1.1rem;
             z-index: 10;
         }
 
         .form-control-icon {
-            background-color: #1a1d22;
-            border: 1px solid #2f3540;
-            color: #ffffff;
+            background-color: #22262c;
+            border: 1px solid #3c424c;
+            color: #ffffff !important;
             border-radius: 30px !important;
             padding: 12px 20px 12px 48px;
             width: 100%;
         }
 
-        .form-control-icon:focus {
-            background-color: #21252d;
-            color: #ffffff;
-            border-color: #8c93a0;
-            box-shadow: none;
+        .form-control-icon::placeholder {
+            color: #9ca3af;
         }
 
         .btn-pill-white { 
@@ -189,29 +180,29 @@
         }
 
         .btn-pill-dark {
-            background-color: #1d2128;
+            background-color: #22262c;
             color: #ffffff;
             font-weight: 600;
             border-radius: 30px;
-            border: 1px solid #2f3540;
+            border: 1px solid #3c424c;
             padding: 12px 24px;
             transition: all 0.2s ease;
         }
 
         .btn-pill-dark:hover {
-            background-color: #282d37;
+            background-color: #2c323a;
         }
 
         .pill-row {
-            border: 1px solid #252a32;
+            border: 1px solid #2d3238;
             border-radius: 40px;
             background-color: #181b20;
             margin-bottom: 10px;
-            padding: 10px 20px;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         .notif-badge { 
@@ -246,8 +237,8 @@
     <div id="app" class="w-100 min-vh-100">
 
         <!-- EKRAN AUTORYZACJI -->
-        <div id="auth-section" class="auth-bg flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
-            <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 110px;" onerror="this.style.display='none'"></div>
+        <div id="auth-section" class="auth-bg-main flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
+            <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 120px;" onerror="this.style.display='none'"></div>
             
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
                 <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')">
@@ -267,15 +258,15 @@
                 <p class="text-light small mb-4">Zaloguj się do Mazren Control System</p>
                 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-light small ms-2">Adres e-mail lub Login</label>
+                    <label class="form-label text-white small ms-2 fw-semibold">Adres e-mail lub Login</label>
                     <div class="input-group-custom">
                         <i class="fa-regular fa-envelope"></i>
-                        <input type="text" id="login-email" class="form-control form-control-icon" placeholder="np. WladekKiero lub e-mail">
+                        <input type="text" id="login-email" class="form-control form-control-icon" placeholder="np. Wladek123@firma.pl lub login">
                     </div>
                 </div>
                 
                 <div class="mb-4 text-start">
-                    <label class="form-label text-light small ms-2">Hasło</label>
+                    <label class="form-label text-white small ms-2 fw-semibold">Hasło</label>
                     <div class="input-group-custom">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="login-password" class="form-control form-control-icon" placeholder="••••••••">
@@ -283,7 +274,7 @@
                 </div>
 
                 <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()">Zaloguj się</button>
-                <div class="text-light small">Nie masz jeszcze konta? <a href="#" class="text-white fw-bold" onclick="showAuthForm('register')">Zarejestruj się</a></div>
+                <div class="text-white small">Nie masz jeszcze konta? <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('register')">Zarejestruj się</a></div>
             </div>
 
             <!-- EKRAN REJESTRACJI -->
@@ -292,7 +283,7 @@
                 <p class="text-light small mb-4">Stwórz konto w Mazren Control System</p>
                 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-light small ms-2">Nick z Discorda</label>
+                    <label class="form-label text-white small ms-2 fw-semibold">Nick z Discorda</label>
                     <div class="input-group-custom">
                         <i class="fa-regular fa-user"></i>
                         <input type="text" id="reg-username" class="form-control form-control-icon" placeholder="np. WladekKiero">
@@ -300,7 +291,7 @@
                 </div>
 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-light small ms-2">Adres e-mail</label>
+                    <label class="form-label text-white small ms-2 fw-semibold">Adres e-mail</label>
                     <div class="input-group-custom">
                         <i class="fa-regular fa-envelope"></i>
                         <input type="email" id="reg-email" class="form-control form-control-icon" placeholder="np. Wladek123@firma.pl">
@@ -309,14 +300,14 @@
 
                 <div class="row g-2 mb-4">
                     <div class="col-6 text-start">
-                        <label class="form-label text-light small ms-2">Hasło</label>
+                        <label class="form-label text-white small ms-2 fw-semibold">Hasło</label>
                         <div class="input-group-custom">
                             <i class="fa-solid fa-lock"></i>
                             <input type="password" id="reg-password" class="form-control form-control-icon" placeholder="••••••••">
                         </div>
                     </div>
                     <div class="col-6 text-start">
-                        <label class="form-label text-light small ms-2">Powtórz hasło</label>
+                        <label class="form-label text-white small ms-2 fw-semibold">Powtórz hasło</label>
                         <div class="input-group-custom">
                             <i class="fa-solid fa-lock"></i>
                             <input type="password" id="reg-confirm-password" class="form-control form-control-icon" placeholder="••••••••">
@@ -325,25 +316,24 @@
                 </div>
 
                 <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()">Stwórz konto</button>
-                <div class="text-light small">Masz już konto? <a href="#" class="text-white fw-bold" onclick="showAuthForm('login')">Zaloguj się</a></div>
+                <div class="text-white small">Masz już konto? <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('login')">Zaloguj się</a></div>
             </div>
 
-            <div class="text-light small">© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
+            <div class="text-white small font-monospace">© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
         </div>
 
-        <!-- PANEL GŁÓWNY (BMS STYLE) -->
+        <!-- PANEL GŁÓWNY -->
         <div id="dashboard-section" style="display:none;">
             
-            <!-- BOCZNY SIDEBAR -->
+            <!-- SIDEBAR -->
             <aside class="sidebar">
                 <div class="sidebar-brand">
-                    <i class="fa-solid fa-truck-fast text-white fs-4"></i>
-                    <span class="fw-bold text-white fs-5">BMS</span>
+                    <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" onerror="this.style.display='none'">
                 </div>
 
                 <div class="sidebar-user">
-                    <div class="text-secondary small">ZALOGOWANY JAKO</div>
-                    <div class="fw-bold text-white fs-6" id="user-display">Arkadiusz</div>
+                    <div class="text-secondary small fw-semibold">ZALOGOWANY JAKO</div>
+                    <div class="fw-bold text-white fs-6" id="user-display">WladekKiero</div>
                     <span id="admin-badge" class="badge bg-danger mt-1 d-none">SZEF / WŁAŚCICIEL</span>
                 </div>
 
@@ -381,10 +371,9 @@
                 </div>
             </aside>
 
-            <!-- GŁÓWNY ZAWARTY WRAPPER -->
+            <!-- GŁÓWNA TREŚĆ -->
             <div class="main-wrapper">
                 
-                <!-- GÓRNY PASEK -->
                 <header class="topbar">
                     <div class="d-flex align-items-center gap-3">
                         <div class="topbar-clock">
@@ -417,61 +406,57 @@
 
                 <main class="container-fluid p-4 flex-grow-1">
 
-                    <!-- STRONA GŁÓWNA - PULPIT KIEROWCY -->
+                    <!-- PULPIT -->
                     <div id="tab-dashboard">
-                        
-                        <!-- BANER POWITALNY -->
-                        <div class="welcome-banner text-white mb-4 shadow">
+                        <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #6b21a8 0%, #9333ea 100%); border-radius: 20px; padding: 28px 32px;">
                             <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> WITAJ Z POWROTEM</div>
-                            <h2 class="fw-bold display-6 mb-1" id="banner-username">Arkadiusz</h2>
+                            <h2 class="fw-bold display-6 mb-1" id="banner-username">WladekKiero</h2>
                             <span class="badge bg-white text-dark fw-bold px-3 py-2 rounded-pill" id="banner-role">Kierowca</span>
                         </div>
 
-                        <!-- STATYSTYKI KIEROWCY (KARTY) -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <div class="stat-box">
+                                <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-secondary small">Dystans (Miesiąc)</div>
+                                        <div class="text-white-50 small">Dystans (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-km">0 km</div>
-                                        <div class="text-muted small">Cel: 6 000 km</div>
+                                        <div class="text-white-50 small">Cel: 6 000 km</div>
                                     </div>
-                                    <div class="stat-icon"><i class="fa-solid fa-route"></i></div>
+                                    <div class="fs-2 text-success"><i class="fa-solid fa-route"></i></div>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="stat-box">
+                                <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-secondary small">Dostawy (Miesiąc)</div>
+                                        <div class="text-white-50 small">Dostawy (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-deliveries">0</div>
-                                        <div class="text-muted small">Zrealizowanych ładunków</div>
+                                        <div class="text-white-50 small">Zrealizowanych ładunków</div>
                                     </div>
-                                    <div class="stat-icon"><i class="fa-solid fa-box"></i></div>
+                                    <div class="fs-2 text-warning"><i class="fa-solid fa-box"></i></div>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="stat-box">
+                                <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-secondary small">Budżet Firmy</div>
+                                        <div class="text-white-50 small">Budżet Firmy</div>
                                         <div class="fw-bold fs-4 text-white" id="dash-company-budget">0 EURO</div>
-                                        <div class="text-muted small">Dostępne środki</div>
+                                        <div class="text-white-50 small">Dostępne środki</div>
                                     </div>
-                                    <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                                    <div class="fs-2 text-info"><i class="fa-solid fa-wallet"></i></div>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="stat-box">
+                                <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-secondary small">Kilometry Firmy</div>
+                                        <div class="text-white-50 small">Kilometry Firmy</div>
                                         <div class="fw-bold fs-4 text-white" id="dash-company-km">0 km</div>
-                                        <div class="text-muted small">Łączny dystans</div>
+                                        <div class="text-white-50 small">Łączny dystans</div>
                                     </div>
-                                    <div class="stat-icon"><i class="fa-solid fa-globe"></i></div>
+                                    <div class="fs-2 text-primary"><i class="fa-solid fa-globe"></i></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- MOJE TRASY I TWÓJ ZESTAW -->
                         <div class="row g-4">
                             <div class="col-md-7">
                                 <div class="bg-card-bms p-4">
@@ -484,41 +469,32 @@
                                 <div class="bg-card-bms p-4">
                                     <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck-front me-2"></i> Twój Zestaw</h5>
                                     <div id="my-assigned-truck-box">
-                                        <div class="text-muted text-center py-4">Brak przypisanego zestawu w garażu.</div>
+                                        <div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ZAKŁADKA: STATYSTYKI FIRMY -->
+                    <!-- STATYSTYKI FIRMY -->
                     <div id="tab-company-stats" style="display:none;">
                         <div class="row g-4 mb-4">
                             <div class="col-md-4">
-                                <div class="stat-box">
-                                    <div>
-                                        <div class="text-secondary small">Łączne kilometry firmy</div>
-                                        <div class="fw-bold fs-3 text-white" id="company-total-km-full">0 km</div>
-                                    </div>
-                                    <div class="stat-icon"><i class="fa-solid fa-road"></i></div>
+                                <div class="bg-card-bms p-4">
+                                    <div class="text-white-50 small">Łączne kilometry firmy</div>
+                                    <div class="fw-bold fs-3 text-white" id="company-total-km-full">0 km</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="stat-box">
-                                    <div>
-                                        <div class="text-secondary small">Łączna liczba dostaw</div>
-                                        <div class="fw-bold fs-3 text-white" id="company-total-deliveries-full">0</div>
-                                    </div>
-                                    <div class="stat-icon"><i class="fa-solid fa-cubes"></i></div>
+                                <div class="bg-card-bms p-4">
+                                    <div class="text-white-50 small">Łączna liczba dostaw</div>
+                                    <div class="fw-bold fs-3 text-white" id="company-total-deliveries-full">0</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="stat-box">
-                                    <div>
-                                        <div class="text-secondary small">Stan Budżetu</div>
-                                        <div class="fw-bold fs-3 text-white text-success" id="company-budget-full">0 EURO</div>
-                                    </div>
-                                    <div class="stat-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                                <div class="bg-card-bms p-4">
+                                    <div class="text-white-50 small">Stan Budżetu</div>
+                                    <div class="fw-bold fs-3 text-success" id="company-budget-full">0 EURO</div>
                                 </div>
                             </div>
                         </div>
@@ -547,7 +523,7 @@
                                     <h5 class="fw-bold mb-3 text-white">Zgłoś wydatek</h5>
                                     <form id="expense-form">
                                         <div class="mb-3">
-                                            <label class="form-label">Typ wydatku</label>
+                                            <label class="form-label text-white fw-semibold">Typ wydatku</label>
                                             <select id="expense_type" class="form-select form-control-icon text-white" required>
                                                 <option value="fuel">⛽ Paliwo</option>
                                                 <option value="service">🔧 Serwis / Naprawa</option>
@@ -555,11 +531,11 @@
                                             </select>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Kwota (€)</label>
+                                            <label class="form-label text-white fw-semibold">Kwota (€)</label>
                                             <input type="number" id="expense_amount" class="form-control form-control-icon text-white" placeholder="np. 450" required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Opis / Miejsce</label>
+                                            <label class="form-label text-white fw-semibold">Opis / Miejsce</label>
                                             <input type="text" id="expense_desc" class="form-control form-control-icon text-white" placeholder="np. Tankowanie">
                                         </div>
                                         <button type="submit" class="btn btn-pill-white w-100 fw-bold">+ Dodaj Wydatek</button>
@@ -572,7 +548,7 @@
                                     <div class="table-responsive">
                                         <table class="table table-dark align-middle mb-0">
                                             <thead>
-                                                <tr class="text-light border-secondary">
+                                                <tr class="text-white border-secondary">
                                                     <th>Kierowca</th>
                                                     <th>Typ</th>
                                                     <th>Opis</th>
@@ -595,11 +571,11 @@
                                 <div class="bg-card-bms p-4 border-info">
                                     <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> Nowe Zlecenie w Dyspozytorni</h5>
                                     <form id="dispatch-form" class="row g-3">
-                                        <div class="col-md-3"><label class="form-label">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select></div>
-                                        <div class="col-md-3"><label class="form-label">Zestaw z garażu</label><select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select></div>
-                                        <div class="col-md-3"><label class="form-label">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
-                                        <div class="col-md-3"><label class="form-label">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
-                                        <div class="col-md-12"><label class="form-label">Uwagi</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
+                                        <div class="col-md-3"><label class="form-label text-white">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-3"><label class="form-label text-white">Zestaw z garażu</label><select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-3"><label class="form-label text-white">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
+                                        <div class="col-md-3"><label class="form-label text-white">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
+                                        <div class="col-md-12"><label class="form-label text-white">Uwagi</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
                                         <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold">Opublikuj zlecenie</button></div>
                                     </form>
                                 </div>
@@ -612,27 +588,28 @@
                         </div>
                     </div>
 
-                    <!-- GARAŻ -->
+                    <!-- GARAŻ (ZGODNIE Z MAKIETAMI) -->
                     <div id="tab-garage" style="display:none;">
                         <div id="garage-main-view">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="fw-bold mb-0 text-white">Flota i Garaż</h3>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fw-bold mb-0 text-white">Ciężarówki</h4>
                                 <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> Dodaj do Garażu</button>
                             </div>
+                            <hr class="border-secondary mb-4">
 
                             <div id="truck-add-form" class="bg-card-bms p-4 mb-4 d-none">
                                 <h5 class="fw-bold text-warning mb-3">Dodaj nowy zestaw do Floty</h5>
                                 <form id="truck-form">
                                     <div class="row g-3">
-                                        <div class="col-md-4"><label class="form-label">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control bg-dark text-white border-secondary" required placeholder="np. VOLVO FH2"></div>
-                                        <div class="col-md-4"><label class="form-label">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select bg-dark text-white border-secondary"></select></div>
-                                        <div class="col-md-4"><label class="form-label">Rejestracja</label><input type="text" name="plates" class="form-control bg-dark text-white border-secondary" required placeholder="np. WRA 6509S"></div>
-                                        <div class="col-md-4"><label class="form-label">Kabina</label><input type="text" name="cabin" class="form-control bg-dark text-white border-secondary" placeholder="np. Globetrotter XL"></div>
-                                        <div class="col-md-4"><label class="form-label">Podwozie</label><input type="text" name="chassis" class="form-control bg-dark text-white border-secondary" placeholder="np. 4x2"></div>
-                                        <div class="col-md-4"><label class="form-label">Silnik</label><input type="text" name="engine" class="form-control bg-dark text-white border-secondary" placeholder="np. D13A500"></div>
-                                        <div class="col-md-4"><label class="form-label">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control bg-dark text-white border-secondary" placeholder="np. I-Shift"></div>
-                                        <div class="col-md-4"><label class="form-label">Wnętrze</label><input type="text" name="interior" class="form-control bg-dark text-white border-secondary" placeholder="np. Standard"></div>
-                                        <div class="col-md-4"><label class="form-label">Akcesoria</label><input type="text" name="accessories" class="form-control bg-dark text-white border-secondary" placeholder="np. Własne"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control bg-dark text-white border-secondary" required placeholder="np. VOLVO FH2"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Rejestracja</label><input type="text" name="plates" class="form-control bg-dark text-white border-secondary" required placeholder="np. WRA 6509S"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Kabina</label><input type="text" name="cabin" class="form-control bg-dark text-white border-secondary" placeholder="np. Globetrotter XL"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Podwozie</label><input type="text" name="chassis" class="form-control bg-dark text-white border-secondary" placeholder="np. 4x2"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Silnik</label><input type="text" name="engine" class="form-control bg-dark text-white border-secondary" placeholder="np. D13A500"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control bg-dark text-white border-secondary" placeholder="np. I-Shift"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Wnętrze</label><input type="text" name="interior" class="form-control bg-dark text-white border-secondary" placeholder="np. Standard"></div>
+                                        <div class="col-md-4"><label class="form-label text-white">Akcesoria</label><input type="text" name="accessories" class="form-control bg-dark text-white border-secondary" placeholder="np. Własne"></div>
                                     </div>
                                     <button type="submit" class="btn btn-pill-white fw-bold mt-3">Zapisz w Garażu</button>
                                 </form>
@@ -653,16 +630,16 @@
                             <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-file-circle-plus me-2"></i> Dodaj Nowy Dokument / Pakiet</h5>
                             <form id="doc-form">
                                 <div class="row g-3">
-                                    <div class="col-md-6"><label class="form-label">Tytuł Dokumentu</label><input type="text" id="doc_title" class="form-control bg-dark text-white border-secondary" required placeholder="np. Regulamin VTC 2026"></div>
-                                    <div class="col-md-6"><label class="form-label">Kategoria</label>
+                                    <div class="col-md-6"><label class="form-label text-white">Tytuł Dokumentu</label><input type="text" id="doc_title" class="form-control bg-dark text-white border-secondary" required placeholder="np. Regulamin VTC 2026"></div>
+                                    <div class="col-md-6"><label class="form-label text-white">Kategoria</label>
                                         <select id="doc_category" class="form-select bg-dark text-white border-secondary">
                                             <option value="Regulamin">Regulamin</option>
                                             <option value="Pakiety">Pakiety Modyfikacji</option>
                                             <option value="Instrukcje">Instrukcje</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-12"><label class="form-label">Treść</label><textarea id="doc_content" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Wpisz treść..."></textarea></div>
-                                    <div class="col-md-12"><label class="form-label">Plik / Załącznik (opcjonalnie)</label><input type="file" id="doc_file" class="form-control bg-dark text-white border-secondary"></div>
+                                    <div class="col-md-12"><label class="form-label text-white">Treść</label><textarea id="doc_content" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Wpisz treść..."></textarea></div>
+                                    <div class="col-md-12"><label class="form-label text-white">Plik / Załącznik (opcjonalnie)</label><input type="file" id="doc_file" class="form-control bg-dark text-white border-secondary"></div>
                                 </div>
                                 <button type="submit" class="btn btn-pill-white fw-bold mt-3">Opublikuj Dokument</button>
                             </form>
@@ -690,7 +667,7 @@
                             <div class="table-responsive">
                                 <table class="table table-dark align-middle">
                                     <thead>
-                                        <tr class="text-light">
+                                        <tr class="text-white">
                                             <th>Kierowca</th>
                                             <th>E-mail</th>
                                             <th>Rola</th>
@@ -721,17 +698,17 @@
                             <input type="hidden" id="modal_dispatch_id" name="dispatch_id">
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="mb-3"><label class="form-label">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Części samochodowe"></div>
-                                    <div class="mb-3"><label class="form-label">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control bg-dark text-white border-secondary" placeholder="np. 1250" required></div>
-                                    <div class="mb-3"><label class="form-label">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control bg-dark text-white border-secondary" placeholder="np. 48000" required></div>
+                                    <div class="mb-3"><label class="form-label text-white">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Części samochodowe"></div>
+                                    <div class="mb-3"><label class="form-label text-white">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control bg-dark text-white border-secondary" placeholder="np. 1250" required></div>
+                                    <div class="mb-3"><label class="form-label text-white">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control bg-dark text-white border-secondary" placeholder="np. 48000" required></div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Dowód (zdjęcie z ETS2)</label>
+                                        <label class="form-label text-white">Dowód (zdjęcie z ETS2)</label>
                                         <input type="file" id="modal_summary" name="summary_photo" accept="image/*" class="form-control bg-dark text-white border-secondary">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">CMR (plik)</label>
+                                        <label class="form-label text-white">CMR (plik)</label>
                                         <input type="file" id="modal_cmr" name="cmr_file" accept="image/*" class="form-control bg-dark text-white border-secondary">
                                     </div>
                                 </div>
@@ -771,9 +748,16 @@
         updateClock();
 
         function showAuthForm(type) {
+            const section = document.getElementById('auth-section');
             document.getElementById('auth-main-card').style.display = 'none';
             document.getElementById('auth-login-card').style.display = type === 'login' ? 'block' : 'none';
             document.getElementById('auth-register-card').style.display = type === 'register' ? 'block' : 'none';
+
+            if (type === 'login' || type === 'register') {
+                section.className = 'auth-bg-side flex-column justify-content-between align-items-center py-5';
+            } else {
+                section.className = 'auth-bg-main flex-column justify-content-between align-items-center py-5';
+            }
         }
 
         function exitApp() {
@@ -829,7 +813,6 @@
                         document.getElementById('add-doc-admin-form').classList.remove('d-none');
                     }
 
-                    // Renderowanie karty "Twój Zestaw"
                     const truckBox = document.getElementById('my-assigned-truck-box');
                     if (data.assignedTruck) {
                         truckBox.innerHTML = `
@@ -837,7 +820,7 @@
                                 <h4 class="fw-bold text-white mb-1">${data.assignedTruck.truck_model}</h4>
                                 <span class="badge bg-secondary mb-3">Rejestracja: ${data.assignedTruck.plates}</span>
                                 ${data.assignedTruck.photo ? `<img src="${data.assignedTruck.photo}" class="img-fluid rounded border border-secondary mb-3">` : ''}
-                                <ul class="list-unstyled text-start small text-light bg-dark p-3 rounded">
+                                <ul class="list-unstyled text-start small text-white bg-dark p-3 rounded">
                                     <li><strong>Kabina:</strong> ${data.assignedTruck.cabin}</li>
                                     <li><strong>Silnik:</strong> ${data.assignedTruck.engine}</li>
                                     <li><strong>Skrzynia:</strong> ${data.assignedTruck.gearbox}</li>
@@ -845,7 +828,7 @@
                             </div>
                         `;
                     } else {
-                        truckBox.innerHTML = '<div class="text-muted text-center py-4">Brak przypisanego zestawu w garażu.</div>';
+                        truckBox.innerHTML = '<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>';
                     }
 
                     switchTab('dashboard');
@@ -949,16 +932,16 @@
                 container.innerHTML = '';
 
                 if (myJobs.length === 0) {
-                    container.innerHTML = '<div class="text-muted p-2">Nie wykonałeś jeszcze żadnych tras.</div>';
+                    container.innerHTML = '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>';
                     return;
                 }
 
                 myJobs.forEach(j => {
                     container.innerHTML += `
                         <div class="pill-row">
-                            <div><strong>${j.start_city}</strong> ➔ <strong>${j.end_city}</strong> (${j.cargo})</div>
+                            <div><strong class="text-white">${j.start_city}</strong> ➔ <strong class="text-white">${j.end_city}</strong> (${j.cargo})</div>
                             <div class="fw-bold text-white">${j.distance} km</div>
-                            <div class="text-success">${j.income} €</div>
+                            <div class="text-success fw-bold">${j.income} €</div>
                         </div>
                     `;
                 });
@@ -974,9 +957,9 @@
                 jobs.forEach(j => {
                     container.innerHTML += `
                         <div class="pill-row">
-                            <div><strong>${j.username}</strong>: ${j.start_city} ➔ ${j.end_city}</div>
+                            <div><strong class="text-white">${j.username}</strong>: ${j.start_city} ➔ ${j.end_city}</div>
                             <div class="fw-bold text-white">${j.distance} km</div>
-                            <div class="text-success">${j.income} €</div>
+                            <div class="text-success fw-bold">${j.income} €</div>
                         </div>
                     `;
                 });
@@ -1013,20 +996,113 @@
             const res = await fetch('/api/trucks');
             if (res.ok) {
                 const trucks = await res.json();
+                groupedTrucksData = {};
+
+                trucks.forEach(t => {
+                    if (!groupedTrucksData[t.truck_model]) {
+                        groupedTrucksData[t.truck_model] = {
+                            model: t.truck_model,
+                            photo: t.photo,
+                            cabin: t.cabin,
+                            chassis: t.chassis,
+                            engine: t.engine,
+                            gearbox: t.gearbox,
+                            interior: t.interior,
+                            accessories: t.accessories,
+                            units: []
+                        };
+                    }
+                    groupedTrucksData[t.truck_model].units.push(t);
+                });
+
                 const grid = document.getElementById('garage-grid');
                 grid.innerHTML = '';
-                trucks.forEach(t => {
+
+                const modelsList = ['MAN TGX E6', 'DAF XF106', 'RENAULT T480', 'SCANIA R', 'VOLVO FH2', 'SCANIA PGR', 'VOLVO FH4', 'MERCEDES MP4'];
+                
+                modelsList.forEach(modelName => {
+                    const group = groupedTrucksData[modelName] || {
+                        model: modelName,
+                        photo: '',
+                        units: []
+                    };
+
+                    let photoHtml = group.photo ? `<img src="${group.photo}" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : (modelName === 'VOLVO FH2' ? `<img src="/volvo1.jpg" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : `<div style="height: 100px;"></div>`);
+
                     grid.innerHTML += `
-                        <div class="col-md-4">
-                            <div class="bg-card-bms p-4">
-                                <h5 class="fw-bold text-white">${t.truck_model}</h5>
-                                <p class="text-muted small">Kierowca: ${t.driver_name}</p>
-                                <span class="badge bg-secondary">${t.plates}</span>
+                        <div class="col-md-3">
+                            <div class="truck-card" onclick="openTruckGroupDetail('${modelName}')">
+                                <h5 class="fw-bold text-white mb-2">${modelName}</h5>
+                                ${photoHtml}
+                                <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto">Więcej informacji</a>
                             </div>
                         </div>
                     `;
                 });
             }
+        }
+
+        function openTruckGroupDetail(modelName) {
+            const group = groupedTrucksData[modelName] || {
+                model: modelName,
+                cabin: 'Globetrotter XL (dolne)',
+                chassis: '4x2 (górne)',
+                engine: 'D13A500',
+                gearbox: 'I-Shift ATO3512D R',
+                interior: 'Standard',
+                accessories: 'Własne',
+                units: []
+            };
+
+            document.getElementById('garage-main-view').style.display = 'none';
+            document.getElementById('garage-detail-view').style.display = 'block';
+
+            let defaultUnits = [
+                { plates: 'WRA 6509S', driver_name: 'miki' },
+                { plates: 'WRA 6510S', driver_name: '' },
+                { plates: 'WRA 6511S', driver_name: '' },
+                { plates: 'WRA 6512S', driver_name: '' }
+            ];
+
+            let displayUnits = group.units.length > 0 ? group.units : defaultUnits;
+
+            let unitsHtml = displayUnits.map(u => `
+                <div class="mb-2 text-white fs-6">
+                    <strong>${u.plates}</strong> ${u.driver_name ? `- @${u.driver_name}` : '-'}
+                </div>
+            `).join('');
+
+            document.getElementById('truck-detail-content').innerHTML = `
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h2 class="fw-bold text-white mb-4">${group.model}</h2>
+                        <div class="mb-3">
+                            <img src="${group.photo || '/volvo1.jpg'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                        </div>
+                        <div>
+                            <img src="/volvo2.jpg" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                        </div>
+                    </div>
+                    <div class="col-md-6 border-start border-secondary ps-md-4">
+                        <ul class="list-unstyled lh-lg text-white fs-5 mb-4">
+                            <li><strong>Kabina:</strong> ${group.cabin || 'Globetrotter XL (dolne)'}</li>
+                            <li><strong>Podwozie:</strong> ${group.chassis || '4x2 (górne)'}</li>
+                            <li><strong>Silnik:</strong> ${group.engine || 'D13A500'}</li>
+                            <li><strong>Skrzynia biegów:</strong> ${group.gearbox || 'I-Shift ATO3512D R'}</li>
+                            <li><strong>Wnętrze:</strong> ${group.interior || 'Standard'}</li>
+                            <li><strong>Akcesoria wnętrza:</strong> ${group.accessories || 'Własne'}</li>
+                        </ul>
+                        <hr class="border-secondary my-4">
+                        <h5 class="fw-bold mb-3 text-white">Kierowcy (${displayUnits.filter(u => u.driver_name).length}/${displayUnits.length}):</h5>
+                        <div>${unitsHtml}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeTruckDetail() {
+            document.getElementById('garage-main-view').style.display = 'block';
+            document.getElementById('garage-detail-view').style.display = 'none';
         }
 
         async function loadExpenses() {
@@ -1036,7 +1112,7 @@
                 const tbody = document.getElementById('expenses-table-body');
                 tbody.innerHTML = '';
                 expenses.forEach(exp => {
-                    tbody.innerHTML += `<tr><td>${exp.username}</td><td>${exp.type}</td><td>${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>-</td></tr>`;
+                    tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${exp.type}</td><td class="text-white">${exp.description}</td><td class="text-danger fw-bold">-${exp.amount} €</td><td>-</td></tr>`;
                 });
             }
         }
