@@ -48,29 +48,41 @@
             font-size: 1.1rem;
         }
 
+        /* TŁO EKRANU AUTORYZACJI */
         .auth-bg { 
-            background-color: #0f1113;
+            background-color: #121417;
             min-height: 100vh; 
         }
 
-        .form-label {
-            color: #ffffff !important;
-            font-weight: 500;
+        /* STYLIZACJA INPUTÓW Z IKONAMI W WEWNĄTRZ */
+        .input-group-custom {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
-        .form-control-dark { 
-            background-color: #24282e; 
-            border: 1px solid #383e46; 
-            color: #ffffff; 
-            border-radius: 14px; 
-            padding: 12px 16px;
+        .input-group-custom i {
+            position: absolute;
+            left: 18px;
+            color: #6c757d;
+            font-size: 1.1rem;
+            z-index: 10;
         }
 
-        .form-control-dark:focus { 
-            background-color: #2b3036; 
-            color: #ffffff; 
-            border-color: #ffffff; 
-            box-shadow: none; 
+        .form-control-icon {
+            background-color: #24282e;
+            border: 1px solid #383e46;
+            color: #ffffff;
+            border-radius: 30px !important;
+            padding: 12px 20px 12px 48px;
+            width: 100%;
+        }
+
+        .form-control-icon:focus {
+            background-color: #2b3036;
+            color: #ffffff;
+            border-color: #ffffff;
+            box-shadow: none;
         }
 
         .btn-pill-white { 
@@ -95,9 +107,15 @@
             border-radius: 30px;
             border: 1px solid #3c424c;
             padding: 12px 24px;
+            transition: all 0.2s ease;
         }
 
-        /* DEDYKOWANE PIGUŁKI DLA TRAS I RANKINGU */
+        .btn-pill-dark:hover {
+            background-color: #323842;
+            color: #ffffff;
+        }
+
+        /* PIGUŁKI WYKONANYCH TRAS I RANKINGU */
         .pill-row {
             border: 1px solid #3c424c;
             border-radius: 50px;
@@ -124,6 +142,23 @@
 
         .pill-col:last-child {
             border-right: none;
+        }
+
+        .truck-card { 
+            background-color: #1a1d21; 
+            border: 1px solid #2d3238; 
+            border-radius: 24px; 
+            cursor: pointer; 
+            transition: transform 0.2s, border-color 0.2s; 
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .truck-card:hover { 
+            transform: translateY(-4px); 
+            border-color: #58606d; 
         }
 
         footer { 
@@ -162,41 +197,86 @@
 <body>
 
     <div id="app" class="w-100 flex-grow-1 d-flex flex-column">
-        <!-- EKRAN LOGOWANIA -->
+        <!-- EKRAN AUTORYZACJI -->
         <div id="auth-section" class="auth-bg flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
-            <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 100px;" onerror="this.style.display='none'"></div>
+            <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 110px;" onerror="this.style.display='none'"></div>
             
+            <!-- EKRAN WYBORU (ZALOGUJ / ZAREJESTRUJ / WYJDŹ) -->
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
-                <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')"><i class="fa-solid fa-download me-2"></i> <span data-i18n="login_btn">Zaloguj się</span></button>
-                <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')"><i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="register_btn">Zarejestruj się</span></button>
+                <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')">
+                    <i class="fa-solid fa-download me-2"></i> <span data-i18n="login_btn">Zaloguj się</span>
+                </button>
+                <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')">
+                    <i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="register_btn">Zarejestruj się</span>
+                </button>
+                <button class="btn btn-pill-dark w-100 mb-3" onclick="exitApp()">
+                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> <span>Wyjdź</span>
+                </button>
             </div>
 
-            <div id="auth-login-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 440px;">
+            <!-- EKRAN LOGOWANIA -->
+            <div id="auth-login-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
                 <h3 class="fw-bold mb-1 text-white" data-i18n="login_title">Witaj ponownie!</h3>
                 <p class="text-light small mb-4" data-i18n="login_sub">Zaloguj się do Mazren Control System</p>
+                
                 <div class="mb-3 text-start">
-                    <label class="form-label" data-i18n="login_label">Login / Nick</label>
-                    <input type="text" id="login-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
+                    <label class="form-label text-light small ms-2">Adres e-mail</label>
+                    <div class="input-group-custom">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" id="login-email" class="form-control form-control-icon" placeholder="np. Wladek123@firma.pl">
+                    </div>
                 </div>
+                
                 <div class="mb-4 text-start">
-                    <label class="form-label" data-i18n="pass_label">Hasło</label>
-                    <input type="password" id="login-password" class="form-control form-control-dark" placeholder="••••••••">
+                    <label class="form-label text-light small ms-2">Hasło</label>
+                    <div class="input-group-custom">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="login-password" class="form-control form-control-icon" placeholder="••••••••">
+                    </div>
                 </div>
+
                 <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()" data-i18n="login_btn">Zaloguj się</button>
                 <div class="text-light small"><span data-i18n="no_acc">Nie masz jeszcze konta?</span> <a href="#" class="text-white fw-bold" onclick="showAuthForm('register')" data-i18n="register_btn">Zarejestruj się</a></div>
             </div>
 
-            <div id="auth-register-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 440px;">
+            <!-- EKRAN REJESTRACJI -->
+            <div id="auth-register-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
                 <h3 class="fw-bold mb-1 text-white" data-i18n="reg_title">Rejestracja konta</h3>
                 <p class="text-light small mb-4" data-i18n="reg_sub">Stwórz konto w Mazren Control System</p>
+                
                 <div class="mb-3 text-start">
-                    <label class="form-label" data-i18n="login_label">Login / Nick</label>
-                    <input type="text" id="reg-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
+                    <label class="form-label text-light small ms-2">Nick z Discorda</label>
+                    <div class="input-group-custom">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" id="reg-username" class="form-control form-control-icon" placeholder="np. WladekKiero">
+                    </div>
                 </div>
+
                 <div class="mb-3 text-start">
-                    <label class="form-label" data-i18n="pass_label">Hasło</label>
-                    <input type="password" id="reg-password" class="form-control form-control-dark" placeholder="••••••••">
+                    <label class="form-label text-light small ms-2">Adres e-mail</label>
+                    <div class="input-group-custom">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" id="reg-email" class="form-control form-control-icon" placeholder="np. Wladek123@firma.pl">
+                    </div>
                 </div>
+
+                <div class="row g-2 mb-4">
+                    <div class="col-6 text-start">
+                        <label class="form-label text-light small ms-2">Hasło</label>
+                        <div class="input-group-custom">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="reg-password" class="form-control form-control-icon" placeholder="••••••••">
+                        </div>
+                    </div>
+                    <div class="col-6 text-start">
+                        <label class="form-label text-light small ms-2">Powtórz hasło</label>
+                        <div class="input-group-custom">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="reg-confirm-password" class="form-control form-control-icon" placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+
                 <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()" data-i18n="create_acc">Stwórz konto</button>
                 <div class="text-light small"><span data-i18n="have_acc">Masz już konto?</span> <a href="#" class="text-white fw-bold" onclick="showAuthForm('login')" data-i18n="login_btn">Zaloguj się</a></div>
             </div>
@@ -445,6 +525,7 @@
                                 <thead>
                                     <tr class="text-light">
                                         <th data-i18n="th_driver">Kierowca</th>
+                                        <th>E-mail</th>
                                         <th data-i18n="th_role">Rola</th>
                                         <th data-i18n="th_status">Status</th>
                                         <th data-i18n="th_actions">Akcje</th>
@@ -457,7 +538,7 @@
                 </div>
             </div>
 
-            <!-- MODAL UKOŃCZENIA ZLECENIA -->
+            <!-- MODALE -->
             <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content bg-card border-secondary text-light">
@@ -530,7 +611,7 @@
                 </div>
             </div>
 
-            <!-- MODAL ODRZUCENIA TRASY PRZEZ SZEFA Z POWODEM -->
+            <!-- MODAL ODRZUCENIA TRASY -->
             <div class="modal fade" id="rejectJobModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content bg-card border-secondary text-light">
@@ -553,7 +634,7 @@
                 </div>
             </div>
 
-            <!-- MODAL EDYCJI ZLECENIA PRZEZ SZEFA -->
+            <!-- MODAL EDYCJI ZLECENIA -->
             <div class="modal fade" id="editDispatchModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content bg-card border-secondary text-light">
@@ -673,6 +754,11 @@
             document.getElementById('auth-register-card').style.display = type === 'register' ? 'block' : 'none';
         }
 
+        function exitApp() {
+            showAuthForm('none');
+            document.getElementById('auth-main-card').style.display = 'block';
+        }
+
         function resetUserUI() {
             document.getElementById('admin-badge').classList.add('d-none');
             document.getElementById('admin-tab-btn').classList.add('d-none');
@@ -744,34 +830,45 @@
         }
 
         async function performLogin() {
-            const u = document.getElementById('login-username').value.trim();
+            const email = document.getElementById('login-email').value.trim();
             const p = document.getElementById('login-password').value.trim();
-            if (!u || !p) { alert('Uzupełnij login i hasło!'); return; }
+            if (!email || !p) { alert('Uzupełnij e-mail i hasło!'); return; }
 
             try {
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
+                    body: JSON.stringify({ email, password: p })
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    localStorage.setItem('vtc_logged_user', u);
+                    localStorage.setItem('vtc_logged_user', email);
                     checkUser();
                 } else { alert(data.error || 'Błąd logowania'); }
             } catch (err) { alert('Błąd połączenia z serwerem.'); }
         }
 
         async function performRegister() {
-            const u = document.getElementById('reg-username').value.trim();
-            const p = document.getElementById('reg-password').value.trim();
-            if (!u || !p) { alert('Uzupełnij login i hasło!'); return; }
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            const confirmPassword = document.getElementById('reg-confirm-password').value.trim();
+
+            if (!username || !email || !password || !confirmPassword) {
+                alert('Wypełnij wszystkie pola formularza!');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Wpisane hasła nie są identyczne!');
+                return;
+            }
 
             try {
                 const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
+                    body: JSON.stringify({ username, email, password, confirmPassword })
                 });
                 const data = await res.json();
                 alert(data.message || data.error);
@@ -1374,7 +1471,7 @@
                 tbody.innerHTML = '';
                 users.forEach(u => {
                     let action = u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser(${u.id})">Zatwierdź</button>` : '<span class="badge bg-success">Aktywny</span>';
-                    tbody.innerHTML += `<tr><td class="text-white">${u.username}</td><td class="text-white">${u.role}</td><td>${action}</td><td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Usuń</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td class="text-white">${u.username}</td><td class="text-white">${u.email || '-'}</td><td class="text-white">${u.role}</td><td>${action}</td><td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Usuń</button></td></tr>`;
                 });
             }
         }
