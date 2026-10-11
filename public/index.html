@@ -7,54 +7,143 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { 
-            background-color: #111316; 
+            background-color: #0b0c0e; 
             color: #ffffff; 
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
+            overflow-x: hidden;
         }
 
-        .bg-card { 
-            background-color: #1a1d21; 
-            border: 1px solid #2d3238; 
-            border-radius: 20px; 
+        /* BOCZNY SIDEBAR (MENU) */
+        .sidebar {
+            width: 250px;
+            background-color: #121418;
+            border-right: 1px solid #1f2329;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
         }
 
-        .nav-link-custom { 
-            color: #b0b6c2; 
-            text-decoration: none; 
-            font-weight: 500; 
-            padding: 8px 16px; 
-            transition: all 0.2s; 
-            cursor: pointer; 
-            font-size: 1.05rem;
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #1f2329;
         }
 
-        .nav-link-custom:hover, .nav-link-custom.active { 
-            color: #ffffff !important; 
-            font-weight: 700;
-            border-bottom: 2px solid #ffffff;
+        .sidebar-user {
+            padding: 16px 20px;
+            background-color: #181b20;
+            margin: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #252a32;
         }
 
-        .user-pill-btn {
-            background: transparent;
-            border: 1px solid #4a505a;
+        .nav-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px 16px;
+            flex-grow: 1;
+        }
+
+        .nav-item-bms {
+            color: #8c93a0;
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .nav-item-bms:hover, .nav-item-bms.active {
             color: #ffffff;
-            border-radius: 30px;
-            padding: 6px 20px;
-            font-weight: bold;
-            font-style: italic;
-            font-size: 1.1rem;
+            background-color: #21252d;
+        }
+
+        /* GŁÓWNA ZAWARTOŚĆ */
+        .main-wrapper {
+            margin-left: 250px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* TOPBAR (GÓRNY PASEK) */
+        .topbar {
+            background-color: #121418;
+            border-bottom: 1px solid #1f2329;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-clock {
+            background-color: #181b20;
+            border: 1px solid #252a32;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #28a745;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bg-card-bms {
+            background-color: #14171c;
+            border: 1px solid #21262f;
+            border-radius: 18px;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #7012ce 0%, #a020f0 100%);
+            border-radius: 20px;
+            padding: 28px 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-box {
+            background-color: #14171c;
+            border: 1px solid #21262f;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background-color: #1f242d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00d26a;
+            font-size: 1.2rem;
         }
 
         /* TŁO EKRANU AUTORYZACJI */
         .auth-bg { 
-            background-color: #121417;
+            background-color: #0c0d0e;
             min-height: 100vh; 
         }
 
-        /* STYLIZACJA INPUTÓW Z IKONAMI W WEWNĄTRZ */
         .input-group-custom {
             position: relative;
             display: flex;
@@ -70,8 +159,8 @@
         }
 
         .form-control-icon {
-            background-color: #24282e;
-            border: 1px solid #383e46;
+            background-color: #1a1d22;
+            border: 1px solid #2f3540;
             color: #ffffff;
             border-radius: 30px !important;
             padding: 12px 20px 12px 48px;
@@ -79,9 +168,9 @@
         }
 
         .form-control-icon:focus {
-            background-color: #2b3036;
+            background-color: #21252d;
             color: #ffffff;
-            border-color: #ffffff;
+            border-color: #8c93a0;
             box-shadow: none;
         }
 
@@ -97,74 +186,32 @@
 
         .btn-pill-white:hover {
             background-color: #e0e0e0;
-            color: #000000;
         }
 
         .btn-pill-dark {
-            background-color: #262a30;
+            background-color: #1d2128;
             color: #ffffff;
             font-weight: 600;
             border-radius: 30px;
-            border: 1px solid #3c424c;
+            border: 1px solid #2f3540;
             padding: 12px 24px;
             transition: all 0.2s ease;
         }
 
         .btn-pill-dark:hover {
-            background-color: #323842;
-            color: #ffffff;
+            background-color: #282d37;
         }
 
-        /* PIGUŁKI WYKONANYCH TRAS I RANKINGU */
         .pill-row {
-            border: 1px solid #3c424c;
-            border-radius: 50px;
-            background-color: #1d2126;
-            margin-bottom: 12px;
+            border: 1px solid #252a32;
+            border-radius: 40px;
+            background-color: #181b20;
+            margin-bottom: 10px;
             padding: 10px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            text-align: center;
-            font-size: 0.95rem;
-            transition: border-color 0.2s;
-        }
-
-        .pill-row:hover {
-            border-color: #6c757d;
-        }
-
-        .pill-col {
-            flex: 1;
-            padding: 0 10px;
-            border-right: 1px solid #383e46;
-        }
-
-        .pill-col:last-child {
-            border-right: none;
-        }
-
-        .truck-card { 
-            background-color: #1a1d21; 
-            border: 1px solid #2d3238; 
-            border-radius: 24px; 
-            cursor: pointer; 
-            transition: transform 0.2s, border-color 0.2s; 
-            min-height: 220px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .truck-card:hover { 
-            transform: translateY(-4px); 
-            border-color: #58606d; 
-        }
-
-        footer { 
-            margin-top: auto; 
-            background-color: #0c0d0e; 
-            border-top: 1px solid #1f2226; 
+            font-size: 0.9rem;
         }
 
         .notif-badge { 
@@ -178,8 +225,8 @@
 
         .notif-dropdown { 
             width: 340px; 
-            background-color: #1a1d21; 
-            border: 1px solid #2d3238; 
+            background-color: #181b20; 
+            border: 1px solid #252a32; 
             max-height: 380px; 
             overflow-y: auto; 
         }
@@ -190,24 +237,24 @@
         }
 
         .notif-item:hover {
-            background-color: #262a30;
+            background-color: #21252d;
         }
     </style>
 </head>
 <body>
 
-    <div id="app" class="w-100 flex-grow-1 d-flex flex-column">
+    <div id="app" class="w-100 min-vh-100">
+
         <!-- EKRAN AUTORYZACJI -->
         <div id="auth-section" class="auth-bg flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
             <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 110px;" onerror="this.style.display='none'"></div>
             
-            <!-- EKRAN WYBORU (ZALOGUJ / ZAREJESTRUJ / WYJDŹ) -->
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
                 <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')">
-                    <i class="fa-solid fa-download me-2"></i> <span data-i18n="login_btn">Zaloguj się</span>
+                    <i class="fa-solid fa-download me-2"></i> <span>Zaloguj się</span>
                 </button>
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')">
-                    <i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="register_btn">Zarejestruj się</span>
+                    <i class="fa-solid fa-user-plus me-2"></i> <span>Zarejestruj się</span>
                 </button>
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="exitApp()">
                     <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> <span>Wyjdź</span>
@@ -215,9 +262,9 @@
             </div>
 
             <!-- EKRAN LOGOWANIA -->
-            <div id="auth-login-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
-                <h3 class="fw-bold mb-1 text-white" data-i18n="login_title">Witaj ponownie!</h3>
-                <p class="text-light small mb-4" data-i18n="login_sub">Zaloguj się do Mazren Control System</p>
+            <div id="auth-login-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
+                <h3 class="fw-bold mb-1 text-white">Witaj ponownie!</h3>
+                <p class="text-light small mb-4">Zaloguj się do Mazren Control System</p>
                 
                 <div class="mb-3 text-start">
                     <label class="form-label text-light small ms-2">Adres e-mail lub Login</label>
@@ -235,14 +282,14 @@
                     </div>
                 </div>
 
-                <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()" data-i18n="login_btn">Zaloguj się</button>
-                <div class="text-light small"><span data-i18n="no_acc">Nie masz jeszcze konta?</span> <a href="#" class="text-white fw-bold" onclick="showAuthForm('register')" data-i18n="register_btn">Zarejestruj się</a></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()">Zaloguj się</button>
+                <div class="text-light small">Nie masz jeszcze konta? <a href="#" class="text-white fw-bold" onclick="showAuthForm('register')">Zarejestruj się</a></div>
             </div>
 
             <!-- EKRAN REJESTRACJI -->
-            <div id="auth-register-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
-                <h3 class="fw-bold mb-1 text-white" data-i18n="reg_title">Rejestracja konta</h3>
-                <p class="text-light small mb-4" data-i18n="reg_sub">Stwórz konto w Mazren Control System</p>
+            <div id="auth-register-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
+                <h3 class="fw-bold mb-1 text-white">Rejestracja konta</h3>
+                <p class="text-light small mb-4">Stwórz konto w Mazren Control System</p>
                 
                 <div class="mb-3 text-start">
                     <label class="form-label text-light small ms-2">Nick z Discorda</label>
@@ -277,394 +324,428 @@
                     </div>
                 </div>
 
-                <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()" data-i18n="create_acc">Stwórz konto</button>
-                <div class="text-light small"><span data-i18n="have_acc">Masz już konto?</span> <a href="#" class="text-white fw-bold" onclick="showAuthForm('login')" data-i18n="login_btn">Zaloguj się</a></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()">Stwórz konto</button>
+                <div class="text-light small">Masz już konto? <a href="#" class="text-white fw-bold" onclick="showAuthForm('login')">Zaloguj się</a></div>
             </div>
 
             <div class="text-light small">© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
         </div>
 
-        <!-- PANEL GŁÓWNY -->
-        <div id="dashboard-section" class="flex-grow-1 flex-column" style="display:none;">
-            <nav class="navbar navbar-expand-lg border-bottom border-dark py-3" style="background-color: #141619;">
-                <div class="container">
-                    <a class="navbar-brand me-3" onclick="switchTab('jobs')">
-                        <img src="/logo.png" style="max-height: 50px;" onerror="this.style.display='none'">
-                    </a>
+        <!-- PANEL GŁÓWNY (BMS STYLE) -->
+        <div id="dashboard-section" style="display:none;">
+            
+            <!-- BOCZNY SIDEBAR -->
+            <aside class="sidebar">
+                <div class="sidebar-brand">
+                    <i class="fa-solid fa-truck-fast text-white fs-4"></i>
+                    <span class="fw-bold text-white fs-5">BMS</span>
+                </div>
 
-                    <div class="d-flex align-items-center order-lg-last ms-auto me-2">
-                        <div class="dropdown me-3">
+                <div class="sidebar-user">
+                    <div class="text-secondary small">ZALOGOWANY JAKO</div>
+                    <div class="fw-bold text-white fs-6" id="user-display">Arkadiusz</div>
+                    <span id="admin-badge" class="badge bg-danger mt-1 d-none">SZEF / WŁAŚCICIEL</span>
+                </div>
+
+                <nav class="nav-sidebar">
+                    <a id="nav-dashboard" class="nav-item-bms active" onclick="switchTab('dashboard')">
+                        <i class="fa-solid fa-border-all"></i> Pulpit
+                    </a>
+                    <a id="nav-company-stats" class="nav-item-bms" onclick="switchTab('company-stats')">
+                        <i class="fa-solid fa-chart-line"></i> Statystyki Firmy
+                    </a>
+                    <a id="nav-finances" class="nav-item-bms" onclick="switchTab('finances')">
+                        <i class="fa-solid fa-vault"></i> Finanse
+                    </a>
+                    <a id="nav-dispatcher" class="nav-item-bms" onclick="switchTab('dispatcher')">
+                        <i class="fa-solid fa-headset"></i> Dyspozytornia
+                    </a>
+                    <a id="nav-garage" class="nav-item-bms" onclick="switchTab('garage')">
+                        <i class="fa-solid fa-truck"></i> Garaż
+                    </a>
+                    <a id="nav-documents" class="nav-item-bms" onclick="switchTab('documents')">
+                        <i class="fa-solid fa-folder-open"></i> Dokumenty
+                    </a>
+                    <a id="nav-about" class="nav-item-bms" onclick="switchTab('about')">
+                        <i class="fa-solid fa-circle-info"></i> O nas
+                    </a>
+                    <a id="admin-tab-btn" class="nav-item-bms text-warning d-none" onclick="switchTab('management')">
+                        <i class="fa-solid fa-user-gear"></i> Zarządzanie
+                    </a>
+                </nav>
+
+                <div class="p-3 border-top border-dark">
+                    <button class="nav-item-bms text-danger w-100 border-0 bg-transparent" onclick="performLogout()">
+                        <i class="fa-solid fa-right-from-bracket"></i> Wyloguj się
+                    </button>
+                </div>
+            </aside>
+
+            <!-- GŁÓWNY ZAWARTY WRAPPER -->
+            <div class="main-wrapper">
+                
+                <!-- GÓRNY PASEK -->
+                <header class="topbar">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="topbar-clock">
+                            <i class="fa-regular fa-calendar me-1"></i>
+                            <span id="current-date">Ładowanie daty...</span>
+                        </div>
+                        <div class="topbar-clock">
+                            <i class="fa-regular fa-clock me-1"></i>
+                            <span id="live-clock">00:00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="dropdown">
                             <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" onclick="markNotifsAsRead()">
                                 <i class="fa-solid fa-bell"></i>
                                 <span id="notif-count" class="badge bg-danger notif-badge d-none">0</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end notif-dropdown p-2 shadow-lg" id="notif-list">
-                                <li class="text-center text-muted small py-2" data-i18n="no_notifs">Brak powiadomień</li>
+                                <li class="text-center text-muted small py-2">Brak powiadomień</li>
                             </ul>
                         </div>
 
-                        <div class="user-pill-btn me-3 d-flex align-items-center">
-                            <span id="user-display">WladekKiero</span>
-                            <span id="admin-badge" class="badge bg-danger ms-2 d-none" style="font-style: normal; font-size: 10px;">SZEF</span>
-                        </div>
-
-                        <select id="lang-selector" class="form-select form-select-sm form-control-dark w-auto me-2" onchange="changeLanguage(this.value)">
+                        <select id="lang-selector" class="form-select form-select-sm bg-dark text-white border-secondary w-auto" onchange="changeLanguage(this.value)">
                             <option value="pl">🇵🇱 PL</option>
                             <option value="en">🇬🇧 EN</option>
                         </select>
+                    </div>
+                </header>
+
+                <main class="container-fluid p-4 flex-grow-1">
+
+                    <!-- STRONA GŁÓWNA - PULPIT KIEROWCY -->
+                    <div id="tab-dashboard">
                         
-                        <button class="btn btn-outline-danger btn-sm rounded-circle" onclick="performLogout()"><i class="fa-solid fa-power-off"></i></button>
-                    </div>
-
-                    <div class="navbar-nav ms-auto me-auto flex-row gap-2">
-                        <a id="nav-jobs" class="nav-link-custom active" onclick="switchTab('jobs')" data-i18n="nav_home">Strona Główna</a>
-                        <a id="nav-finances" class="nav-link-custom" onclick="switchTab('finances')" data-i18n="nav_finances">Finanse</a>
-                        <a id="nav-dispatcher" class="nav-link-custom" onclick="switchTab('dispatcher')" data-i18n="nav_dispatcher">Dyspozytornia</a>
-                        <a id="nav-garage" class="nav-link-custom" onclick="switchTab('garage')" data-i18n="nav_garage">Garaż</a>
-                        <a id="nav-documents" class="nav-link-custom" onclick="switchTab('documents')" data-i18n="nav_docs">Dokumenty</a>
-                        <a id="nav-about" class="nav-link-custom" onclick="switchTab('about')" data-i18n="nav_about">O nas</a>
-                        <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" onclick="switchTab('management')" data-i18n="nav_manage">Zarządzanie</a>
-                    </div>
-                </div>
-            </nav>
-
-            <div class="container py-4 flex-grow-1">
-                <!-- STRONA GŁÓWNA -->
-                <div id="tab-jobs">
-                    <div class="row g-4 mb-4">
-                        <div class="col-md-12">
-                            <div class="bg-card p-4">
-                                <h5 class="text-light mb-1" data-i18n="company_budget">Budżet firmy:</h5>
-                                <h1 id="company-total-budget" class="fw-bold text-white display-5 mb-0">12848 EURO</h1>
-                            </div>
+                        <!-- BANER POWITALNY -->
+                        <div class="welcome-banner text-white mb-4 shadow">
+                            <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> WITAJ Z POWROTEM</div>
+                            <h2 class="fw-bold display-6 mb-1" id="banner-username">Arkadiusz</h2>
+                            <span class="badge bg-white text-dark fw-bold px-3 py-2 rounded-pill" id="banner-role">Kierowca</span>
                         </div>
-                        <div class="col-md-6">
-                            <div class="bg-card p-4">
-                                <h5 class="text-light mb-2" data-i18n="my_stats">Twoje statystyki: (cel 6000km)</h5>
-                                <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-white border border-secondary" id="my-km-status">
-                                    0 / 6000 km
+
+                        <!-- STATYSTYKI KIEROWCY (KARTY) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <div>
+                                        <div class="text-secondary small">Dystans (Miesiąc)</div>
+                                        <div class="fw-bold fs-4 text-white" id="my-monthly-km">0 km</div>
+                                        <div class="text-muted small">Cel: 6 000 km</div>
+                                    </div>
+                                    <div class="stat-icon"><i class="fa-solid fa-route"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <div>
+                                        <div class="text-secondary small">Dostawy (Miesiąc)</div>
+                                        <div class="fw-bold fs-4 text-white" id="my-monthly-deliveries">0</div>
+                                        <div class="text-muted small">Zrealizowanych ładunków</div>
+                                    </div>
+                                    <div class="stat-icon"><i class="fa-solid fa-box"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <div>
+                                        <div class="text-secondary small">Budżet Firmy</div>
+                                        <div class="fw-bold fs-4 text-white" id="dash-company-budget">0 EURO</div>
+                                        <div class="text-muted small">Dostępne środki</div>
+                                    </div>
+                                    <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <div>
+                                        <div class="text-secondary small">Kilometry Firmy</div>
+                                        <div class="fw-bold fs-4 text-white" id="dash-company-km">0 km</div>
+                                        <div class="text-muted small">Łączny dystans</div>
+                                    </div>
+                                    <div class="stat-icon"><i class="fa-solid fa-globe"></i></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="bg-card p-4">
-                                <h5 class="text-light mb-2" data-i18n="company_stats">Statystyki firmy:</h5>
-                                <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-white border border-secondary" id="company-total-km">
-                                    0 km
+
+                        <!-- MOJE TRASY I TWÓJ ZESTAW -->
+                        <div class="row g-4">
+                            <div class="col-md-7">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i> Wykonane Trasy</h5>
+                                    <div id="my-jobs-container"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-5">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck-front me-2"></i> Twój Zestaw</h5>
+                                    <div id="my-assigned-truck-box">
+                                        <div class="text-muted text-center py-4">Brak przypisanego zestawu w garażu.</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row g-4">
-                        <div class="col-md-7">
-                            <div class="bg-card p-4">
-                                <h4 class="fw-bold mb-4 text-white" data-i18n="completed_jobs">Wykonane trasy:</h4>
-                                <div id="jobs-pill-container"></div>
+                    <!-- ZAKŁADKA: STATYSTYKI FIRMY -->
+                    <div id="tab-company-stats" style="display:none;">
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <div>
+                                        <div class="text-secondary small">Łączne kilometry firmy</div>
+                                        <div class="fw-bold fs-3 text-white" id="company-total-km-full">0 km</div>
+                                    </div>
+                                    <div class="stat-icon"><i class="fa-solid fa-road"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <div>
+                                        <div class="text-secondary small">Łączna liczba dostaw</div>
+                                        <div class="fw-bold fs-3 text-white" id="company-total-deliveries-full">0</div>
+                                    </div>
+                                    <div class="stat-icon"><i class="fa-solid fa-cubes"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <div>
+                                        <div class="text-secondary small">Stan Budżetu</div>
+                                        <div class="fw-bold fs-3 text-white text-success" id="company-budget-full">0 EURO</div>
+                                    </div>
+                                    <div class="stat-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-5">
-                            <div class="bg-card p-4">
-                                <h4 class="fw-bold mb-4 text-white" data-i18n="ranking">Ranking kierowców:</h4>
-                                <div id="ranking-pill-container"></div>
+
+                        <div class="row g-4">
+                            <div class="col-md-7">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold text-white mb-4">Wszystkie Wykonane Trasy w Firmie</h5>
+                                    <div id="all-jobs-container"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold text-white mb-4">Ranking Kierowców</h5>
+                                    <div id="ranking-container"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- DYSPOZYTOR -->
-                <div id="tab-dispatcher" style="display:none;">
-                    <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
-                        <div class="col-md-12">
-                            <div class="bg-card p-4 border-info">
-                                <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> <span data-i18n="new_dispatch">Nowe Zlecenie w Dyspozytorni</span></h5>
-                                <form id="dispatch-form" class="row g-3">
-                                    <div class="col-md-3"><label class="form-label" data-i18n="assign_driver">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-3"><label class="form-label" data-i18n="truck_set">Zestaw z garażu</label><select id="dispatch_truck" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-3"><label class="form-label" data-i18n="from_city">Skąd</label><input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)"></div>
-                                    <div class="col-md-3"><label class="form-label" data-i18n="to_city">Dokąd</label><input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)"></div>
-                                    <div class="col-md-12"><label class="form-label" data-i18n="notes">Uwagi</label><input type="text" id="dispatch_notes" class="form-control form-control-dark" placeholder="Dodatkowe informacje..."></div>
-                                    <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold" data-i18n="pub_dispatch">Opublikuj zlecenie</button></div>
+                    <!-- FINANSE -->
+                    <div id="tab-finances" style="display:none;">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold mb-3 text-white">Zgłoś wydatek</h5>
+                                    <form id="expense-form">
+                                        <div class="mb-3">
+                                            <label class="form-label">Typ wydatku</label>
+                                            <select id="expense_type" class="form-select form-control-icon text-white" required>
+                                                <option value="fuel">⛽ Paliwo</option>
+                                                <option value="service">🔧 Serwis / Naprawa</option>
+                                                <option value="fine">🚨 Mandat</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Kwota (€)</label>
+                                            <input type="number" id="expense_amount" class="form-control form-control-icon text-white" placeholder="np. 450" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Opis / Miejsce</label>
+                                            <input type="text" id="expense_desc" class="form-control form-control-icon text-white" placeholder="np. Tankowanie">
+                                        </div>
+                                        <button type="submit" class="btn btn-pill-white w-100 fw-bold">+ Dodaj Wydatek</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold mb-3 text-white">Rejestr wydatków firmy</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-dark align-middle mb-0">
+                                            <thead>
+                                                <tr class="text-light border-secondary">
+                                                    <th>Kierowca</th>
+                                                    <th>Typ</th>
+                                                    <th>Opis</th>
+                                                    <th>Kwota</th>
+                                                    <th>Akcje</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="expenses-table-body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DYSPOZYTOR -->
+                    <div id="tab-dispatcher" style="display:none;">
+                        <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
+                            <div class="col-md-12">
+                                <div class="bg-card-bms p-4 border-info">
+                                    <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> Nowe Zlecenie w Dyspozytorni</h5>
+                                    <form id="dispatch-form" class="row g-3">
+                                        <div class="col-md-3"><label class="form-label">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-3"><label class="form-label">Zestaw z garażu</label><select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-3"><label class="form-label">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
+                                        <div class="col-md-3"><label class="form-label">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
+                                        <div class="col-md-12"><label class="form-label">Uwagi</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
+                                        <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold">Opublikuj zlecenie</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-card-bms p-4">
+                            <h4 class="fw-bold mb-4 text-white">Dostępne trasy w Dyspozytorni:</h4>
+                            <div id="dispatches-container" class="row g-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- GARAŻ -->
+                    <div id="tab-garage" style="display:none;">
+                        <div id="garage-main-view">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="fw-bold mb-0 text-white">Flota i Garaż</h3>
+                                <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> Dodaj do Garażu</button>
+                            </div>
+
+                            <div id="truck-add-form" class="bg-card-bms p-4 mb-4 d-none">
+                                <h5 class="fw-bold text-warning mb-3">Dodaj nowy zestaw do Floty</h5>
+                                <form id="truck-form">
+                                    <div class="row g-3">
+                                        <div class="col-md-4"><label class="form-label">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control bg-dark text-white border-secondary" required placeholder="np. VOLVO FH2"></div>
+                                        <div class="col-md-4"><label class="form-label">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-4"><label class="form-label">Rejestracja</label><input type="text" name="plates" class="form-control bg-dark text-white border-secondary" required placeholder="np. WRA 6509S"></div>
+                                        <div class="col-md-4"><label class="form-label">Kabina</label><input type="text" name="cabin" class="form-control bg-dark text-white border-secondary" placeholder="np. Globetrotter XL"></div>
+                                        <div class="col-md-4"><label class="form-label">Podwozie</label><input type="text" name="chassis" class="form-control bg-dark text-white border-secondary" placeholder="np. 4x2"></div>
+                                        <div class="col-md-4"><label class="form-label">Silnik</label><input type="text" name="engine" class="form-control bg-dark text-white border-secondary" placeholder="np. D13A500"></div>
+                                        <div class="col-md-4"><label class="form-label">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control bg-dark text-white border-secondary" placeholder="np. I-Shift"></div>
+                                        <div class="col-md-4"><label class="form-label">Wnętrze</label><input type="text" name="interior" class="form-control bg-dark text-white border-secondary" placeholder="np. Standard"></div>
+                                        <div class="col-md-4"><label class="form-label">Akcesoria</label><input type="text" name="accessories" class="form-control bg-dark text-white border-secondary" placeholder="np. Własne"></div>
+                                    </div>
+                                    <button type="submit" class="btn btn-pill-white fw-bold mt-3">Zapisz w Garażu</button>
                                 </form>
                             </div>
+
+                            <div id="garage-grid" class="row g-4"></div>
+                        </div>
+
+                        <div id="garage-detail-view" style="display: none;">
+                            <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> Powrót</button>
+                            <div class="bg-card-bms p-4 p-md-5" id="truck-detail-content"></div>
                         </div>
                     </div>
 
-                    <div class="bg-card p-4">
-                        <h4 class="fw-bold mb-4 text-white" data-i18n="avail_dispatches">! Dostępne trasy w Dyspozytorni:</h4>
-                        <div id="dispatches-container" class="row g-3"></div>
-                    </div>
-                </div>
-
-                <!-- FINANSE -->
-                <div id="tab-finances" style="display:none;">
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white" data-i18n="add_expense">Zgłoś wydatek</h5>
-                                <form id="expense-form">
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="exp_type">Typ wydatku</label>
-                                        <select id="expense_type" class="form-select form-control-dark" required>
-                                            <option value="fuel">⛽ Paliwo</option>
-                                            <option value="service">🔧 Serwis / Naprawa</option>
-                                            <option value="fine">🚨 Mandat</option>
+                    <!-- DOKUMENTY -->
+                    <div id="tab-documents" style="display:none;">
+                        <div id="add-doc-admin-form" class="bg-card-bms p-4 mb-4 d-none border-warning">
+                            <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-file-circle-plus me-2"></i> Dodaj Nowy Dokument / Pakiet</h5>
+                            <form id="doc-form">
+                                <div class="row g-3">
+                                    <div class="col-md-6"><label class="form-label">Tytuł Dokumentu</label><input type="text" id="doc_title" class="form-control bg-dark text-white border-secondary" required placeholder="np. Regulamin VTC 2026"></div>
+                                    <div class="col-md-6"><label class="form-label">Kategoria</label>
+                                        <select id="doc_category" class="form-select bg-dark text-white border-secondary">
+                                            <option value="Regulamin">Regulamin</option>
+                                            <option value="Pakiety">Pakiety Modyfikacji</option>
+                                            <option value="Instrukcje">Instrukcje</option>
                                         </select>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="exp_amount">Kwota (€)</label>
-                                        <input type="number" id="expense_amount" class="form-control form-control-dark" placeholder="np. 450" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="exp_desc">Opis / Miejsce</label>
-                                        <input type="text" id="expense_desc" class="form-control form-control-dark" placeholder="np. Tankowanie">
-                                    </div>
-                                    <button type="submit" class="btn btn-pill-white w-100 fw-bold" data-i18n="btn_add_exp">+ Dodaj Wydatek</button>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white" data-i18n="expense_log">Rejestr wydatków firmy</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-dark align-middle mb-0">
-                                        <thead>
-                                            <tr class="text-light border-secondary">
-                                                <th data-i18n="th_driver">Kierowca</th>
-                                                <th data-i18n="th_type">Typ</th>
-                                                <th data-i18n="th_desc">Opis</th>
-                                                <th data-i18n="th_amount">Kwota</th>
-                                                <th data-i18n="th_actions">Akcje</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="expenses-table-body"></tbody>
-                                    </table>
+                                    <div class="col-md-12"><label class="form-label">Treść</label><textarea id="doc_content" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Wpisz treść..."></textarea></div>
+                                    <div class="col-md-12"><label class="form-label">Plik / Załącznik (opcjonalnie)</label><input type="file" id="doc_file" class="form-control bg-dark text-white border-secondary"></div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GARAŻ VTC -->
-                <div id="tab-garage" style="display:none;">
-                    <div id="garage-main-view">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold mb-0 text-white" data-i18n="garage_trucks">Ciężarówki</h3>
-                            <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> <span data-i18n="add_to_garage">Dodaj do Garażu</span></button>
-                        </div>
-
-                        <div id="truck-add-form" class="bg-card p-4 mb-4 d-none">
-                            <h5 class="fw-bold text-warning mb-3" data-i18n="add_truck_fleet">Dodaj nowy zestaw do Floty</h5>
-                            <form id="truck-form">
-                                <div class="row g-3">
-                                    <div class="col-md-4"><label class="form-label" data-i18n="truck_model">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
-                                    <div class="col-md-4"><label class="form-label" data-i18n="th_driver">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-4"><label class="form-label" data-i18n="plates">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
-                                    <div class="col-md-4"><label class="form-label">Kabina</label><input type="text" name="cabin" class="form-control form-control-dark" placeholder="np. Globetrotter XL"></div>
-                                    <div class="col-md-4"><label class="form-label">Podwozie</label><input type="text" name="chassis" class="form-control form-control-dark" placeholder="np. 4x2"></div>
-                                    <div class="col-md-4"><label class="form-label">Silnik</label><input type="text" name="engine" class="form-control form-control-dark" placeholder="np. D13A500"></div>
-                                    <div class="col-md-4"><label class="form-label">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control form-control-dark" placeholder="np. I-Shift"></div>
-                                    <div class="col-md-4"><label class="form-label">Wnętrze</label><input type="text" name="interior" class="form-control form-control-dark" placeholder="np. Standard"></div>
-                                    <div class="col-md-4"><label class="form-label">Akcesoria</label><input type="text" name="accessories" class="form-control form-control-dark" placeholder="np. Własne"></div>
-                                </div>
-                                <button type="submit" class="btn btn-pill-white fw-bold mt-3" data-i18n="save_garage">Zapisz w Garażu</button>
+                                <button type="submit" class="btn btn-pill-white fw-bold mt-3">Opublikuj Dokument</button>
                             </form>
                         </div>
 
-                        <div id="garage-grid" class="row g-4"></div>
-                    </div>
-
-                    <div id="garage-detail-view" style="display: none;">
-                        <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> <span data-i18n="back">Powrót</span></button>
-                        <div class="bg-card p-4 p-md-5" id="truck-detail-content"></div>
-                    </div>
-                </div>
-
-                <!-- DOKUMENTY (REGULAMIN / PAKIETY) -->
-                <div id="tab-documents" style="display:none;">
-                    <div id="add-doc-admin-form" class="bg-card p-4 mb-4 d-none border-warning">
-                        <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-file-circle-plus me-2"></i> <span data-i18n="add_new_doc">Dodaj Nowy Dokument / Pakiet</span></h5>
-                        <form id="doc-form">
-                            <div class="row g-3">
-                                <div class="col-md-6"><label class="form-label" data-i18n="doc_title">Tytuł Dokumentu</label><input type="text" id="doc_title" class="form-control form-control-dark" required placeholder="np. Regulamin VTC 2026"></div>
-                                <div class="col-md-6"><label class="form-label" data-i18n="doc_cat">Kategoria</label>
-                                    <select id="doc_category" class="form-select form-control-dark">
-                                        <option value="Regulamin">Regulamin</option>
-                                        <option value="Pakiety">Pakiety Modyfikacji</option>
-                                        <option value="Instrukcje">Instrukcje</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-12"><label class="form-label" data-i18n="doc_content">Treść</label><textarea id="doc_content" class="form-control form-control-dark" rows="3" placeholder="Wpisz treść..."></textarea></div>
-                                <div class="col-md-12"><label class="form-label" data-i18n="doc_file">Plik / Załącznik (opcjonalnie)</label><input type="file" id="doc_file" class="form-control form-control-dark"></div>
-                            </div>
-                            <button type="submit" class="btn btn-pill-white fw-bold mt-3" data-i18n="pub_doc">Opublikuj Dokument</button>
-                        </form>
-                    </div>
-
-                    <div class="bg-card p-4">
-                        <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="company_docs">Dokumenty i Regulaminy Firmowe</span></h4>
-                        <div id="documents-container" class="row g-4"></div>
-                    </div>
-                </div>
-
-                <!-- O NAS -->
-                <div id="tab-about" style="display:none;">
-                    <div class="bg-card p-5 text-center my-4" style="max-width: 900px; margin: 0 auto; border-radius: 28px;">
-                        <p class="fs-5 leading-relaxed text-white">
-                            <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!
-                        </p>
-                    </div>
-                </div>
-
-                <!-- ZARZĄDZANIE KONTAMI -->
-                <div id="tab-management" style="display:none;">
-                    <div class="bg-card p-4">
-                        <h4 class="fw-bold mb-3 text-warning" data-i18n="manage_users">Zarządzanie Kontami Kierowców</h4>
-                        <div class="table-responsive">
-                            <table class="table table-dark align-middle">
-                                <thead>
-                                    <tr class="text-light">
-                                        <th data-i18n="th_driver">Kierowca</th>
-                                        <th>E-mail</th>
-                                        <th data-i18n="th_role">Rola</th>
-                                        <th data-i18n="th_status">Status</th>
-                                        <th data-i18n="th_actions">Akcje</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="management-users-list"></tbody>
-                            </table>
+                        <div class="bg-card-bms p-4">
+                            <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> Dokumenty i Regulaminy Firmowe</h4>
+                            <div id="documents-container" class="row g-4"></div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- O NAS -->
+                    <div id="tab-about" style="display:none;">
+                        <div class="bg-card-bms p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
+                            <p class="fs-5 leading-relaxed text-white">
+                                <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ZARZĄDZANIE -->
+                    <div id="tab-management" style="display:none;">
+                        <div class="bg-card-bms p-4">
+                            <h4 class="fw-bold mb-3 text-warning">Zarządzanie Kontami Kierowców</h4>
+                            <div class="table-responsive">
+                                <table class="table table-dark align-middle">
+                                    <thead>
+                                        <tr class="text-light">
+                                            <th>Kierowca</th>
+                                            <th>E-mail</th>
+                                            <th>Rola</th>
+                                            <th>Status</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="management-users-list"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </main>
             </div>
-
-            <!-- MODALE -->
-            <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content bg-card border-secondary text-light">
-                        <div class="modal-header border-secondary">
-                            <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-flag-checkered me-2"></i> Potwierdzenie i przesyłanie trasy</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form id="complete-dispatch-form">
-                            <div class="modal-body p-4">
-                                <input type="hidden" id="modal_dispatch_id" name="dispatch_id">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="mb-3"><label class="form-label" data-i18n="th_cargo">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
-                                        <div class="mb-3"><label class="form-label" data-i18n="th_dist">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
-                                        <div class="mb-3"><label class="form-label" data-i18n="th_income">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Dowód (zdjęcie z ETS2)</label>
-                                            <input type="file" id="modal_summary" name="summary_photo" accept="image/*" class="form-control form-control-dark">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">CMR (plik)</label>
-                                            <input type="file" id="modal_cmr" name="cmr_file" accept="image/*" class="form-control form-control-dark">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer border-secondary">
-                                <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
-                                <button type="submit" class="btn btn-pill-white btn-sm fw-bold px-4" data-i18n="send_route">Prześlij trasę</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MODAL EDYCJI WYDATKU -->
-            <div class="modal fade" id="editExpenseModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content bg-card border-secondary text-light">
-                        <div class="modal-header border-secondary">
-                            <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-pen-to-square me-2"></i> Edycja Wydatku</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-4">
-                            <input type="hidden" id="edit_expense_id">
-                            <div class="mb-3">
-                                <label class="form-label" data-i18n="exp_type">Typ wydatku</label>
-                                <select id="edit_expense_type" class="form-select form-control-dark" required>
-                                    <option value="fuel">⛽ Paliwo</option>
-                                    <option value="service">🔧 Serwis / Naprawa</option>
-                                    <option value="fine">🚨 Mandat</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label" data-i18n="exp_amount">Kwota (€)</label>
-                                <input type="number" id="edit_expense_amount" class="form-control form-control-dark" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label" data-i18n="exp_desc">Opis / Miejsce</label>
-                                <input type="text" id="edit_expense_desc" class="form-control form-control-dark">
-                            </div>
-                        </div>
-                        <div class="modal-footer border-secondary">
-                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
-                            <button type="button" class="btn btn-pill-white btn-sm fw-bold px-4" onclick="submitEditExpense()" data-i18n="save_changes">Zapisz Zmiany</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MODAL ODRZUCENIA TRASY -->
-            <div class="modal fade" id="rejectJobModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content bg-card border-secondary text-light">
-                        <div class="modal-header border-secondary">
-                            <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i> Odrzucenie raportu trasy</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-4">
-                            <input type="hidden" id="reject_job_id">
-                            <div class="mb-3">
-                                <label class="form-label">Podaj powód odrzucenia trasy:</label>
-                                <textarea id="reject_reason_text" class="form-control form-control-dark" rows="3" placeholder="np. Nieczytelne zdjęcie CMR, błędny dystans itp."></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer border-secondary">
-                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
-                            <button type="button" class="btn btn-danger btn-sm fw-bold px-4" onclick="confirmRejectJob()">Odrzuć i wyślij powiadomienie</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MODAL EDYCJI ZLECENIA -->
-            <div class="modal fade" id="editDispatchModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content bg-card border-secondary text-light">
-                        <div class="modal-header border-secondary">
-                            <h5 class="modal-title fw-bold text-warning"><i class="fa-solid fa-pen-to-square me-2"></i> Edycja Zlecenia</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="hidden" id="edit_dispatch_id">
-                            <div class="mb-3"><label class="form-label" data-i18n="assign_driver">Przypisz kierowcę</label><select id="edit_dispatch_assigned" class="form-select form-control-dark"></select></div>
-                            <div class="mb-3"><label class="form-label" data-i18n="truck_set">Zestaw z garażu</label><select id="edit_dispatch_truck" class="form-select form-control-dark"></select></div>
-                            <div class="mb-3"><label class="form-label" data-i18n="from_city">Skąd</label><input type="text" id="edit_dispatch_start" class="form-control form-control-dark" required></div>
-                            <div class="mb-3"><label class="form-label" data-i18n="to_city">Dokąd</label><input type="text" id="edit_dispatch_end" class="form-control form-control-dark" required></div>
-                            <div class="mb-3"><label class="form-label" data-i18n="notes">Uwagi</label><textarea id="edit_dispatch_notes" class="form-control form-control-dark" rows="2"></textarea></div>
-                        </div>
-                        <div class="modal-footer border-secondary">
-                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
-                            <button type="button" class="btn btn-pill-white btn-sm fw-bold px-4" onclick="submitEditDispatch()" data-i18n="save_changes">Zapisz Zmiany</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <footer class="py-3 text-light small">
-                <div class="container d-flex justify-content-between align-items-center">
-                    <div>© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
-                    <div class="fw-bold">Mazren Control System</div>
-                </div>
-            </footer>
         </div>
+
+        <!-- MODALE -->
+        <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-card-bms border-secondary text-light">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-flag-checkered me-2"></i> Potwierdzenie i przesyłanie trasy</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="complete-dispatch-form">
+                        <div class="modal-body p-4">
+                            <input type="hidden" id="modal_dispatch_id" name="dispatch_id">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3"><label class="form-label">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Części samochodowe"></div>
+                                    <div class="mb-3"><label class="form-label">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control bg-dark text-white border-secondary" placeholder="np. 1250" required></div>
+                                    <div class="mb-3"><label class="form-label">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control bg-dark text-white border-secondary" placeholder="np. 48000" required></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Dowód (zdjęcie z ETS2)</label>
+                                        <input type="file" id="modal_summary" name="summary_photo" accept="image/*" class="form-control bg-dark text-white border-secondary">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">CMR (plik)</label>
+                                        <input type="file" id="modal_cmr" name="cmr_file" accept="image/*" class="form-control bg-dark text-white border-secondary">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal">Anuluj</button>
+                            <button type="submit" class="btn btn-pill-white btn-sm fw-bold px-4">Prześlij trasę</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -674,79 +755,20 @@
         let currentUsername = '';
         let currentLang = 'pl';
         let groupedTrucksData = {};
-        let allDispatchesCache = [];
-        let allExpensesCache = [];
 
-        const countryFlags = {
-            'PL': '🇵🇱', 'DE': '🇩🇪', 'ES': '🇪🇸', 'FR': '🇫🇷', 'IT': '🇮🇹', 'NL': '🇳🇱',
-            'BE': '🇧🇪', 'UK': '🇬🇧', 'GB': '🇬🇧', 'CZ': '🇨🇿', 'SK': '🇸🇰', 'AT': '🇦🇹',
-            'CH': '🇨🇭', 'SE': '🇸🇪', 'NO': '🇳🇴', 'FI': '🇫🇮', 'DK': '🇩🇰', 'HU': '🇭🇺',
-            'RO': '🇷🇴', 'BG': '🇧🇬', 'HR': '🇭🇷', 'SL': '🇸🇮', 'LT': '🇱🇹', 'LV': '🇱🇻', 'EE': '🇪🇪'
-        };
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('pl-PL');
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            let dateStr = now.toLocaleDateString('pl-PL', options);
+            dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
-        function getFlag(text) {
-            const match = text.match(/\(([^)]+)\)/);
-            if (match && match[1]) {
-                const code = match[1].toUpperCase().trim();
-                return countryFlags[code] ? countryFlags[code] + ' ' : '';
-            }
-            return '';
+            document.getElementById('live-clock').innerText = timeStr;
+            document.getElementById('current-date').innerText = dateStr;
         }
-
-        const i18n = {
-            pl: {
-                login_btn: "Zaloguj się", register_btn: "Zarejestruj się", login_title: "Witaj ponownie!",
-                login_sub: "Zaloguj się do Mazren Control System", login_label: "Login / Nick", pass_label: "Hasło",
-                no_acc: "Nie masz jeszcze konta?", reg_title: "Rejestracja konta", reg_sub: "Stwórz konto w Mazren Control System",
-                create_acc: "Stwórz konto", have_acc: "Masz już konto?", no_notifs: "Brak powiadomień",
-                nav_home: "Strona Główna", nav_finances: "Finanse", nav_dispatcher: "Dyspozytornia", nav_garage: "Garaż",
-                nav_docs: "Dokumenty", nav_about: "O nas", nav_manage: "Zarządzanie", company_budget: "Budżet firmy:",
-                my_stats: "Twoje statystyki: (cel 6000km)", company_stats: "Statystyki firmy:", completed_jobs: "Wykonane trasy:",
-                th_driver: "Kierowca", th_route: "Trasa / Pliki", th_dist: "Dystans", th_income: "Zarobek", th_cargo: "Towar",
-                th_actions: "Akcje", ranking: "Ranking kierowców:", new_dispatch: "Nowe Zlecenie w Dyspozytorni",
-                assign_driver: "Przypisz kierowcę", truck_set: "Zestaw z garażu", from_city: "Skąd", to_city: "Dokąd",
-                notes: "Uwagi", pub_dispatch: "Opublikuj zlecenie", avail_dispatches: "! Dostępne trasy w Dyspozytorni:",
-                add_expense: "Zgłoś wydatek", exp_type: "Typ wydatku", exp_amount: "Kwota (€)", exp_desc: "Opis / Miejsce",
-                btn_add_exp: "+ Dodaj Wydatek", expense_log: "Rejestr wydatków firmy", th_type: "Typ", th_desc: "Opis",
-                th_amount: "Kwota", garage_trucks: "Ciężarówki", add_to_garage: "Dodaj do Garażu", add_truck_fleet: "Dodaj nowy zestaw do Floty",
-                truck_model: "Model Ciężarówki", plates: "Rejestracja", save_garage: "Zapisz w Garażu", back: "Powrót",
-                add_new_doc: "Dodaj Nowy Dokument / Pakiet", doc_title: "Tytuł Dokumentu", doc_cat: "Kategoria", doc_content: "Treść",
-                doc_file: "Plik / Załącznik (opcjonalnie)", pub_doc: "Opublikuj Dokument", company_docs: "Dokumenty i Regulaminy Firmowe",
-                manage_users: "Zarządzanie Kontami Kierowców", th_role: "Rola", th_status: "Status", cancel: "Anuluj",
-                send_route: "Prześlij trasę", save_changes: "Zapisz Zmiany"
-            },
-            en: {
-                login_btn: "Log in", register_btn: "Register", login_title: "Welcome back!",
-                login_sub: "Log in to Mazren Control System", login_label: "Username / Nick", pass_label: "Password",
-                no_acc: "Don't have an account?", reg_title: "Register account", reg_sub: "Create account in Mazren Control System",
-                create_acc: "Create account", have_acc: "Already have an account?", no_notifs: "No notifications",
-                nav_home: "Dashboard", nav_finances: "Finances", nav_dispatcher: "Dispatcher", nav_garage: "Garage",
-                nav_docs: "Documents", nav_about: "About Us", nav_manage: "Management", company_budget: "Company budget:",
-                my_stats: "Your statistics: (target 6000km)", company_stats: "Company statistics:", completed_jobs: "Completed routes:",
-                th_driver: "Driver", th_route: "Route / Files", th_dist: "Distance", th_income: "Income", th_cargo: "Cargo",
-                th_actions: "Actions", ranking: "Drivers ranking:", new_dispatch: "New Dispatch Job",
-                assign_driver: "Assign driver", truck_set: "Truck set", from_city: "From", to_city: "To",
-                notes: "Notes", pub_dispatch: "Publish Job", avail_dispatches: "! Available routes in Dispatcher:",
-                add_expense: "Add expense", exp_type: "Expense type", exp_amount: "Amount (€)", exp_desc: "Description / Location",
-                btn_add_exp: "+ Add Expense", expense_log: "Company Expense Log", th_type: "Type", th_desc: "Description",
-                th_amount: "Amount", garage_trucks: "Trucks", add_to_garage: "Add to Garage", add_truck_fleet: "Add new truck to Fleet",
-                truck_model: "Truck Model", plates: "License Plate", save_garage: "Save in Garage", back: "Back",
-                add_new_doc: "Add New Document / Package", doc_title: "Document Title", doc_cat: "Category", doc_content: "Content",
-                doc_file: "File / Attachment (optional)", pub_doc: "Publish Document", company_docs: "Company Documents & Rules",
-                manage_users: "Driver Accounts Management", th_role: "Role", th_status: "Status", cancel: "Cancel",
-                send_route: "Submit route", save_changes: "Save Changes"
-            }
-        };
-
-        function changeLanguage(lang) {
-            currentLang = lang;
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (i18n[lang] && i18n[lang][key]) {
-                    el.innerText = i18n[lang][key];
-                }
-            });
-        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
         function showAuthForm(type) {
             document.getElementById('auth-main-card').style.display = 'none';
@@ -759,16 +781,8 @@
             document.getElementById('auth-main-card').style.display = 'block';
         }
 
-        function resetUserUI() {
-            document.getElementById('admin-badge').classList.add('d-none');
-            document.getElementById('admin-tab-btn').classList.add('d-none');
-            document.getElementById('dispatcher-admin-form').style.display = 'none';
-            document.getElementById('add-truck-btn').classList.add('d-none');
-            document.getElementById('add-doc-admin-form').classList.add('d-none');
-        }
-
         function switchTab(tab) {
-            ['jobs', 'dispatcher', 'finances', 'garage', 'documents', 'about', 'management'].forEach(t => {
+            ['dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById('nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
@@ -777,7 +791,8 @@
                     else nav.classList.remove('active');
                 }
             });
-            if (tab === 'dispatcher') { loadDispatches(); if (currentUserRole === 'admin') loadDispatcherOptions(); }
+            if (tab === 'company-stats') loadCompanyStatsFull();
+            else if (tab === 'dispatcher') { loadDispatches(); if (currentUserRole === 'admin') loadDispatcherOptions(); }
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'garage') loadGarage();
             else if (tab === 'documents') loadDocuments();
@@ -788,8 +803,6 @@
             const savedUser = localStorage.getItem('vtc_logged_user');
             if (!savedUser) return showLogin();
 
-            resetUserUI();
-
             try {
                 const res = await fetch('/api/user');
                 if (res.ok) {
@@ -799,10 +812,14 @@
                     currentUsername = data.username;
 
                     document.getElementById('auth-section').style.display = 'none';
-                    document.getElementById('dashboard-section').style.display = 'flex';
+                    document.getElementById('dashboard-section').style.display = 'block';
+                    
                     document.getElementById('user-display').innerText = data.username;
+                    document.getElementById('banner-username').innerText = data.username;
+                    document.getElementById('banner-role').innerText = data.role === 'admin' ? 'Szef / Właściciel' : 'Kierowca';
 
-                    document.getElementById('my-km-status').innerText = `${data.monthlyKm} / ${data.limitKm} km`;
+                    document.getElementById('my-monthly-km').innerText = `${data.monthlyKm} km`;
+                    document.getElementById('my-monthly-deliveries').innerText = data.monthlyDeliveries;
 
                     if (data.role === 'admin') {
                         document.getElementById('admin-badge').classList.remove('d-none');
@@ -812,21 +829,36 @@
                         document.getElementById('add-doc-admin-form').classList.remove('d-none');
                     }
 
-                    switchTab('jobs');
+                    // Renderowanie karty "Twój Zestaw"
+                    const truckBox = document.getElementById('my-assigned-truck-box');
+                    if (data.assignedTruck) {
+                        truckBox.innerHTML = `
+                            <div class="text-center">
+                                <h4 class="fw-bold text-white mb-1">${data.assignedTruck.truck_model}</h4>
+                                <span class="badge bg-secondary mb-3">Rejestracja: ${data.assignedTruck.plates}</span>
+                                ${data.assignedTruck.photo ? `<img src="${data.assignedTruck.photo}" class="img-fluid rounded border border-secondary mb-3">` : ''}
+                                <ul class="list-unstyled text-start small text-light bg-dark p-3 rounded">
+                                    <li><strong>Kabina:</strong> ${data.assignedTruck.cabin}</li>
+                                    <li><strong>Silnik:</strong> ${data.assignedTruck.engine}</li>
+                                    <li><strong>Skrzynia:</strong> ${data.assignedTruck.gearbox}</li>
+                                </ul>
+                            </div>
+                        `;
+                    } else {
+                        truckBox.innerHTML = '<div class="text-muted text-center py-4">Brak przypisanego zestawu w garażu.</div>';
+                    }
+
+                    switchTab('dashboard');
                     loadNotifications();
                     loadCompanyStats();
-                    loadJobs();
+                    loadMyJobs();
                 } else { showLogin(); }
             } catch (e) { showLogin(); }
         }
 
         function showLogin() {
-            resetUserUI();
             document.getElementById('auth-section').style.display = 'flex';
             document.getElementById('dashboard-section').style.display = 'none';
-            document.getElementById('auth-main-card').style.display = 'block';
-            document.getElementById('auth-login-card').style.display = 'none';
-            document.getElementById('auth-register-card').style.display = 'none';
         }
 
         async function performLogin() {
@@ -854,15 +886,8 @@
             const password = document.getElementById('reg-password').value.trim();
             const confirmPassword = document.getElementById('reg-confirm-password').value.trim();
 
-            if (!username || !email || !password || !confirmPassword) {
-                alert('Wypełnij wszystkie pola formularza!');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                alert('Wpisane hasła nie są identyczne!');
-                return;
-            }
+            if (!username || !email || !password || !confirmPassword) { alert('Wypełnij wszystkie pola!'); return; }
+            if (password !== confirmPassword) { alert('Hasła nie są identyczne!'); return; }
 
             try {
                 const res = await fetch('/api/register', {
@@ -882,301 +907,99 @@
             showLogin();
         }
 
-        async function loadGarage() {
-            const res = await fetch('/api/trucks');
+        async function loadCompanyStats() {
+            const res = await fetch('/api/company-stats');
             if (res.ok) {
-                const trucks = await res.json();
-                groupedTrucksData = {};
+                const data = await res.json();
+                document.getElementById('dash-company-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
+                document.getElementById('dash-company-km').textContent = data.totalCompanyKm + ' km';
+            }
+        }
 
-                trucks.forEach(t => {
-                    if (!groupedTrucksData[t.truck_model]) {
-                        groupedTrucksData[t.truck_model] = {
-                            model: t.truck_model,
-                            photo: t.photo,
-                            cabin: t.cabin,
-                            chassis: t.chassis,
-                            engine: t.engine,
-                            gearbox: t.gearbox,
-                            interior: t.interior,
-                            accessories: t.accessories,
-                            units: []
-                        };
-                    }
-                    groupedTrucksData[t.truck_model].units.push(t);
-                });
+        async function loadCompanyStatsFull() {
+            const res = await fetch('/api/company-stats');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('company-total-km-full').textContent = data.totalCompanyKm + ' km';
+                document.getElementById('company-total-deliveries-full').textContent = data.totalDeliveries;
+                document.getElementById('company-budget-full').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
 
-                const grid = document.getElementById('garage-grid');
-                grid.innerHTML = '';
-
-                const modelsList = ['MAN TGX E6', 'DAF XF106', 'RENAULT T480', 'SCANIA R', 'VOLVO FH2', 'SCANIA PGR', 'VOLVO FH4', 'MERCEDES MP4'];
-                
-                modelsList.forEach(modelName => {
-                    const group = groupedTrucksData[modelName] || {
-                        model: modelName,
-                        photo: '',
-                        units: []
-                    };
-
-                    let hasPhoto = group.photo ? `<img src="${group.photo}" class="img-fluid rounded mb-2" style="max-height: 100px; object-fit: cover;">` : '<div style="height: 80px;"></div>';
-
-                    grid.innerHTML += `
-                        <div class="col-md-3">
-                            <div class="truck-card p-4 text-center" onclick="openTruckGroupDetail('${modelName}')">
-                                <h5 class="fw-bold text-white mb-3">${modelName}</h5>
-                                ${hasPhoto}
-                                <div class="text-light small"><u>Więcej informacji</u></div>
-                            </div>
+                const rankContainer = document.getElementById('ranking-container');
+                rankContainer.innerHTML = '';
+                data.driversRanking.forEach((d, idx) => {
+                    rankContainer.innerHTML += `
+                        <div class="pill-row">
+                            <div class="fw-bold text-white">${idx + 1}. ${d.username}</div>
+                            <div class="text-light">${d.deliveries} dostaw</div>
+                            <div class="fw-bold text-white">${d.km} km</div>
                         </div>
                     `;
                 });
+
+                loadAllJobs();
             }
         }
 
-        function openTruckGroupDetail(modelName) {
-            const group = groupedTrucksData[modelName] || {
-                model: modelName,
-                cabin: 'Globetrotter XL (dolne)',
-                chassis: '4x2 (górne)',
-                engine: 'D13A500',
-                gearbox: 'I-Shift ATO3512D R',
-                interior: 'Standard',
-                accessories: 'Własne',
-                units: []
-            };
-
-            document.getElementById('garage-main-view').style.display = 'none';
-            document.getElementById('garage-detail-view').style.display = 'block';
-
-            let unitsHtml = group.units.length > 0 ? group.units.map(u => `
-                <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-1">
-                    <span><strong>${u.plates}</strong> - @${u.driver_name}</span>
-                    ${currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm py-0 px-2" onclick="deleteTruckUnit(${u.id})">Usuń</button>` : ''}
-                </div>
-            `).join('') : '<div class="text-light small">Brak przypisanych kierowców.</div>';
-
-            document.getElementById('truck-detail-content').innerHTML = `
-                <div class="row g-4">
-                    <div class="col-md-5">
-                        <h2 class="fw-bold text-white mb-4">${group.model}</h2>
-                        <div class="bg-dark p-3 rounded text-center border border-secondary mb-3" style="min-height: 200px; display:flex; align-items:center; justify-content:center;">
-                            ${group.photo ? `<img src="${group.photo}" class="img-fluid rounded">` : '<span class="text-light">Brak zdjęcia głównego</span>'}
-                        </div>
-                    </div>
-                    <div class="col-md-7 fs-5">
-                        <ul class="list-unstyled lh-lg text-white">
-                            <li><strong>Kabina:</strong> ${group.cabin || 'Standard'}</li>
-                            <li><strong>Podwozie:</strong> ${group.chassis || 'Standard'}</li>
-                            <li><strong>Silnik:</strong> ${group.engine || 'Standard'}</li>
-                            <li><strong>Skrzynia biegów:</strong> ${group.gearbox || 'Standard'}</li>
-                            <li><strong>Wnętrze:</strong> ${group.interior || 'Standard'}</li>
-                            <li><strong>Akcesoria wnętrza:</strong> ${group.accessories || 'Standard'}</li>
-                        </ul>
-                        <hr class="border-secondary my-4">
-                        <h5 class="fw-bold mb-3 text-white">Kierowcy (${group.units.length}/4):</h5>
-                        <div class="text-white fs-6">${unitsHtml}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function closeTruckDetail() {
-            document.getElementById('garage-main-view').style.display = 'block';
-            document.getElementById('garage-detail-view').style.display = 'none';
-        }
-
-        function toggleTruckForm() {
-            if (currentUserRole !== 'admin') return;
-            const form = document.getElementById('truck-add-form');
-            form.classList.toggle('d-none');
-            if (!form.classList.contains('d-none')) {
-                fetch('/api/users').then(r => r.json()).then(users => {
-                    const sel = document.getElementById('truck_driver_select');
-                    sel.innerHTML = '<option value="Wolne">Wolne</option>';
-                    users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
-                });
-            }
-        }
-
-        document.getElementById('truck-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (currentUserRole !== 'admin') return;
-            const formData = new FormData(e.target);
-            const res = await fetch('/api/trucks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(Object.fromEntries(formData))
-            });
-            if (res.ok) { toggleTruckForm(); loadGarage(); }
-        });
-
-        async function deleteTruckUnit(id) {
-            if (confirm('Usunąć ten wpis z garażu?')) {
-                await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
-                closeTruckDetail();
-                loadGarage();
-            }
-        }
-
-        // DOKUMENTY
-        async function loadDocuments() {
-            const res = await fetch('/api/documents');
+        async function loadMyJobs() {
+            const res = await fetch('/api/jobs');
             if (res.ok) {
-                const docs = await res.json();
-                const container = document.getElementById('documents-container');
+                const jobs = await res.json();
+                const myJobs = jobs.filter(j => j.username === currentUsername);
+                const container = document.getElementById('my-jobs-container');
                 container.innerHTML = '';
 
-                if (docs.length === 0) {
-                    container.innerHTML = '<div class="text-light p-3">Brak opublikowanych dokumentów.</div>';
+                if (myJobs.length === 0) {
+                    container.innerHTML = '<div class="text-muted p-2">Nie wykonałeś jeszcze żadnych tras.</div>';
                     return;
                 }
 
-                docs.forEach(doc => {
-                    let fileBtn = doc.file_url ? `<a href="${doc.file_url}" target="_blank" class="btn btn-pill-white btn-sm mt-3"><i class="fa-solid fa-download me-1"></i> Pobierz Plik</a>` : '';
-                    let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-outline-danger btn-sm float-end" onclick="deleteDocument(${doc.id})"><i class="fa-solid fa-trash"></i></button>` : '';
-
+                myJobs.forEach(j => {
                     container.innerHTML += `
-                        <div class="col-md-6">
-                            <div class="bg-card p-4">
-                                ${delBtn}
-                                <span class="badge bg-warning text-dark mb-2">${doc.category}</span>
-                                <h4 class="fw-bold text-white mb-2">${doc.title}</h4>
-                                <p class="text-light mb-3" style="white-space: pre-line;">${doc.content}</p>
-                                ${fileBtn}
-                            </div>
+                        <div class="pill-row">
+                            <div><strong>${j.start_city}</strong> ➔ <strong>${j.end_city}</strong> (${j.cargo})</div>
+                            <div class="fw-bold text-white">${j.distance} km</div>
+                            <div class="text-success">${j.income} €</div>
                         </div>
                     `;
                 });
             }
         }
 
-        document.getElementById('doc-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData();
-            formData.append('title', document.getElementById('doc_title').value);
-            formData.append('category', document.getElementById('doc_category').value);
-            formData.append('content', document.getElementById('doc_content').value);
-            if (document.getElementById('doc_file').files[0]) {
-                formData.append('doc_file', document.getElementById('doc_file').files[0]);
-            }
-
-            const res = await fetch('/api/documents', {
-                method: 'POST',
-                body: formData
-            });
-
+        async function loadAllJobs() {
+            const res = await fetch('/api/jobs');
             if (res.ok) {
-                document.getElementById('doc-form').reset();
-                loadDocuments();
-                alert('Dokument dodany!');
-            }
-        });
-
-        async function deleteDocument(id) {
-            if (confirm('Usunąć ten dokument?')) {
-                await fetch(`/api/documents/${id}`, { method: 'DELETE' });
-                loadDocuments();
+                const jobs = await res.json();
+                const container = document.getElementById('all-jobs-container');
+                container.innerHTML = '';
+                jobs.forEach(j => {
+                    container.innerHTML += `
+                        <div class="pill-row">
+                            <div><strong>${j.username}</strong>: ${j.start_city} ➔ ${j.end_city}</div>
+                            <div class="fw-bold text-white">${j.distance} km</div>
+                            <div class="text-success">${j.income} €</div>
+                        </div>
+                    `;
+                });
             }
         }
 
         async function loadDispatches() {
             const res = await fetch('/api/dispatches');
             if (res.ok) {
-                allDispatchesCache = await res.json();
+                const dispatches = await res.json();
                 const container = document.getElementById('dispatches-container');
                 container.innerHTML = '';
-
-                if (allDispatchesCache.length === 0) {
-                    container.innerHTML = '<div class="text-light p-3">Brak dostępnych zleceń w tej chwili.</div>';
-                    return;
-                }
-
-                allDispatchesCache.forEach(d => {
-                    let actionHtml = '';
-                    const canAccept = (d.assigned_to === 'Wszyscy' || d.assigned_to === currentUsername);
-
-                    if (d.status === 'W wolnym obiegu') {
-                        if (canAccept) {
-                            actionHtml = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
-                        } else {
-                            actionHtml = `<span class="badge bg-secondary">Zlecenie dla innego kierowcy</span>`;
-                        }
-                    } else if (d.accepted_by_id === currentUserId) {
-                        actionHtml = `<button class="btn btn-pill-white btn-sm fw-bold text-success" onclick="openCompleteModal(${d.id})"><i class="fa-solid fa-flag-checkered me-1"></i> Ukończ zlecenie</button>`;
-                    } else {
-                        actionHtml = `<span class="badge bg-secondary">W trakcie realizacji przez @${d.accepted_by_username}</span>`;
-                    }
-
-                    let adminControls = '';
-                    if (currentUserRole === 'admin') {
-                        adminControls = `
-                            <div class="mt-2 pt-2 border-top border-secondary d-flex gap-2">
-                                <button class="btn btn-outline-warning btn-sm py-0 px-2 fw-bold" onclick="openEditDispatchModal(${d.id})"><i class="fa-solid fa-pen me-1"></i> Edytuj</button>
-                                <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="deleteDispatch(${d.id})"><i class="fa-solid fa-trash me-1"></i> Usuń</button>
-                            </div>
-                        `;
-                    }
-
+                dispatches.forEach(d => {
                     container.innerHTML += `
                         <div class="col-md-6">
-                            <div class="bg-card p-4">
+                            <div class="bg-card-bms p-4">
                                 <h4 class="fw-bold text-white mb-2">${d.start_city} ➔ ${d.end_city}</h4>
-                                <p class="small text-info mb-2">Przydział: <strong>${d.assigned_to}</strong></p>
-                                <hr class="border-secondary">
-                                <p class="mb-1 text-white"><strong>Zestaw:</strong> ${d.truck_name || 'Standard'}</p>
-                                <p class="mb-1 text-white"><strong>Uwagi:</strong> ${d.notes || 'Brak'}</p>
-                                <p class="mb-2 text-white"><strong>Status:</strong> <span class="text-warning">${d.status}</span> ${d.accepted_by_username ? '(@' + d.accepted_by_username + ')' : ''}</p>
-                                <div class="mt-3">${actionHtml}</div>
-                                ${adminControls}
+                                <p class="text-info mb-2">Przydział: ${d.assigned_to}</p>
+                                <p class="text-light mb-2">Zestaw: ${d.truck_name || 'Standard'}</p>
+                                ${d.status === 'W wolnym obiegu' ? `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>` : `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username})</span>`}
                             </div>
                         </div>
                     `;
-                });
-            }
-        }
-
-        document.getElementById('dispatch-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const res = await fetch('/api/dispatches', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    assigned_to: document.getElementById('dispatch_assigned').value,
-                    truck_name: document.getElementById('dispatch_truck').value,
-                    start_city: document.getElementById('dispatch_start').value,
-                    end_city: document.getElementById('dispatch_end').value,
-                    notes: document.getElementById('dispatch_notes').value
-                })
-            });
-            if (res.ok) {
-                document.getElementById('dispatch-form').reset();
-                loadDispatches();
-                alert('Zlecenie opublikowane pomyślnie!');
-            }
-        });
-
-        async function loadDispatcherOptions() {
-            const uRes = await fetch('/api/users');
-            if (uRes.ok) {
-                const users = await uRes.json();
-                const sel = document.getElementById('dispatch_assigned');
-                const editSel = document.getElementById('edit_dispatch_assigned');
-                sel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
-                editSel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
-                users.forEach(u => {
-                    sel.innerHTML += `<option value="${u.username}">${u.username}</option>`;
-                    editSel.innerHTML += `<option value="${u.username}">${u.username}</option>`;
-                });
-            }
-            const tRes = await fetch('/api/trucks');
-            if (tRes.ok) {
-                const trucks = await tRes.json();
-                const tSel = document.getElementById('dispatch_truck');
-                const editTSel = document.getElementById('edit_dispatch_truck');
-                tSel.innerHTML = '<option value="Standard">Standardowy Zestaw</option>';
-                editTSel.innerHTML = '<option value="Standard">Standardowy Zestaw</option>';
-                trucks.forEach(t => {
-                    tSel.innerHTML += `<option value="${t.truck_model} (${t.plates})">${t.truck_model} - ${t.plates}</option>`;
-                    editTSel.innerHTML += `<option value="${t.truck_model} (${t.plates})">${t.truck_model} - ${t.plates}</option>`;
                 });
             }
         }
@@ -1186,298 +1009,57 @@
             if (res.ok) loadDispatches();
         }
 
-        function openEditDispatchModal(id) {
-            const disp = allDispatchesCache.find(d => d.id === id);
-            if (!disp) return;
-
-            document.getElementById('edit_dispatch_id').value = disp.id;
-            document.getElementById('edit_dispatch_assigned').value = disp.assigned_to || 'Wszyscy';
-            document.getElementById('edit_dispatch_truck').value = disp.truck_name || 'Standard';
-            document.getElementById('edit_dispatch_start').value = disp.start_city;
-            document.getElementById('edit_dispatch_end').value = disp.end_city;
-            document.getElementById('edit_dispatch_notes').value = disp.notes || '';
-
-            const modal = new bootstrap.Modal(document.getElementById('editDispatchModal'));
-            modal.show();
-        }
-
-        async function submitEditDispatch() {
-            const id = document.getElementById('edit_dispatch_id').value;
-            const res = await fetch(`/api/dispatches/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    assigned_to: document.getElementById('edit_dispatch_assigned').value,
-                    truck_name: document.getElementById('edit_dispatch_truck').value,
-                    start_city: document.getElementById('edit_dispatch_start').value,
-                    end_city: document.getElementById('edit_dispatch_end').value,
-                    notes: document.getElementById('edit_dispatch_notes').value
-                })
-            });
-
+        async function loadGarage() {
+            const res = await fetch('/api/trucks');
             if (res.ok) {
-                const modalEl = document.getElementById('editDispatchModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-                loadDispatches();
+                const trucks = await res.json();
+                const grid = document.getElementById('garage-grid');
+                grid.innerHTML = '';
+                trucks.forEach(t => {
+                    grid.innerHTML += `
+                        <div class="col-md-4">
+                            <div class="bg-card-bms p-4">
+                                <h5 class="fw-bold text-white">${t.truck_model}</h5>
+                                <p class="text-muted small">Kierowca: ${t.driver_name}</p>
+                                <span class="badge bg-secondary">${t.plates}</span>
+                            </div>
+                        </div>
+                    `;
+                });
             }
         }
 
-        async function deleteDispatch(id) {
-            if (confirm('Usunąć to zlecenie?')) {
-                await fetch(`/api/dispatches/${id}`, { method: 'DELETE' });
-                loadDispatches();
-            }
-        }
-
-        function openCompleteModal(id) {
-            document.getElementById('modal_dispatch_id').value = id;
-            document.getElementById('complete-dispatch-form').reset();
-            document.getElementById('modal_dispatch_id').value = id;
-
-            const modal = new bootstrap.Modal(document.getElementById('completeModal'));
-            modal.show();
-        }
-
-        document.getElementById('complete-dispatch-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('modal_dispatch_id').value;
-            const formData = new FormData(e.target);
-
-            const res = await fetch(`/api/dispatches/${id}/complete`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (res.ok) {
-                const modalEl = document.getElementById('completeModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-
-                alert('Trasa przesłana pomyślnie do weryfikacji przez Szefa!');
-                loadDispatches();
-                loadCompanyStats();
-                loadJobs();
-            }
-        });
-
-        // WYDATKI
         async function loadExpenses() {
             const res = await fetch('/api/expenses');
             if (res.ok) {
-                allExpensesCache = await res.json();
+                const expenses = await res.json();
                 const tbody = document.getElementById('expenses-table-body');
                 tbody.innerHTML = '';
-                allExpensesCache.forEach(exp => {
-                    let typeBadge = exp.type === 'fuel' ? '⛽ Paliwo' : (exp.type === 'fine' ? '🚨 Mandat' : '🔧 Serwis');
-                    
-                    let actionsCell = '';
-                    if (currentUserRole === 'admin' || exp.user_id === currentUserId) {
-                        actionsCell = `
-                            <button class="btn btn-outline-warning btn-sm py-0 px-2 fw-bold me-1" onclick="openEditExpenseModal(${exp.id})"><i class="fa-solid fa-pen"></i></button>
-                            <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="deleteExpense(${exp.id})"><i class="fa-solid fa-trash"></i></button>
-                        `;
-                    }
-
-                    tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${typeBadge}</td><td class="text-white">${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>${actionsCell}</td></tr>`;
+                expenses.forEach(exp => {
+                    tbody.innerHTML += `<tr><td>${exp.username}</td><td>${exp.type}</td><td>${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>-</td></tr>`;
                 });
             }
         }
 
-        document.getElementById('expense-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const res = await fetch('/api/expenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: document.getElementById('expense_type').value,
-                    amount: document.getElementById('expense_amount').value,
-                    description: document.getElementById('expense_desc').value
-                })
-            });
-            if (res.ok) { document.getElementById('expense-form').reset(); loadExpenses(); loadCompanyStats(); }
-        });
-
-        function openEditExpenseModal(id) {
-            const exp = allExpensesCache.find(e => e.id === id);
-            if (!exp) return;
-
-            document.getElementById('edit_expense_id').value = exp.id;
-            document.getElementById('edit_expense_type').value = exp.type;
-            document.getElementById('edit_expense_amount').value = exp.amount;
-            document.getElementById('edit_expense_desc').value = exp.description;
-
-            const modal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
-            modal.show();
-        }
-
-        async function submitEditExpense() {
-            const id = document.getElementById('edit_expense_id').value;
-            const res = await fetch(`/api/expenses/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: document.getElementById('edit_expense_type').value,
-                    amount: document.getElementById('edit_expense_amount').value,
-                    description: document.getElementById('edit_expense_desc').value
-                })
-            });
-
+        async function loadDocuments() {
+            const res = await fetch('/api/documents');
             if (res.ok) {
-                const modalEl = document.getElementById('editExpenseModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-                loadExpenses();
-                loadCompanyStats();
-            } else {
-                const err = await res.json();
-                alert(err.error || 'Błąd edycji wydatku');
-            }
-        }
-
-        async function deleteExpense(id) {
-            if (confirm('Czy na pewno chcesz usunąć ten wydatek?')) { 
-                await fetch(`/api/expenses/${id}`, { method: 'DELETE' }); 
-                loadExpenses(); 
-                loadCompanyStats(); 
-            }
-        }
-
-        async function loadCompanyStats() {
-            const res = await fetch('/api/company-stats');
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('company-total-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' EURO';
-                document.getElementById('company-total-km').textContent = data.totalCompanyKm + ' km';
-                const container = document.getElementById('ranking-pill-container');
+                const docs = await res.json();
+                const container = document.getElementById('documents-container');
                 container.innerHTML = '';
-                
-                if (!data.driversRanking || data.driversRanking.length === 0) {
-                    container.innerHTML = '<div class="text-light p-2">Brak wpisów w rankingu.</div>';
-                    return;
-                }
-
-                data.driversRanking.forEach((d, idx) => {
+                docs.forEach(doc => {
                     container.innerHTML += `
-                        <div class="pill-row">
-                            <div class="pill-col fw-bold text-white">${d.username}</div>
-                            <div class="pill-col text-light">${idx + 1} miejsce</div>
-                            <div class="pill-col fw-bold text-white">${d.km}km</div>
-                        </div>
-                    `;
-                });
-            }
-        }
-
-        async function loadJobs() {
-            const res = await fetch('/api/jobs');
-            if (res.ok) {
-                const jobs = await res.json();
-                const container = document.getElementById('jobs-pill-container');
-                container.innerHTML = '';
-
-                if (jobs.length === 0) {
-                    container.innerHTML = '<div class="text-light p-2">Brak wykonanych tras.</div>';
-                    return;
-                }
-
-                jobs.forEach(j => {
-                    let startFlag = getFlag(j.start_city);
-                    let endFlag = getFlag(j.end_city);
-
-                    let cmrLink = j.cmr_file ? `<a href="${j.cmr_file}" target="_blank" class="badge bg-secondary text-decoration-none ms-1"><i class="fa-solid fa-image"></i> CMR</a>` : '';
-                    let summaryLink = j.summary_photo ? `<a href="${j.summary_photo}" target="_blank" class="badge bg-info text-decoration-none ms-1"><i class="fa-solid fa-camera"></i> Dowód</a>` : '';
-
-                    let statusBadge = j.status === 'pending' ? `<span class="badge bg-warning text-dark ms-1">Oczekuje</span>` : '';
-
-                    let adminActions = '';
-                    if (currentUserRole === 'admin') {
-                        if (j.status === 'pending') {
-                            adminActions = `
-                                <div class="mt-1">
-                                    <button class="btn btn-success btn-sm py-0 px-2 fw-bold me-1" onclick="approveJob(${j.id})"><i class="fa-solid fa-check"></i></button>
-                                    <button class="btn btn-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                            `;
-                        } else {
-                            adminActions = `
-                                <div class="mt-1">
-                                    <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            `;
-                        }
-                    }
-
-                    container.innerHTML += `
-                        <div class="pill-row flex-wrap">
-                            <div class="pill-col fw-bold text-white">${j.username}</div>
-                            <div class="pill-col text-white">
-                                ${startFlag}${j.start_city} – ${endFlag}${j.end_city}
-                                ${cmrLink} ${summaryLink} ${statusBadge}
-                                <div class="text-muted small" style="font-size: 11px;">${j.formatted_date || ''}</div>
+                        <div class="col-md-6">
+                            <div class="bg-card-bms p-4">
+                                <span class="badge bg-warning text-dark mb-2">${doc.category}</span>
+                                <h4 class="fw-bold text-white mb-2">${doc.title}</h4>
+                                <p class="text-light mb-3">${doc.content}</p>
                             </div>
-                            <div class="pill-col text-white fw-bold">${j.distance}km</div>
-                            <div class="pill-col text-white fw-bold">${j.income} Euro</div>
-                            <div class="pill-col text-white fw-bold">${j.cargo}</div>
-                            ${adminActions ? `<div class="ms-2">${adminActions}</div>` : ''}
                         </div>
                     `;
                 });
             }
         }
-
-        async function approveJob(id) {
-            const res = await fetch(`/api/jobs/${id}/approve`, { method: 'PUT' });
-            if (res.ok) {
-                loadJobs();
-                loadCompanyStats();
-                checkUser();
-            }
-        }
-
-        function openRejectJobModal(id) {
-            document.getElementById('reject_job_id').value = id;
-            document.getElementById('reject_reason_text').value = '';
-            const modal = new bootstrap.Modal(document.getElementById('rejectJobModal'));
-            modal.show();
-        }
-
-        async function confirmRejectJob() {
-            const id = document.getElementById('reject_job_id').value;
-            const reason = document.getElementById('reject_reason_text').value.trim();
-
-            const res = await fetch(`/api/jobs/${id}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reason })
-            });
-
-            if (res.ok) {
-                const modalEl = document.getElementById('rejectJobModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-                loadJobs();
-                loadCompanyStats();
-                checkUser();
-                alert('Trasa została odrzucona i usunięta.');
-            }
-        }
-
-        async function loadManagementUsers() {
-            const res = await fetch('/api/users');
-            if (res.ok) {
-                const users = await res.json();
-                const tbody = document.getElementById('management-users-list');
-                tbody.innerHTML = '';
-                users.forEach(u => {
-                    let action = u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser(${u.id})">Zatwierdź</button>` : '<span class="badge bg-success">Aktywny</span>';
-                    tbody.innerHTML += `<tr><td class="text-white">${u.username}</td><td class="text-white">${u.email || '-'}</td><td class="text-white">${u.role}</td><td>${action}</td><td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Usuń</button></td></tr>`;
-                });
-            }
-        }
-
-        async function approveUser(id) { await fetch(`/api/users/${id}/approve`, { method: 'PUT' }); loadManagementUsers(); }
-        async function deleteUser(id) { if (confirm('Usunąć konto?')) { await fetch(`/api/users/${id}`, { method: 'DELETE' }); loadManagementUsers(); } }
 
         async function loadNotifications() {
             try {
@@ -1486,24 +1068,18 @@
                     const notifs = await res.json();
                     const list = document.getElementById('notif-list');
                     const badge = document.getElementById('notif-count');
-                    
                     let unread = notifs.filter(n => !n.is_read).length;
                     if (unread > 0) { badge.innerText = unread; badge.classList.remove('d-none'); }
                     else { badge.classList.add('d-none'); }
 
-                    list.innerHTML = notifs.length === 0 ? `<li class="text-center text-muted small py-2" data-i18n="no_notifs">${i18n[currentLang].no_notifs}</li>` : notifs.map(n => `
-                        <li class="p-2 border-bottom border-secondary notif-item" onclick="onNotificationClick('${n.action_tab || 'jobs'}')">
+                    list.innerHTML = notifs.length === 0 ? '<li class="text-center text-muted small py-2">Brak powiadomień</li>' : notifs.map(n => `
+                        <li class="p-2 border-bottom border-secondary notif-item">
                             <div class="fw-bold text-white small">${n.title}</div>
                             <div class="text-light small">${n.message}</div>
                         </li>
                     `).join('');
                 }
-            } catch (e) { console.error('Błąd powiadomień:', e); }
-        }
-
-        async function onNotificationClick(targetTab) {
-            await markNotifsAsRead();
-            switchTab(targetTab);
+            } catch (e) {}
         }
 
         async function markNotifsAsRead() {
