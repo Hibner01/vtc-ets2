@@ -98,8 +98,27 @@
                         <div class="col-md-4"><div class="bg-card p-4 h-100"><h6 class="text-muted" data-i18n="companyStatsTitle">Statystyki firmy:</h6><h3 id="company-total-km" class="fw-bold text-info mb-0">0 km</h3></div></div>
                     </div>
                     <div class="row g-4">
-                        <div class="col-md-7"><div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="completedRoutes">Wykonane trasy:</h5><div class="table-responsive"><table class="table table-dark table-hover align-middle mb-0"><tbody id="jobs-table-body"></tbody></table></div></div></div>
-                        <div class="col-md-5"><div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="driversRanking">Ranking kierowców:</h5><ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul></div></div>
+                        <div class="col-md-8">
+                            <div class="bg-card p-4">
+                                <h5 class="fw-bold mb-3" data-i18n="completedRoutes">Wykonane trasy:</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr class="text-muted border-secondary">
+                                                <th>Kierowca</th>
+                                                <th>Trasa / Pliki</th>
+                                                <th>Dystans</th>
+                                                <th>Zarobek</th>
+                                                <th>Towar</th>
+                                                <th id="jobs-actions-header" class="d-none">Akcje</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="jobs-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4"><div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="driversRanking">Ranking kierowców:</h5><ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul></div></div>
                     </div>
                 </div>
 
@@ -227,7 +246,7 @@
                 </div>
             </div>
 
-            <!-- MODAL UKOŃCZENIA ZLECENIA (UPLOAD ZDJĘĆ) -->
+            <!-- MODAL UKOŃCZENIA ZLECENIA -->
             <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content bg-card border-secondary text-light">
@@ -381,6 +400,15 @@
             document.getElementById('auth-register-card').style.display = type === 'register' ? 'block' : 'none';
         }
 
+        function resetUserUI() {
+            document.getElementById('admin-badge').classList.add('d-none');
+            document.getElementById('admin-tab-btn').classList.add('d-none');
+            document.getElementById('dispatcher-admin-form').style.display = 'none';
+            document.getElementById('dispatcher-list-col').className = 'col-md-12';
+            document.getElementById('add-truck-btn').classList.add('d-none');
+            document.getElementById('jobs-actions-header').classList.add('d-none');
+        }
+
         function switchTab(tab) {
             ['jobs', 'dispatcher', 'finances', 'garage', 'docs', 'about', 'management'].forEach(t => {
                 document.getElementById('tab-' + t).style.display = (tab === t) ? 'block' : 'none';
@@ -395,6 +423,8 @@
             const savedUser = localStorage.getItem('vtc_logged_user');
             if (!savedUser) return showLogin();
 
+            resetUserUI();
+
             try {
                 const res = await fetch('/api/user');
                 if (res.ok) {
@@ -407,17 +437,18 @@
                     document.getElementById('dashboard-section').style.display = 'flex';
                     document.getElementById('user-display').innerText = data.username;
 
+                    document.getElementById('my-km-status').innerText = `${data.monthlyKm} / ${data.limitKm} km`;
+
                     if (data.role === 'admin') {
                         document.getElementById('admin-badge').classList.remove('d-none');
                         document.getElementById('admin-tab-btn').classList.remove('d-none');
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
                         document.getElementById('dispatcher-list-col').className = 'col-md-8';
                         document.getElementById('add-truck-btn').classList.remove('d-none');
-                    } else {
-                        document.getElementById('dispatcher-admin-form').style.display = 'none';
-                        document.getElementById('dispatcher-list-col').className = 'col-md-12';
+                        document.getElementById('jobs-actions-header').classList.remove('d-none');
                     }
 
+                    switchTab('jobs');
                     loadNotifications();
                     loadCompanyStats();
                     loadJobs();
@@ -426,6 +457,7 @@
         }
 
         function showLogin() {
+            resetUserUI();
             document.getElementById('auth-section').style.display = 'flex';
             document.getElementById('dashboard-section').style.display = 'none';
             document.getElementById('auth-main-card').style.display = 'block';
@@ -804,7 +836,7 @@
                 tbody.innerHTML = '';
                 expenses.forEach(exp => {
                     let typeBadge = exp.type === 'fuel' ? '⛽ Paliwo' : (exp.type === 'fine' ? '🚨 Mandat' : '🔧 Serwis');
-                    let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteExpense(${exp.id})">Usuń</button>` : '';
+                    let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm py-0 px-2" onclick="deleteExpense(${exp.id})">Usuń</button>` : '';
                     tbody.innerHTML += `<tr><td>${exp.username}</td><td>${typeBadge}</td><td>${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>${delBtn}</td></tr>`;
                 });
             }
@@ -851,8 +883,36 @@
                 jobs.forEach(j => {
                     let cmrLink = j.cmr_file ? `<a href="${j.cmr_file}" target="_blank" class="badge bg-secondary text-decoration-none ms-1"><i class="fa-solid fa-image"></i> CMR</a>` : '';
                     let summaryLink = j.summary_photo ? `<a href="${j.summary_photo}" target="_blank" class="badge bg-info text-decoration-none ms-1"><i class="fa-solid fa-camera"></i> Foto</a>` : '';
-                    tbody.innerHTML += `<tr><td>${j.username}</td><td>${j.start_city} - ${j.end_city} ${cmrLink} ${summaryLink}</td><td>${j.distance}km</td><td>${j.income} Euro</td><td>${j.cargo}</td></tr>`;
+                    
+                    let deleteBtnCell = '';
+                    if (currentUserRole === 'admin') {
+                        deleteBtnCell = `<td><button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="deleteJob(${j.id})"><i class="fa-solid fa-trash me-1"></i> Usuń</button></td>`;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${j.username}</strong></td>
+                            <td>${j.start_city} ➔ ${j.end_city} ${cmrLink} ${summaryLink}</td>
+                            <td>${j.distance} km</td>
+                            <td class="text-success">${j.income} €</td>
+                            <td>${j.cargo}</td>
+                            ${deleteBtnCell}
+                        </tr>
+                    `;
                 });
+            }
+        }
+
+        async function deleteJob(id) {
+            if (confirm('Czy na pewno chcesz usunąć tę trasę z historii? (Kilometry i zarobek zostaną cofnięte)')) {
+                const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadJobs();
+                    loadCompanyStats();
+                    checkUser();
+                } else {
+                    alert('Błąd podczas usuwania trasy.');
+                }
             }
         }
 
