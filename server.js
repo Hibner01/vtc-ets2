@@ -32,8 +32,6 @@ async function initDB() {
                 cargo VARCHAR(255) DEFAULT 'Standard',
                 distance INTEGER NOT NULL,
                 income INTEGER DEFAULT 0,
-                cmr_file TEXT,
-                summary_photo TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -49,19 +47,16 @@ async function initDB() {
 
             CREATE TABLE IF NOT EXISTS trucks (
                 id SERIAL PRIMARY KEY,
-                driver_name VARCHAR(255) NOT NULL,
                 truck_model VARCHAR(255) NOT NULL,
-                trailer_model VARCHAR(255),
+                driver_name VARCHAR(255) DEFAULT 'Wolne',
                 plates VARCHAR(50) NOT NULL,
                 photo TEXT NOT NULL,
-                photo_back TEXT,
-                cabin VARCHAR(255) DEFAULT 'Globetrotter XL (dolne)',
-                chassis VARCHAR(255) DEFAULT '4x2 (górne)',
-                engine VARCHAR(255) DEFAULT 'D13A500',
-                gearbox VARCHAR(255) DEFAULT 'I-Shift ATO3512D R',
+                cabin VARCHAR(255) DEFAULT 'Standard',
+                chassis VARCHAR(255) DEFAULT 'Standard',
+                engine VARCHAR(255) DEFAULT 'Standard',
+                gearbox VARCHAR(255) DEFAULT 'Standard',
                 interior VARCHAR(255) DEFAULT 'Standard',
-                accessories VARCHAR(255) DEFAULT 'Własne',
-                max_drivers INTEGER DEFAULT 4
+                accessories VARCHAR(255) DEFAULT 'Standard'
             );
 
             CREATE TABLE IF NOT EXISTS dispatches (
@@ -108,41 +103,11 @@ app.use(session({
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// --- POWIADOMIENIA ---
-
-app.get('/api/notifications', async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    try {
-        const result = await pool.query(
-            'SELECT * FROM notifications WHERE user_id = $1 ORDER BY id DESC LIMIT 10',
-            [req.session.userId]
-        );
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania powiadomień' });
-    }
-});
-
-app.put('/api/notifications/read', async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    try {
-        await pool.query('UPDATE notifications SET is_read = true WHERE user_id = $1', [req.session.userId]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd aktualizacji powiadomień' });
-    }
-});
-
-// Helper dodawania powiadomienia
+// Pomocnicza funkcja powiadomień
 async function addNotification(userId, title, message) {
     try {
-        await pool.query(
-            'INSERT INTO notifications (user_id, title, message) VALUES ($1, $2, $3)',
-            [userId, title, message]
-        );
-    } catch (err) {
-        console.error('Błąd dodawania powiadomienia:', err);
-    }
+        await pool.query('INSERT INTO notifications (user_id, title, message) VALUES ($1, $2, $3)', [userId, title, message]);
+    } catch (e) { console.log(e); }
 }
 
 // --- AUTORYZACJA ---
@@ -161,12 +126,9 @@ app.post('/api/register', async (req, res) => {
 
         await pool.query('INSERT INTO users (username, password, role, status) VALUES ($1, $2, $3, $4)', [username, hashedPassword, role, status]);
         
-        // Powiadomienie dla adminów o nowym kierowcy
         if (status === 'pending') {
             const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
-            admins.rows.forEach(adm => {
-                addNotification(adm.id, '👤 Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`);
-            });
+            admins.rows.forEach(adm => addNotification(adm.id, '👤 Nowy Kierowca', `Kierowca @${username} czeka na akceptację.`));
         }
 
         res.json({ success: true, message: status === 'pending' ? 'Konto oczekuje na akceptację Szefa!' : 'Konto Szefa utworzone!' });
@@ -221,6 +183,24 @@ app.post('/api/logout', (req, res) => {
     req.session.destroy(() => res.json({ success: true }));
 });
 
+// --- POWIADOMIENIA API ---
+
+app.get('/api/notifications', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    try {
+        const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY id DESC LIMIT 10', [req.session.userId]);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: 'Błąd powiadomień' }); }
+});
+
+app.put('/api/notifications/read', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    try {
+        await pool.query('UPDATE notifications SET is_read = true WHERE user_id = $1', [req.session.userId]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd aktualizacji' }); }
+});
+
 // --- ZARZĄDZANIE KONTAMI ---
 
 app.get('/api/users', async (req, res) => {
@@ -228,23 +208,16 @@ app.get('/api/users', async (req, res) => {
     try {
         const result = await pool.query('SELECT id, username, role, status FROM users ORDER BY id DESC');
         res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd użytkowników' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd użytkowników' }); }
 });
 
 app.put('/api/users/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
-        
-        // Powiadomienie dla zaakceptowanego kierowcy
-        addNotification(req.params.id, '🎉 Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa. Witamy w firmie!');
-
+        addNotification(req.params.id, '🎉 Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!');
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd zatwierdzania' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd zatwierdzania' }); }
 });
 
 app.delete('/api/users/:id', async (req, res) => {
@@ -252,9 +225,7 @@ app.delete('/api/users/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd usuwania użytkownika' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania' }); }
 });
 
 // --- DYSPOZYTOR ---
@@ -263,9 +234,7 @@ app.get('/api/dispatches', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM dispatches ORDER BY id DESC');
         res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd zleceń' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd zleceń' }); }
 });
 
 app.post('/api/dispatches', async (req, res) => {
@@ -276,18 +245,10 @@ app.post('/api/dispatches', async (req, res) => {
             'INSERT INTO dispatches (assigned_to, start_city, end_city, truck_name, notes) VALUES ($1, $2, $3, $4, $5)',
             [assigned_to || 'Wszyscy', start_city, end_city, truck_name || 'Standardowy Zestaw', notes || '']
         );
-
-        // Powiadomienie kierowcy jeśli przypisano konkretnego
-        if (assigned_to && assigned_to !== 'Wszyscy') {
-            const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
-            if (targetUser.rows.length > 0) {
-                addNotification(targetUser.rows[0].id, '📡 Nowe Zlecenie', `Szef wystawił dla Ciebie trasę: ${start_city} ➔ ${end_city}`);
-            }
-        }
-
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: 'Błąd dodawania zlecenia' });
+        console.error('Błąd dyspozytora:', err);
+        res.status(500).json({ error: 'Błąd dodawania zlecenia: ' + err.message });
     }
 });
 
@@ -302,9 +263,7 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
             ['W trakcie', req.session.userId, username, req.params.id]
         );
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd akceptacji' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd akceptacji' }); }
 });
 
 // --- FINANSE ---
@@ -314,26 +273,22 @@ app.get('/api/expenses', async (req, res) => {
         const query = `SELECT expenses.*, users.username FROM expenses JOIN users ON expenses.user_id = users.id ORDER BY expenses.id DESC`;
         const result = await pool.query(query);
         res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania wydatków' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd pobierania wydatków' }); }
 });
 
 app.post('/api/expenses', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    const { type, amount, description, liters } = req.body;
+    const { type, amount, description } = req.body;
     const parsedAmount = parseInt(amount) || 0;
     if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
 
     try {
         await pool.query(
-            'INSERT INTO expenses (user_id, type, amount, description, liters) VALUES ($1, $2, $3, $4, $5)',
-            [req.session.userId, type || 'fuel', parsedAmount, description || 'Wydatek', parseInt(liters) || 0]
+            'INSERT INTO expenses (user_id, type, amount, description) VALUES ($1, $2, $3, $4)',
+            [req.session.userId, type || 'fuel', parsedAmount, description || 'Wydatek']
         );
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd zapisu wydatku' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd zapisu wydatku' }); }
 });
 
 app.delete('/api/expenses/:id', async (req, res) => {
@@ -341,9 +296,7 @@ app.delete('/api/expenses/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM expenses WHERE id = $1', [req.params.id]);
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd usuwania wydatku' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania wydatku' }); }
 });
 
 // --- GARAŻ VTC ---
@@ -352,26 +305,22 @@ app.get('/api/trucks', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM trucks ORDER BY id DESC');
         res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania floty' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd pobierania floty' }); }
 });
 
-app.post('/api/trucks', upload.fields([{ name: 'photo' }, { name: 'photo_back' }]), async (req, res) => {
+app.post('/api/trucks', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
-    const { driver_name, truck_model, trailer_model, plates, cabin, chassis, engine, gearbox, interior, accessories } = req.body;
+    const { truck_model, driver_name, plates, cabin, chassis, engine, gearbox, interior, accessories } = req.body;
     const defaultPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg';
 
     try {
         await pool.query(
-            `INSERT INTO trucks (driver_name, truck_model, trailer_model, plates, photo, photo_back, cabin, chassis, engine, gearbox, interior, accessories) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+            `INSERT INTO trucks (truck_model, driver_name, plates, photo, cabin, chassis, engine, gearbox, interior, accessories) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
-                driver_name || 'Wolne',
                 truck_model,
-                trailer_model || '',
-                plates,
-                defaultPhoto,
+                driver_name || 'Wolne',
+                plates || 'BRAK',
                 defaultPhoto,
                 cabin || 'Standard',
                 chassis || 'Standard',
@@ -383,7 +332,8 @@ app.post('/api/trucks', upload.fields([{ name: 'photo' }, { name: 'photo_back' }
         );
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: 'Błąd dodawania pojazdu' });
+        console.error('Błąd garażu:', err);
+        res.status(500).json({ error: 'Błąd dodawania pojazdu: ' + err.message });
     }
 });
 
@@ -392,9 +342,7 @@ app.delete('/api/trucks/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM trucks WHERE id = $1', [req.params.id]);
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd usuwania pojazdu' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania pojazdu' }); }
 });
 
 // --- STATYSTYKI ---
@@ -403,9 +351,7 @@ app.get('/api/jobs', async (req, res) => {
     try {
         const result = await pool.query('SELECT jobs.*, users.username FROM jobs JOIN users ON jobs.user_id = users.id ORDER BY jobs.id DESC');
         res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd pobierania tras' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd pobierania tras' }); }
 });
 
 app.get('/api/company-stats', async (req, res) => {
@@ -431,9 +377,7 @@ app.get('/api/company-stats', async (req, res) => {
             totalCompanyBudget: totalIncome - totalExpenses,
             driversRanking: rankingRes.rows
         });
-    } catch (err) {
-        res.status(500).json({ error: 'Błąd statystyk' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Błąd statystyk' }); }
 });
 
 app.listen(PORT, () => console.log(`Serwer VTC działa na porcie ${PORT}`));
