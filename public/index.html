@@ -177,7 +177,7 @@
                     </div>
                 </div>
 
-                <!-- DOKUMENTY (PRZYWRÓCONA ZAKŁADKA) -->
+                <!-- DOKUMENTY -->
                 <div id="tab-docs" style="display:none;">
                     <div class="bg-card p-4">
                         <h4 class="fw-bold mb-3 text-light"><i class="fa-solid fa-file-contract me-2 text-warning"></i> Dokumenty Firmowe</h4>
@@ -227,7 +227,7 @@
                 </div>
             </div>
 
-            <!-- MODAL UKOŃCZENIA ZLECENIA (CMR & PODSUMOWANIE) -->
+            <!-- MODAL UKOŃCZENIA ZLECENIA -->
             <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content bg-card border-secondary text-light">
@@ -237,32 +237,41 @@
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="modal_dispatch_id">
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Towar / Ładunek</label>
-                                <input type="text" id="modal_cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe">
-                            </div>
+                            <div class="mb-3"><label class="form-label small text-muted">Towar / Ładunek</label><input type="text" id="modal_cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
                             <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">Dystans (km)</label>
-                                    <input type="number" id="modal_distance" class="form-control form-control-dark" placeholder="np. 1250" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">Zarobek (€)</label>
-                                    <input type="number" id="modal_income" class="form-control form-control-dark" placeholder="np. 48000" required>
-                                </div>
+                                <div class="col-6"><label class="form-label small text-muted">Dystans (km)</label><input type="number" id="modal_distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
+                                <div class="col-6"><label class="form-label small text-muted">Zarobek (€)</label><input type="number" id="modal_income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Link do zdjęcia CMR (opcjonalne)</label>
-                                <input type="url" id="modal_cmr" class="form-control form-control-dark" placeholder="https://imgur.com/...">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Link do podsumowania z gry (opcjonalne)</label>
-                                <input type="url" id="modal_summary" class="form-control form-control-dark" placeholder="https://imgur.com/...">
-                            </div>
+                            <div class="mb-3"><label class="form-label small text-muted">Link do zdjęcia CMR (opcjonalne)</label><input type="url" id="modal_cmr" class="form-control form-control-dark" placeholder="https://imgur.com/..."></div>
+                            <div class="mb-3"><label class="form-label small text-muted">Link do podsumowania z gry (opcjonalne)</label><input type="url" id="modal_summary" class="form-control form-control-dark" placeholder="https://imgur.com/..."></div>
                         </div>
                         <div class="modal-footer border-secondary">
                             <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Anuluj</button>
                             <button type="button" class="btn btn-success btn-sm fw-bold px-4" onclick="submitCompleteDispatch()">Wyślij Raport</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL EDYCJI ZLECENIA PRZEZ SZEFA -->
+            <div class="modal fade" id="editDispatchModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content bg-card border-secondary text-light">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title fw-bold text-warning"><i class="fa-solid fa-pen-to-square me-2"></i> Edycja Zlecenia</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="edit_dispatch_id">
+                            <div class="mb-3"><label class="form-label small text-muted">Przypisz kierowcę</label><select id="edit_dispatch_assigned" class="form-select form-control-dark"></select></div>
+                            <div class="mb-3"><label class="form-label small text-muted">Zestaw z garażu</label><select id="edit_dispatch_truck" class="form-select form-control-dark"></select></div>
+                            <div class="mb-3"><label class="form-label small text-muted">Skąd</label><input type="text" id="edit_dispatch_start" class="form-control form-control-dark" required></div>
+                            <div class="mb-3"><label class="form-label small text-muted">Dokąd</label><input type="text" id="edit_dispatch_end" class="form-control form-control-dark" required></div>
+                            <div class="mb-3"><label class="form-label small text-muted">Uwagi</label><textarea id="edit_dispatch_notes" class="form-control form-control-dark" rows="2"></textarea></div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Anuluj</button>
+                            <button type="button" class="btn btn-warning btn-sm fw-bold px-4" onclick="submitEditDispatch()">Zapisz Zmiany</button>
                         </div>
                     </div>
                 </div>
@@ -284,6 +293,7 @@
         let currentUserRole = '';
         let currentUsername = '';
         let groupedTrucksData = {};
+        let allDispatchesCache = [];
 
         const translations = {
             pl: {
@@ -457,7 +467,7 @@
             showLogin();
         }
 
-        // --- GARAŻ (Grupowanie po modelu) ---
+        // --- GARAŻ ---
         async function loadGarage() {
             const res = await fetch('/api/trucks');
             if (res.ok) {
@@ -576,19 +586,17 @@
         async function loadDispatches() {
             const res = await fetch('/api/dispatches');
             if (res.ok) {
-                const dispatches = await res.json();
+                allDispatchesCache = await res.json();
                 const container = document.getElementById('dispatches-container');
                 container.innerHTML = '';
 
-                if (dispatches.length === 0) {
-                    container.innerHTML = '<div class="text-muted p-3">Brak dostępnych zleceń dla Ciebie w tej chwili.</div>';
+                if (allDispatchesCache.length === 0) {
+                    container.innerHTML = '<div class="text-muted p-3">Brak dostępnych zleceń w tej chwili.</div>';
                     return;
                 }
 
-                dispatches.forEach(d => {
+                allDispatchesCache.forEach(d => {
                     let actionHtml = '';
-                    
-                    // Czy to zlecenie może przyjąć dany użytkownik?
                     const canAccept = (d.assigned_to === 'Wszyscy' || d.assigned_to === currentUsername);
 
                     if (d.status === 'W wolnym obiegu') {
@@ -603,6 +611,17 @@
                         actionHtml = `<span class="badge bg-secondary">W trakcie realizacji przez @${d.accepted_by_username}</span>`;
                     }
 
+                    // PRZYCISKI DLA SZEFA (Edycja i Usuwanie)
+                    let adminControls = '';
+                    if (currentUserRole === 'admin') {
+                        adminControls = `
+                            <div class="mt-2 pt-2 border-top border-secondary d-flex gap-2">
+                                <button class="btn btn-outline-warning btn-sm py-0 px-2 fw-bold" onclick="openEditDispatchModal(${d.id})"><i class="fa-solid fa-pen me-1"></i> Edytuj</button>
+                                <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="deleteDispatch(${d.id})"><i class="fa-solid fa-trash me-1"></i> Usuń</button>
+                            </div>
+                        `;
+                    }
+
                     container.innerHTML += `
                         <div class="col-md-6">
                             <div class="bg-card p-4">
@@ -615,6 +634,7 @@
                                 <div class="mt-3">
                                     ${actionHtml}
                                 </div>
+                                ${adminControls}
                             </div>
                         </div>
                     `;
@@ -650,15 +670,25 @@
             if (uRes.ok) {
                 const users = await uRes.json();
                 const sel = document.getElementById('dispatch_assigned');
+                const editSel = document.getElementById('edit_dispatch_assigned');
                 sel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
-                users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
+                editSel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
+                users.forEach(u => {
+                    sel.innerHTML += `<option value="${u.username}">${u.username}</option>`;
+                    editSel.innerHTML += `<option value="${u.username}">${u.username}</option>`;
+                });
             }
             const tRes = await fetch('/api/trucks');
             if (tRes.ok) {
                 const trucks = await tRes.json();
                 const tSel = document.getElementById('dispatch_truck');
+                const editTSel = document.getElementById('edit_dispatch_truck');
                 tSel.innerHTML = '<option value="Standard">Standardowy Zestaw</option>';
-                trucks.forEach(t => tSel.innerHTML += `<option value="${t.truck_model} (${t.plates})">${t.truck_model} - ${t.plates}</option>`);
+                editTSel.innerHTML = '<option value="Standard">Standardowy Zestaw</option>';
+                trucks.forEach(t => {
+                    tSel.innerHTML += `<option value="${t.truck_model} (${t.plates})">${t.truck_model} - ${t.plates}</option>`;
+                    editTSel.innerHTML += `<option value="${t.truck_model} (${t.plates})">${t.truck_model} - ${t.plates}</option>`;
+                });
             }
         }
 
@@ -669,6 +699,59 @@
             } else {
                 const data = await res.json();
                 alert(data.error || 'Nie możesz przyjąć tego zlecenia.');
+            }
+        }
+
+        // EDYCJA I USUWANIE DLA SZEFA
+        function openEditDispatchModal(id) {
+            const disp = allDispatchesCache.find(d => d.id === id);
+            if (!disp) return;
+
+            document.getElementById('edit_dispatch_id').value = disp.id;
+            document.getElementById('edit_dispatch_assigned').value = disp.assigned_to || 'Wszyscy';
+            document.getElementById('edit_dispatch_truck').value = disp.truck_name || 'Standard';
+            document.getElementById('edit_dispatch_start').value = disp.start_city;
+            document.getElementById('edit_dispatch_end').value = disp.end_city;
+            document.getElementById('edit_dispatch_notes').value = disp.notes || '';
+
+            const modal = new bootstrap.Modal(document.getElementById('editDispatchModal'));
+            modal.show();
+        }
+
+        async function submitEditDispatch() {
+            const id = document.getElementById('edit_dispatch_id').value;
+            const res = await fetch(`/api/dispatches/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assigned_to: document.getElementById('edit_dispatch_assigned').value,
+                    truck_name: document.getElementById('edit_dispatch_truck').value,
+                    start_city: document.getElementById('edit_dispatch_start').value,
+                    end_city: document.getElementById('edit_dispatch_end').value,
+                    notes: document.getElementById('edit_dispatch_notes').value
+                })
+            });
+
+            if (res.ok) {
+                const modalEl = document.getElementById('editDispatchModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                loadDispatches();
+                alert('Zlecenie zostało zaktualizowane!');
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Błąd edycji zlecenia.');
+            }
+        }
+
+        async function deleteDispatch(id) {
+            if (confirm('Czy na pewno chcesz usunąć to zlecenie?')) {
+                const res = await fetch(`/api/dispatches/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadDispatches();
+                } else {
+                    alert('Błąd podczas usuwania zlecenia.');
+                }
             }
         }
 
