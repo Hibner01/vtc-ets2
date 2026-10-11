@@ -14,7 +14,6 @@
             overflow-x: hidden;
         }
 
-        /* Przywrócone tła volvo1.png i volvo2.png */
         .auth-bg-main { 
             background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.png') center/cover no-repeat fixed;
             min-height: 100vh; 
@@ -134,6 +133,29 @@
         .truck-card:hover { 
             transform: translateY(-4px); 
             border-color: #ffffff; 
+        }
+
+        /* ŁADNE, WYPEŁNIONE ZDJĘCIA BEZ PASKÓW */
+        .truck-img-preview {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid #383e47;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .truck-img-preview:hover {
+            transform: scale(1.02);
+        }
+
+        .truck-card-grid-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #2d3238;
         }
 
         .input-group-custom {
@@ -415,7 +437,7 @@
                                     <div>
                                         <div class="text-white-50 small" data-i18n="deliveriesMonth">Dostawy (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-deliveries">0</div>
-                                        <div class="text-white-50 small" data-i18n="completedCargo">Zrealizowanych ładunków</div>
+                                        <div class="text-white-50 small" data-i18n="completedCargo">Zrealizovaných ładunków</div>
                                     </div>
                                     <div class="fs-2 text-warning"><i class="fa-solid fa-box"></i></div>
                                 </div>
@@ -574,7 +596,6 @@
                         <div id="garage-main-view">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="fw-bold mb-0 text-white" data-i18n="trucksHeader">Ciężarówki</h4>
-                                <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> <span data-i18n="addTruck">Dodaj do Garażu</span></button>
                             </div>
                             <hr class="border-secondary mb-4">
 
@@ -635,6 +656,10 @@
         let currentUsername = '';
         let currentLang = 'pl';
         let groupedTrucksData = {};
+        let allUsersList = [];
+
+        // Przechowywanie przypisanych kierowców w pamięci przeglądarki
+        let assignedTrucksStorage = JSON.parse(localStorage.getItem('vtc_assigned_drivers') || '{}');
 
         const staticTrucksSpecs = {
             "SCANIA R500": {
@@ -646,11 +671,7 @@
                 accessories: "Własne",
                 photo: "/scaniarprzod.jpg",
                 photoBack: "/scaniartyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 8001S", driver_name: "" },
-                    { plates: "WRA 8002S", driver_name: "" },
-                    { plates: "WRA 8003S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 8001S", "WRA 8002S", "WRA 8003S"]
             },
             "SCANIA PGR 520": {
                 cabin: "CR19T Topline 2008-2018",
@@ -661,11 +682,7 @@
                 accessories: "Własne",
                 photo: "/scaniapgrprzod.jpg",
                 photoBack: "/scaniapgrtyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 6614S", driver_name: "" },
-                    { plates: "WRA 6615S", driver_name: "" },
-                    { plates: "WRA 6616S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 6614S", "WRA 6615S", "WRA 6616S"]
             },
             "RENAULT PRIVILEGE 400": {
                 cabin: "High Roof",
@@ -676,11 +693,7 @@
                 accessories: "Własne",
                 photo: "/renaultprzod.jpg",
                 photoBack: "/renaulttyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 5024S", driver_name: "" },
-                    { plates: "WRA 5025S", driver_name: "" },
-                    { plates: "WRA 5026S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 5024S", "WRA 5025S", "WRA 5026S"]
             },
             "VOLVO FH2 500": {
                 cabin: "Globetrotter XL (dolne)",
@@ -691,12 +704,7 @@
                 accessories: "Własne",
                 photo: "/volvoprzod.jpg",
                 photoBack: "/volvotyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 6509S", driver_name: "" },
-                    { plates: "WRA 6510S", driver_name: "" },
-                    { plates: "WRA 6511S", driver_name: "" },
-                    { plates: "WRA 6512S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 6509S", "WRA 6510S", "WRA 6511S", "WRA 6512S"]
             },
             "RENAULT T 480": {
                 cabin: "High Sleeper",
@@ -707,11 +715,7 @@
                 accessories: "Własne",
                 photo: "/renaulttprzod.jpg",
                 photoBack: "/renaultttyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 7945S", driver_name: "" },
-                    { plates: "WRA 7946S", driver_name: "" },
-                    { plates: "WRA 7947S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 7945S", "WRA 7946S", "WRA 7947S"]
             },
             "MERCEDES MP4 476": {
                 cabin: "GigaSpace",
@@ -722,11 +726,7 @@
                 accessories: "Własne",
                 photo: "/mercedesprzod.jpg",
                 photoBack: "/mercedestyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 7217S", driver_name: "" },
-                    { plates: "WRA 7218S", driver_name: "" },
-                    { plates: "WRA 7219S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 7217S", "WRA 7218S", "WRA 7219S"]
             },
             "MAN TGX E6 480": {
                 cabin: "Cabin XXL",
@@ -737,11 +737,7 @@
                 accessories: "Własne",
                 photo: "/manprzod.jpg",
                 photoBack: "/mantyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 7707S", driver_name: "" },
-                    { plates: "WRA 7708S", driver_name: "" },
-                    { plates: "WRA 7709S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 7707S", "WRA 7708S", "WRA 7709S"]
             },
             "DAF XF106 510": {
                 cabin: "Super Space Cab",
@@ -752,12 +748,7 @@
                 accessories: "Własne",
                 photo: "/dafprzod.jpg",
                 photoBack: "/daftyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 6196S", driver_name: "" },
-                    { plates: "WRA 6197S", driver_name: "" },
-                    { plates: "WRA 6198S", driver_name: "" },
-                    { plates: "WRA 6199S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 6196S", "WRA 6197S", "WRA 6198S", "WRA 6199S"]
             },
             "VOLVO FH4 500": {
                 cabin: "Globetrotter XL",
@@ -768,11 +759,7 @@
                 accessories: "Własne",
                 photo: "/volvo4przod.jpg",
                 photoBack: "/volvo4tyl.jpg",
-                defaultUnits: [
-                    { plates: "WRA 7605S", driver_name: "" },
-                    { plates: "WRA 7606S", driver_name: "" },
-                    { plates: "WRA 7607S", driver_name: "" }
-                ]
+                defaultUnits: ["WRA 7605S", "WRA 7606S", "WRA 7607S"]
             }
         };
 
@@ -977,6 +964,19 @@
             else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
         }
 
+        async function fetchDriversList() {
+            try {
+                const res = await fetch('/api/users');
+                if(res.ok) {
+                    allUsersList = await res.json();
+                } else {
+                    allUsersList = [{ username: 'WladekKiero' }, { username: 'miki' }];
+                }
+            } catch(e) {
+                allUsersList = [{ username: 'WladekKiero' }, { username: 'miki' }];
+            }
+        }
+
         async function checkUser() {
             const savedUser = localStorage.getItem('vtc_logged_user');
             if (!savedUser) return showLogin();
@@ -1003,26 +1003,9 @@
                         document.getElementById('admin-badge').classList.remove('d-none');
                         document.getElementById('admin-tab-btn').classList.remove('d-none');
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
-                        document.getElementById('add-truck-btn').classList.remove('d-none');
                     }
 
-                    const truckBox = document.getElementById('my-assigned-truck-box');
-                    if (data.assignedTruck) {
-                        truckBox.innerHTML = `
-                            <div class="text-center">
-                                <h4 class="fw-bold text-white mb-1">${data.assignedTruck.truck_model}</h4>
-                                <span class="badge bg-secondary mb-3">Rejestracja: ${data.assignedTruck.plates}</span>
-                                ${data.assignedTruck.photo ? `<img src="${data.assignedTruck.photo}" class="img-fluid rounded border border-secondary mb-3">` : ''}
-                                <ul class="list-unstyled text-start small text-white bg-dark p-3 rounded">
-                                    <li><strong>Kabina:</strong> ${data.assignedTruck.cabin}</li>
-                                    <li><strong>Silnik:</strong> ${data.assignedTruck.engine}</li>
-                                    <li><strong>Skrzynia:</strong> ${data.assignedTruck.gearbox}</li>
-                                </ul>
-                            </div>
-                        `;
-                    } else {
-                        truckBox.innerHTML = `<div class="text-white-50 text-center py-4">${i18n[currentLang].noTruckAssigned}</div>`;
-                    }
+                    await fetchDriversList();
 
                     switchTab('dashboard');
                     loadCompanyStats();
@@ -1185,83 +1168,88 @@
         }
 
         async function loadGarage() {
-            const res = await fetch('/api/trucks');
-            if (res.ok) {
-                const trucks = await res.json();
-                groupedTrucksData = {};
+            const grid = document.getElementById('garage-grid');
+            grid.innerHTML = '';
 
-                trucks.forEach(t => {
-                    if (!groupedTrucksData[t.truck_model]) {
-                        groupedTrucksData[t.truck_model] = {
-                            model: t.truck_model,
-                            ...staticTrucksSpecs[t.truck_model],
-                            units: []
-                        };
-                    }
-                    groupedTrucksData[t.truck_model].units.push(t);
-                });
+            const modelsList = Object.keys(staticTrucksSpecs);
+            
+            modelsList.forEach(modelName => {
+                const spec = staticTrucksSpecs[modelName];
+                let photoHtml = spec.photo ? `<img src="${spec.photo}" class="truck-card-grid-img mb-2">` : `<div style="height: 120px;"></div>`;
 
-                const grid = document.getElementById('garage-grid');
-                grid.innerHTML = '';
-
-                const modelsList = Object.keys(staticTrucksSpecs);
-                
-                modelsList.forEach(modelName => {
-                    const spec = staticTrucksSpecs[modelName];
-                    const group = groupedTrucksData[modelName] || {
-                        model: modelName,
-                        ...spec,
-                        units: []
-                    };
-
-                    // Zmieniono object-fit na contain, aby miniatury w siatce garażu też się nie przycinały
-                    let photoHtml = spec.photo ? `<img src="${spec.photo}" class="img-fluid rounded mb-2 bg-black p-1" style="max-height: 140px; width: 100%; object-fit: contain;">` : `<div style="height: 120px;"></div>`;
-
-                    grid.innerHTML += `
-                        <div class="col-md-3">
-                            <div class="truck-card" onclick="openTruckGroupDetail('${modelName}')">
-                                <h5 class="fw-bold text-white mb-2">${modelName}</h5>
-                                ${photoHtml}
-                                <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto" data-i18n="moreInfo">${i18n[currentLang].moreInfo}</a>
-                            </div>
+                grid.innerHTML += `
+                    <div class="col-md-3">
+                        <div class="truck-card" onclick="openTruckGroupDetail('${modelName}')">
+                            <h5 class="fw-bold text-white mb-2">${modelName}</h5>
+                            ${photoHtml}
+                            <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto" data-i18n="moreInfo">${i18n[currentLang].moreInfo}</a>
                         </div>
-                    `;
-                });
-            }
+                    </div>
+                `;
+            });
         }
 
         function openTruckGroupDetail(modelName) {
             const spec = staticTrucksSpecs[modelName] || {};
-            const group = groupedTrucksData[modelName] || {
-                model: modelName,
-                ...spec,
-                units: []
-            };
-
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
-            let displayUnits = group.units.length > 0 ? group.units : (spec.defaultUnits || []);
+            let platesList = spec.defaultUnits || [];
+            let activeCount = 0;
 
-            let unitsHtml = displayUnits.map(u => `
-                <div class="mb-2 text-white fs-6">
-                    <strong>${u.plates}</strong> ${u.driver_name ? `- @${u.driver_name}` : '-'}
-                </div>
-            `).join('');
+            let unitsHtml = platesList.map(plate => {
+                let assignedUser = assignedTrucksStorage[plate] || '';
+                if(assignedUser) activeCount++;
 
-            // Zwiększono wysokość (max-height: 380px) oraz zmieniono na object-fit: contain, aby całe zdjęcia mieściły się w oknach bez przycinania
+                return `
+                    <div class="d-flex align-items-center justify-content-between mb-2 text-white fs-6 p-2 rounded bg-dark border border-secondary">
+                        <div><strong>${plate}</strong> ${assignedUser ? `- <span class="text-warning">@${assignedUser}</span>` : '<span class="text-muted">- Wolny</span>'}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Pasek przypisywania zestawu widoczny TYLKO dla Szefa (currentUserRole === 'admin')
+            let bossAssignPanelHtml = '';
+            if (currentUserRole === 'admin') {
+                let optionsPlates = platesList.map(p => `<option value="${p}">${p}</option>`).join('');
+                let optionsDrivers = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+
+                bossAssignPanelHtml = `
+                    <div class="bg-card-bms p-3 mb-4 border border-warning rounded-3">
+                        <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-user-gear me-2"></i> Przypisz Zestaw (Panel Szefa)</h6>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5">
+                                <label class="small text-white mb-1">Rejestracja:</label>
+                                <select id="assign_select_plate" class="form-select form-select-sm bg-dark text-white border-secondary">${optionsPlates}</select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="small text-white mb-1">Kierowca:</label>
+                                <select id="assign_select_driver" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                    <option value="">-- Zwolnij miejsce --</option>
+                                    ${optionsDrivers}
+                                </select>
+                            </div>
+                            <div class="col-md-2 mt-auto">
+                                <button class="btn btn-pill-white btn-sm w-100 fw-bold" onclick="saveDriverAssignment('${modelName}')">Zapisz</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             document.getElementById('truck-detail-content').innerHTML = `
                 <div class="row g-4">
                     <div class="col-md-7">
-                        <h2 class="fw-bold text-white mb-4">${group.model}</h2>
-                        <div class="mb-3 bg-black p-2 rounded border border-secondary text-center">
-                            <img src="${spec.photo || '/volvo1.png'}" class="img-fluid rounded shadow" style="width: 100%; max-height: 360px; object-fit: contain;">
+                        <h2 class="fw-bold text-white mb-3">${modelName}</h2>
+                        <div class="mb-3">
+                            <img src="${spec.photo || '/volvo1.png'}" class="truck-img-preview">
                         </div>
-                        <div class="bg-black p-2 rounded border border-secondary text-center">
-                            <img src="${spec.photoBack || '/volvo2.png'}" class="img-fluid rounded shadow" style="width: 100%; max-height: 360px; object-fit: contain;">
+                        <div>
+                            <img src="${spec.photoBack || '/volvo2.png'}" class="truck-img-preview">
                         </div>
                     </div>
                     <div class="col-md-5 border-start border-secondary ps-md-4">
+                        ${bossAssignPanelHtml}
                         <ul class="list-unstyled lh-lg text-white fs-5 mb-4">
                             <li><strong>Kabina:</strong> ${spec.cabin || 'Standard'}</li>
                             <li><strong>Podwozie:</strong> ${spec.chassis || '4x2'}</li>
@@ -1271,11 +1259,26 @@
                             <li><strong>Akcesoria wnętrza:</strong> ${spec.accessories || 'Własne'}</li>
                         </ul>
                         <hr class="border-secondary my-4">
-                        <h5 class="fw-bold mb-3 text-white">Kierowcy (${displayUnits.filter(u => u.driver_name).length}/${displayUnits.length}):</h5>
+                        <h5 class="fw-bold mb-3 text-white">Kierowcy (${activeCount}/${platesList.length}):</h5>
                         <div>${unitsHtml}</div>
                     </div>
                 </div>
             `;
+        }
+
+        function saveDriverAssignment(modelName) {
+            const plate = document.getElementById('assign_select_plate').value;
+            const driver = document.getElementById('assign_select_driver').value;
+
+            if (driver) {
+                assignedTrucksStorage[plate] = driver;
+            } else {
+                delete assignedTrucksStorage[plate];
+            }
+
+            localStorage.setItem('vtc_assigned_drivers', JSON.stringify(assignedTrucksStorage));
+            alert(`Pomyślnie zaktualizowano przydział dla rejestracji ${plate}!`);
+            openTruckGroupDetail(modelName);
         }
 
         function closeTruckDetail() {
