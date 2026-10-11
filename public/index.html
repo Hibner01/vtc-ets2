@@ -136,7 +136,6 @@
             border-color: #ffffff; 
         }
 
-        /* POPRAWIONE PROPORCJE ZDJĘĆ CIĘŻARÓWEK */
         .truck-img-preview {
             width: 100%;
             height: 320px;
@@ -144,11 +143,6 @@
             border-radius: 16px;
             border: 1px solid #383e47;
             box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-            transition: transform 0.3s ease;
-        }
-
-        .truck-img-preview:hover {
-            transform: scale(1.015);
         }
 
         .truck-card-grid-img {
@@ -337,7 +331,6 @@
         <div id="dashboard-section" style="display:none;">
             
             <aside class="sidebar">
-                <!-- KLIKALNE LOGO - PRZEKRACZA NA PULPIT -->
                 <div class="sidebar-brand" onclick="switchTab('dashboard')" title="Strona Główna">
                     <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" onerror="this.style.display='none'">
                 </div>
@@ -528,7 +521,7 @@
                             <div class="col-md-4">
                                 <div class="bg-card-bms p-4">
                                     <h5 class="fw-bold mb-3 text-white" data-i18n="addExpense">Zgłoś wydatek</h5>
-                                    <form id="expense-form">
+                                    <form id="expense-form" onsubmit="submitExpenseForm(event)">
                                         <div class="mb-3">
                                             <label class="form-label text-white fw-semibold" data-i18n="expenseType">Typ wydatku</label>
                                             <select id="expense_type" class="form-select form-control-icon text-white" required>
@@ -576,9 +569,15 @@
                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4 border-info">
                                     <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> <span data-i18n="newDispatch">Nowe Zlecenie w Dyspozytorni</span></h5>
-                                    <form id="dispatch-form" class="row g-3">
-                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="assignDriver">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select></div>
-                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="selectTruck">Zestaw z garażu</label><select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select></div>
+                                    <form id="dispatch-form" onsubmit="submitDispatchForm(event)" class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white" data-i18n="assignDriver">Przypisz kierowcę</label>
+                                            <select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white" data-i18n="selectTruck">Zestaw z garażu</label>
+                                            <select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select>
+                                        </div>
                                         <div class="col-md-3"><label class="form-label text-white" data-i18n="fromCity">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
                                         <div class="col-md-3"><label class="form-label text-white" data-i18n="toCity">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
                                         <div class="col-md-12"><label class="form-label text-white" data-i18n="notes">Uwagi</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
@@ -610,7 +609,6 @@
                         </div>
                     </div>
 
-                    <!-- DOKUMENTY (Z WZOREM CMR I PRZYKŁADAMI) -->
                     <div id="tab-documents" style="display:none;">
                         <div class="bg-card-bms p-4">
                             <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="documentsHeader">Dokumenty i Regulaminy Firmowe</span></h4>
@@ -702,251 +700,62 @@
         let currentUserRole = '';
         let currentUsername = '';
         let currentLang = 'pl';
-        let groupedTrucksData = {};
         let allUsersList = [];
 
         let assignedTrucksStorage = JSON.parse(localStorage.getItem('vtc_assigned_drivers') || '{}');
 
         const staticTrucksSpecs = {
-            "SCANIA R500": {
-                cabin: "Highline",
-                chassis: "4x2 type 2",
-                engine: "DC13 165 500 Euro 6",
-                gearbox: "G33CMR",
-                interior: "Exclusive Dark Eu",
-                accessories: "Własne",
-                photo: "/scaniarprzod.jpg",
-                photoBack: "/scaniartyl.jpg",
-                defaultUnits: ["WRA 8001S", "WRA 8002S", "WRA 8003S"]
-            },
-            "SCANIA PGR 520": {
-                cabin: "CR19T Topline 2008-2018",
-                chassis: "4x2 4000mm",
-                engine: "DC16 101 520 Euro 6",
-                gearbox: "GRSO900R",
-                interior: "Treated New Gauges Radio 2010-2018",
-                accessories: "Własne",
-                photo: "/scaniapgrprzod.jpg",
-                photoBack: "/scaniapgrtyl.jpg",
-                defaultUnits: ["WRA 6614S", "WRA 6615S", "WRA 6616S"]
-            },
-            "RENAULT PRIVILEGE 400": {
-                cabin: "High Roof",
-                chassis: "4x2",
-                engine: "400 Euro2",
-                gearbox: "Optidriver R",
-                interior: "Privilege",
-                accessories: "Własne",
-                photo: "/renaultprzod.jpg",
-                photoBack: "/renaulttyl.jpg",
-                defaultUnits: ["WRA 5024S", "WRA 5025S", "WRA 5026S"]
-            },
-            "VOLVO FH2 500": {
-                cabin: "Globetrotter XL (dolne)",
-                chassis: "4x2 (górne)",
-                engine: "D13A500",
-                gearbox: "I-Shift ATO3512D R",
-                interior: "Standard",
-                accessories: "Własne",
-                photo: "/volvoprzod.jpg",
-                photoBack: "/volvotyl.jpg",
-                defaultUnits: ["WRA 6509S", "WRA 6510S", "WRA 6511S", "WRA 6512S"]
-            },
-            "RENAULT T 480": {
-                cabin: "High Sleeper",
-                chassis: "4x2",
-                engine: "DTI 13 480 Euro 6",
-                gearbox: "Optidriver AT2612F R",
-                interior: "Exclusive Black 2019",
-                accessories: "Własne",
-                photo: "/renaulttprzod.jpg",
-                photoBack: "/renaultttyl.jpg",
-                defaultUnits: ["WRA 7945S", "WRA 7946S", "WRA 7947S"]
-            },
-            "MERCEDES MP4 476": {
-                cabin: "GigaSpace",
-                chassis: "4x2",
-                engine: "OM 471 Euro VI 350 476KM",
-                gearbox: "PowerShift G281-12 R",
-                interior: "Comfortline GigaSpace (EU)",
-                accessories: "Własne",
-                photo: "/mercedesprzod.jpg",
-                photoBack: "/mercedestyl.jpg",
-                defaultUnits: ["WRA 7217S", "WRA 7218S", "WRA 7219S"]
-            },
-            "MAN TGX E6 480": {
-                cabin: "Cabin XXL",
-                chassis: "4x2 BLS",
-                engine: "D2676 LF25 353 Euro 6 480KM",
-                gearbox: "TipMatic 12AS2331 DD R",
-                interior: "Beige 2019",
-                accessories: "Własne",
-                photo: "/manprzod.jpg",
-                photoBack: "/mantyl.jpg",
-                defaultUnits: ["WRA 7707S", "WRA 7708S", "WRA 7709S"]
-            },
-            "DAF XF106 510": {
-                cabin: "Super Space Cab",
-                chassis: "4x2",
-                engine: "MX-13 375 Euro 6 510KM",
-                gearbox: "ZF AS Tronic R",
-                interior: "Standard",
-                accessories: "Własne",
-                photo: "/dafprzod.jpg",
-                photoBack: "/daftyl.jpg",
-                defaultUnits: ["WRA 6196S", "WRA 6197S", "WRA 6198S", "WRA 6199S"]
-            },
-            "VOLVO FH4 500": {
-                cabin: "Globetrotter XL",
-                chassis: "4x2",
-                engine: "DC13C500 EEV 500KM",
-                gearbox: "VT2514B 12+2 Retarder",
-                interior: "Exclusive",
-                accessories: "Własne",
-                photo: "/volvo4przod.jpg",
-                photoBack: "/volvo4tyl.jpg",
-                defaultUnits: ["WRA 7605S", "WRA 7606S", "WRA 7607S"]
-            }
+            "SCANIA R500": { cabin: "Highline", chassis: "4x2 type 2", engine: "DC13 165 500 Euro 6", gearbox: "G33CMR", interior: "Exclusive Dark Eu", accessories: "Własne", photo: "/scaniarprzod.jpg", photoBack: "/scaniartyl.jpg", defaultUnits: ["WRA 8001S", "WRA 8002S", "WRA 8003S"] },
+            "SCANIA PGR 520": { cabin: "CR19T Topline 2008-2018", chassis: "4x2 4000mm", engine: "DC16 101 520 Euro 6", gearbox: "GRSO900R", interior: "Treated New Gauges Radio", accessories: "Własne", photo: "/scaniapgrprzod.jpg", photoBack: "/scaniapgrtyl.jpg", defaultUnits: ["WRA 6614S", "WRA 6615S", "WRA 6616S"] },
+            "RENAULT PRIVILEGE 400": { cabin: "High Roof", chassis: "4x2", engine: "400 Euro2", gearbox: "Optidriver R", interior: "Privilege", accessories: "Własne", photo: "/renaultprzod.jpg", photoBack: "/renaulttyl.jpg", defaultUnits: ["WRA 5024S", "WRA 5025S", "WRA 5026S"] },
+            "VOLVO FH2 500": { cabin: "Globetrotter XL", chassis: "4x2", engine: "D13A500", gearbox: "I-Shift", interior: "Standard", accessories: "Własne", photo: "/volvoprzod.jpg", photoBack: "/volvotyl.jpg", defaultUnits: ["WRA 6509S", "WRA 6510S", "WRA 6511S", "WRA 6512S"] },
+            "RENAULT T 480": { cabin: "High Sleeper", chassis: "4x2", engine: "DTI 13 480", gearbox: "Optidriver", interior: "Exclusive Black", accessories: "Własne", photo: "/renaulttprzod.jpg", photoBack: "/renaultttyl.jpg", defaultUnits: ["WRA 7945S", "WRA 7946S", "WRA 7947S"] },
+            "MERCEDES MP4 476": { cabin: "GigaSpace", chassis: "4x2", engine: "OM 471 476KM", gearbox: "PowerShift", interior: "Comfortline", accessories: "Własne", photo: "/mercedesprzod.jpg", photoBack: "/mercedestyl.jpg", defaultUnits: ["WRA 7217S", "WRA 7218S", "WRA 7219S"] },
+            "MAN TGX E6 480": { cabin: "Cabin XXL", chassis: "4x2 BLS", engine: "D2676 480KM", gearbox: "TipMatic", interior: "Beige", accessories: "Własne", photo: "/manprzod.jpg", photoBack: "/mantyl.jpg", defaultUnits: ["WRA 7707S", "WRA 7708S", "WRA 7709S"] },
+            "DAF XF106 510": { cabin: "Super Space Cab", chassis: "4x2", engine: "MX-13 510KM", gearbox: "ZF AS Tronic", interior: "Standard", accessories: "Własne", photo: "/dafprzod.jpg", photoBack: "/daftyl.jpg", defaultUnits: ["WRA 6196S", "WRA 6197S", "WRA 6198S", "WRA 6199S"] },
+            "VOLVO FH4 500": { cabin: "Globetrotter XL", chassis: "4x2", engine: "DC13C500 500KM", gearbox: "VT2514B", interior: "Exclusive", accessories: "Własne", photo: "/volvo4przod.jpg", photoBack: "/volvo4tyl.jpg", defaultUnits: ["WRA 7605S", "WRA 7606S", "WRA 7607S"] }
         };
 
         const i18n = {
             pl: {
-                loginBtn: "Zaloguj się",
-                registerBtn: "Zarejestruj się",
-                exitBtn: "Wyjdź",
-                welcomeBack: "Witaj ponownie!",
-                loginSubtitle: "Zaloguj się do Mazren Control System",
-                emailOrLogin: "Adres e-mail lub Login",
-                password: "Hasło",
-                noAccount: "Nie masz jeszcze konta?",
-                createAccount: "Rejestracja konta",
-                registerSubtitle: "Stwórz konto w Mazren Control System",
-                discordNick: "Nick z Discorda",
-                emailAddress: "Adres e-mail",
-                repeatPassword: "Powtórz hasło",
-                createAccountBtn: "Stwórz konto",
-                hasAccount: "Masz już konto?",
-                loggedInAs: "ZALOGOWANY JAKO",
-                bossRole: "SZEF / WŁAŚCICIEL",
-                navDashboard: "Pulpit",
-                navStats: "Statystyki Firmy",
-                navFinances: "Finanse",
-                navDispatcher: "Dyspozytornia",
-                navGarage: "Garaż",
-                navDocuments: "Dokumenty",
-                navAbout: "O nas",
-                navManagement: "Zarządzanie",
-                logout: "Wyloguj się",
-                welcomeBackBanner: "WITAJ Z POWROTEM",
-                distanceMonth: "Dystans (Miesiąc)",
-                targetKm: "Cel: 6 000 km",
-                deliveriesMonth: "Dostawy (Miesiąc)",
-                completedCargo: "Zrealizowanych ładunków",
-                companyBudget: "Budżet Firmy",
-                availableFunds: "Dostępne środki",
-                companyKm: "Kilometry Firmy",
-                totalDistance: "Łączny dystans",
-                completedRoutes: "Wykonane Trasy",
-                yourTruck: "Twój Zestaw",
-                noTruckAssigned: "Brak przypisanego zestawu w garażu.",
-                moreInfo: "Więcej informacji",
-                trucksHeader: "Ciężarówki",
-                addTruck: "Dodaj do Garażu",
-                backBtn: "Powrót",
-                documentsHeader: "Dokumenty i Regulaminy Firmowe",
-                managementHeader: "Zarządzanie Kontami Kierowców",
-                driver: "Kierowca",
-                type: "Typ",
-                description: "Opis",
-                amount: "Kwota",
-                actions: "Akcje",
-                role: "Rola",
-                totalCompanyKm: "Łączne kilometry firmy",
-                totalCompanyDeliveries: "Łączna liczba dostaw",
-                budgetStatus: "Stan Budżetu",
-                allCompanyJobs: "Wszystkie Wykonane Trasy w Firmie",
-                driversRanking: "Ranking Kierowców",
-                addExpense: "Zgłoś wydatek",
-                expenseType: "Typ wydatku",
-                submitExpense: "+ Dodaj Wydatek",
-                expensesLog: "Rejestr wydatków firmy",
-                newDispatch: "Nowe Zlecenie w Dyspozytorni",
-                assignDriver: "Przypisz kierowcę",
-                selectTruck: "Zestaw z garażu",
-                fromCity: "Skąd",
-                toCity: "Dokąd",
-                notes: "Uwagi",
-                publishDispatch: "Opublikuj zlecenie",
-                availableJobs: "Dostępne trasy w Dyspozytorni:"
+                loginBtn: "Zaloguj się", registerBtn: "Zarejestruj się", exitBtn: "Wyjdź", welcomeBack: "Witaj ponownie!",
+                loginSubtitle: "Zaloguj się do Mazren Control System", emailOrLogin: "Adres e-mail lub Login", password: "Hasło",
+                noAccount: "Nie masz jeszcze konta?", createAccount: "Rejestracja konta", registerSubtitle: "Stwórz konto w Mazren Control System",
+                discordNick: "Nick z Discorda", emailAddress: "Adres e-mail", repeatPassword: "Powtórz hasło", createAccountBtn: "Stwórz konto",
+                hasAccount: "Masz już konto?", loggedInAs: "ZALOGOWANY JAKO", bossRole: "SZEF / WŁAŚCICIEL", navDashboard: "Pulpit",
+                navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
+                navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
+                welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 6 000 km",
+                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizowanych ładunków", companyBudget: "Budżet Firmy",
+                availableFunds: "Dostępne środki", companyKm: "Kilometry Firmy", totalDistance: "Łączny dystans",
+                completedRoutes: "Wykonane Trasy", yourTruck: "Twój Zestaw", noTruckAssigned: "Brak przypisanego zestawu w garażu.",
+                moreInfo: "Więcej informacji", trucksHeader: "Ciężarówki", addTruck: "Dodaj do Garażu", backBtn: "Powrót",
+                documentsHeader: "Dokumenty i Regulaminy Firmowe", managementHeader: "Zarządzanie Kontami Kierowców", driver: "Kierowca",
+                type: "Typ", description: "Opis", amount: "Kwota", actions: "Akcje", role: "Rola", totalCompanyKm: "Łączne kilometry firmy",
+                totalCompanyDeliveries: "Łączna liczba dostaw", budgetStatus: "Stan Budżetu", allCompanyJobs: "Wszystkie Wykonane Trasy w Firmie",
+                driversRanking: "Ranking Kierowców", addExpense: "Zgłoś wydatek", expenseType: "Typ wydatku", submitExpense: "+ Dodaj Wydatek",
+                expensesLog: "Rejestr wydatków firmy", newDispatch: "Nowe Zlecenie w Dyspozytorni", assignDriver: "Przypisz kierowcę",
+                selectTruck: "Zestaw z garażu", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi", publishDispatch: "Opublikuj zlecenie", availableJobs: "Dostępne trasy w Dyspozytorni:"
             },
             en: {
-                loginBtn: "Sign In",
-                registerBtn: "Register",
-                exitBtn: "Exit",
-                welcomeBack: "Welcome Back!",
-                loginSubtitle: "Log in to Mazren Control System",
-                emailOrLogin: "Email or Username",
-                password: "Password",
-                noAccount: "Don't have an account?",
-                createAccount: "Account Registration",
-                registerSubtitle: "Create an account in Mazren Control System",
-                discordNick: "Discord Username",
-                emailAddress: "Email Address",
-                repeatPassword: "Repeat Password",
-                createAccountBtn: "Create Account",
-                hasAccount: "Already have an account?",
-                loggedInAs: "LOGGED IN AS",
-                bossRole: "BOSS / OWNER",
-                navDashboard: "Dashboard",
-                navStats: "Company Stats",
-                navFinances: "Finances",
-                navDispatcher: "Dispatcher",
-                navGarage: "Garage",
-                navDocuments: "Documents",
-                navAbout: "About Us",
-                navManagement: "Management",
-                logout: "Logout",
-                welcomeBackBanner: "WELCOME BACK",
-                distanceMonth: "Distance (Month)",
-                targetKm: "Goal: 6,000 km",
-                deliveriesMonth: "Deliveries (Month)",
-                completedCargo: "Completed Loads",
-                companyBudget: "Company Budget",
-                availableFunds: "Available Funds",
-                companyKm: "Company Distance",
-                totalDistance: "Total Distance",
-                completedRoutes: "Completed Routes",
-                yourTruck: "Your Truck",
-                noTruckAssigned: "No truck assigned in garage.",
-                moreInfo: "More Info",
-                trucksHeader: "Trucks",
-                addTruck: "Add to Garage",
-                backBtn: "Back",
-                documentsHeader: "Company Documents & Rules",
-                managementHeader: "Driver Accounts Management",
-                driver: "Driver",
-                type: "Type",
-                description: "Description",
-                amount: "Amount",
-                actions: "Actions",
-                role: "Role",
-                totalCompanyKm: "Total Company Distance",
-                totalCompanyDeliveries: "Total Deliveries",
-                budgetStatus: "Budget Balance",
-                allCompanyJobs: "All Completed Company Routes",
-                driversRanking: "Drivers Leaderboard",
-                addExpense: "Report Expense",
-                expenseType: "Expense Type",
-                submitExpense: "+ Add Expense",
-                expensesLog: "Company Expense Log",
-                newDispatch: "New Dispatch Order",
-                assignDriver: "Assign Driver",
-                selectTruck: "Select Truck",
-                fromCity: "From",
-                toCity: "To",
-                notes: "Notes",
-                publishDispatch: "Publish Order",
-                availableJobs: "Available Dispatch Routes:"
+                loginBtn: "Sign In", registerBtn: "Register", exitBtn: "Exit", welcomeBack: "Welcome Back!",
+                loginSubtitle: "Log in to Mazren Control System", emailOrLogin: "Email or Username", password: "Password",
+                noAccount: "Don't have an account?", createAccount: "Account Registration", registerSubtitle: "Create an account",
+                discordNick: "Discord Username", emailAddress: "Email Address", repeatPassword: "Repeat Password", createAccountBtn: "Create Account",
+                hasAccount: "Already have an account?", loggedInAs: "LOGGED IN AS", bossRole: "BOSS / OWNER", navDashboard: "Dashboard",
+                navStats: "Company Stats", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage",
+                navDocuments: "Documents", navAbout: "About Us", navManagement: "Management", logout: "Logout",
+                welcomeBackBanner: "WELCOME BACK", distanceMonth: "Distance (Month)", targetKm: "Goal: 6,000 km",
+                deliveriesMonth: "Deliveries (Month)", completedCargo: "Completed Loads", companyBudget: "Company Budget",
+                availableFunds: "Available Funds", companyKm: "Company Distance", totalDistance: "Total Distance",
+                completedRoutes: "Completed Routes", yourTruck: "Your Truck", noTruckAssigned: "No truck assigned in garage.",
+                moreInfo: "More Info", trucksHeader: "Trucks", addTruck: "Add to Garage", backBtn: "Back",
+                documentsHeader: "Company Documents & Rules", managementHeader: "Driver Accounts Management", driver: "Driver",
+                type: "Type", description: "Description", amount: "Amount", actions: "Actions", role: "Role", totalCompanyKm: "Total Company Distance",
+                totalCompanyDeliveries: "Total Deliveries", budgetStatus: "Budget Balance", allCompanyJobs: "All Completed Company Routes",
+                driversRanking: "Drivers Leaderboard", addExpense: "Report Expense", expenseType: "Expense Type", submitExpense: "+ Add Expense",
+                expensesLog: "Company Expense Log", newDispatch: "New Dispatch Order", assignDriver: "Assign Driver",
+                selectTruck: "Select Truck", fromCity: "From", toCity: "To", notes: "Notes", publishDispatch: "Publish Order", availableJobs: "Available Dispatch Routes:"
             }
         };
 
@@ -954,22 +763,15 @@
             currentLang = lang;
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (i18n[lang] && i18n[lang][key]) {
-                    el.innerText = i18n[lang][key];
-                }
+                if (i18n[lang] && i18n[lang][key]) el.innerText = i18n[lang][key];
             });
         }
 
         function updateClock() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('pl-PL');
-            
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            let dateStr = now.toLocaleDateString(currentLang === 'pl' ? 'pl-PL' : 'en-US', options);
-            dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-
-            document.getElementById('live-clock').innerText = timeStr;
-            document.getElementById('current-date').innerText = dateStr;
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString('pl-PL');
+            let dateStr = now.toLocaleDateString(currentLang === 'pl' ? 'pl-PL' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('current-date').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
         }
         setInterval(updateClock, 1000);
         updateClock();
@@ -979,12 +781,7 @@
             document.getElementById('auth-main-card').style.display = 'none';
             document.getElementById('auth-login-card').style.display = type === 'login' ? 'block' : 'none';
             document.getElementById('auth-register-card').style.display = type === 'register' ? 'block' : 'none';
-
-            if (type === 'login' || type === 'register') {
-                section.className = 'auth-bg-side flex-column justify-content-between align-items-center py-5';
-            } else {
-                section.className = 'auth-bg-main flex-column justify-content-between align-items-center py-5';
-            }
+            section.className = (type === 'login' || type === 'register') ? 'auth-bg-side flex-column justify-content-between align-items-center py-5' : 'auth-bg-main flex-column justify-content-between align-items-center py-5';
         }
 
         function exitApp() {
@@ -997,30 +794,41 @@
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById('nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
-                if (nav) {
-                    if (tab === t) nav.classList.add('active');
-                    else nav.classList.remove('active');
-                }
+                if (nav) nav.classList.toggle('active', tab === t);
             });
             if (tab === 'company-stats') loadCompanyStatsFull();
-            else if (tab === 'dispatcher') { loadDispatches(); }
+            else if (tab === 'dispatcher') loadDispatches();
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'garage') loadGarage();
-            else if (tab === 'documents') {}
             else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
         }
 
         async function fetchDriversList() {
             try {
                 const res = await fetch('/api/users');
-                if(res.ok) {
-                    allUsersList = await res.json();
-                } else {
-                    allUsersList = [{ username: 'WladekKiero' }, { username: 'miki' }];
-                }
+                if (res.ok) allUsersList = await res.json();
+                else allUsersList = [{ username: currentUsername || 'WladekKiero' }];
             } catch(e) {
-                allUsersList = [{ username: 'WladekKiero' }, { username: 'miki' }];
+                allUsersList = [{ username: currentUsername || 'WladekKiero' }];
             }
+            populateDispatcherDropdowns();
+        }
+
+        function populateDispatcherDropdowns() {
+            const driverSelect = document.getElementById('dispatch_assigned');
+            const truckSelect = document.getElementById('dispatch_truck');
+            if (!driverSelect || !truckSelect) return;
+
+            driverSelect.innerHTML = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+            
+            let truckOptions = '<option value="Dowolny zestaw">Dowolny zestaw</option>';
+            for (let model in staticTrucksSpecs) {
+                let plates = staticTrucksSpecs[model].defaultUnits || [];
+                plates.forEach(p => {
+                    truckOptions += `<option value="${model} (${p})">${model} - ${p}</option>`;
+                });
+            }
+            truckSelect.innerHTML = truckOptions;
         }
 
         async function checkUser() {
@@ -1042,8 +850,8 @@
                     document.getElementById('banner-username').innerText = data.username;
                     document.getElementById('banner-role').innerText = data.role === 'admin' ? (currentLang === 'pl' ? 'Szef / Właściciel' : 'Boss / Owner') : (currentLang === 'pl' ? 'Kierowca' : 'Driver');
 
-                    document.getElementById('my-monthly-km').innerText = `${data.monthlyKm} km`;
-                    document.getElementById('my-monthly-deliveries').innerText = data.monthlyDeliveries;
+                    document.getElementById('my-monthly-km').innerText = `${data.monthlyKm || 0} km`;
+                    document.getElementById('my-monthly-deliveries').innerText = data.monthlyDeliveries || 0;
 
                     if (data.role === 'admin') {
                         document.getElementById('admin-badge').classList.remove('d-none');
@@ -1052,7 +860,6 @@
                     }
 
                     await fetchDriversList();
-
                     switchTab('dashboard');
                     loadCompanyStats();
                     loadMyJobs();
@@ -1116,7 +923,7 @@
             if (res.ok) {
                 const data = await res.json();
                 document.getElementById('dash-company-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
-                document.getElementById('dash-company-km').textContent = data.totalCompanyKm + ' km';
+                document.getElementById('dash-company-km').textContent = (data.totalCompanyKm || 0) + ' km';
             }
         }
 
@@ -1124,13 +931,13 @@
             const res = await fetch('/api/company-stats');
             if (res.ok) {
                 const data = await res.json();
-                document.getElementById('company-total-km-full').textContent = data.totalCompanyKm + ' km';
-                document.getElementById('company-total-deliveries-full').textContent = data.totalDeliveries;
+                document.getElementById('company-total-km-full').textContent = (data.totalCompanyKm || 0) + ' km';
+                document.getElementById('company-total-deliveries-full').textContent = data.totalDeliveries || 0;
                 document.getElementById('company-budget-full').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
 
                 const rankContainer = document.getElementById('ranking-container');
                 rankContainer.innerHTML = '';
-                data.driversRanking.forEach((d, idx) => {
+                (data.driversRanking || []).forEach((d, idx) => {
                     rankContainer.innerHTML += `
                         <div class="pill-row">
                             <div class="fw-bold text-white">${idx + 1}. ${d.username}</div>
@@ -1139,7 +946,6 @@
                         </div>
                     `;
                 });
-
                 loadAllJobs();
             }
         }
@@ -1150,21 +956,9 @@
                 const jobs = await res.json();
                 const myJobs = jobs.filter(j => j.username === currentUsername);
                 const container = document.getElementById('my-jobs-container');
-                container.innerHTML = '';
-
-                if (myJobs.length === 0) {
-                    container.innerHTML = '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>';
-                    return;
-                }
-
+                container.innerHTML = myJobs.length === 0 ? '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>' : '';
                 myJobs.forEach(j => {
-                    container.innerHTML += `
-                        <div class="pill-row">
-                            <div><strong class="text-white">${j.start_city}</strong> ➔ <strong class="text-white">${j.end_city}</strong> (${j.cargo})</div>
-                            <div class="fw-bold text-white">${j.distance} km</div>
-                            <div class="text-success fw-bold">${j.income} €</div>
-                        </div>
-                    `;
+                    container.innerHTML += `<div class="pill-row"><div><strong class="text-white">${j.start_city}</strong> ➔ <strong class="text-white">${j.end_city}</strong> (${j.cargo})</div><div class="fw-bold text-white">${j.distance} km</div><div class="text-success fw-bold">${j.income} €</div></div>`;
                 });
             }
         }
@@ -1176,13 +970,7 @@
                 const container = document.getElementById('all-jobs-container');
                 container.innerHTML = '';
                 jobs.forEach(j => {
-                    container.innerHTML += `
-                        <div class="pill-row">
-                            <div><strong class="text-white">${j.username}</strong>: ${j.start_city} ➔ ${j.end_city}</div>
-                            <div class="fw-bold text-white">${j.distance} km</div>
-                            <div class="text-success fw-bold">${j.income} €</div>
-                        </div>
-                    `;
+                    container.innerHTML += `<div class="pill-row"><div><strong class="text-white">${j.username}</strong>: ${j.start_city} ➔ ${j.end_city}</div><div class="fw-bold text-white">${j.distance} km</div><div class="text-success fw-bold">${j.income} €</div></div>`;
                 });
             }
         }
@@ -1208,6 +996,29 @@
             }
         }
 
+        async function submitDispatchForm(e) {
+            e.preventDefault();
+            const data = {
+                assigned_to: document.getElementById('dispatch_assigned').value,
+                truck_name: document.getElementById('dispatch_truck').value,
+                start_city: document.getElementById('dispatch_start').value,
+                end_city: document.getElementById('dispatch_end').value,
+                notes: document.getElementById('dispatch_notes').value
+            };
+            const res = await fetch('/api/dispatches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                document.getElementById('dispatch-form').reset();
+                loadDispatches();
+                alert('Zlecenie zostało opublikowane pomyślnie!');
+            } else {
+                alert('Błąd podczas publikowania zlecenia.');
+            }
+        }
+
         async function acceptDispatch(id) {
             const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
             if (res.ok) loadDispatches();
@@ -1216,23 +1027,18 @@
         async function loadGarage() {
             const grid = document.getElementById('garage-grid');
             grid.innerHTML = '';
-
-            const modelsList = Object.keys(staticTrucksSpecs);
-            
-            modelsList.forEach(modelName => {
+            for (let modelName in staticTrucksSpecs) {
                 const spec = staticTrucksSpecs[modelName];
-                let photoHtml = spec.photo ? `<img src="${spec.photo}" class="truck-card-grid-img mb-2">` : `<div style="height: 120px;"></div>`;
-
                 grid.innerHTML += `
                     <div class="col-md-3">
                         <div class="truck-card" onclick="openTruckGroupDetail('${modelName}')">
                             <h5 class="fw-bold text-white mb-2">${modelName}</h5>
-                            ${photoHtml}
-                            <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto" data-i18n="moreInfo">${i18n[currentLang].moreInfo}</a>
+                            <img src="${spec.photo}" class="truck-card-grid-img mb-2" onerror="this.src='/logo.png'">
+                            <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto">Więcej informacji</a>
                         </div>
                     </div>
                 `;
-            });
+            }
         }
 
         function openTruckGroupDetail(modelName) {
@@ -1242,41 +1048,23 @@
 
             let platesList = spec.defaultUnits || [];
             let activeCount = 0;
-
             let unitsHtml = platesList.map(plate => {
                 let assignedUser = assignedTrucksStorage[plate] || '';
                 if(assignedUser) activeCount++;
-
-                return `
-                    <div class="d-flex align-items-center justify-content-between mb-2 text-white fs-6 p-2 rounded bg-dark border border-secondary">
-                        <div><strong>${plate}</strong> ${assignedUser ? `- <span class="text-warning">@${assignedUser}</span>` : '<span class="text-muted">- Wolny</span>'}</div>
-                    </div>
-                `;
+                return `<div class="d-flex align-items-center justify-content-between mb-2 text-white fs-6 p-2 rounded bg-dark border border-secondary"><div><strong>${plate}</strong> ${assignedUser ? `- <span class="text-warning">@${assignedUser}</span>` : '<span class="text-muted">- Wolny</span>'}</div></div>`;
             }).join('');
 
             let bossAssignPanelHtml = '';
             if (currentUserRole === 'admin') {
                 let optionsPlates = platesList.map(p => `<option value="${p}">${p}</option>`).join('');
                 let optionsDrivers = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
-
                 bossAssignPanelHtml = `
                     <div class="bg-card-bms p-3 mb-4 border border-warning rounded-3">
                         <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-user-gear me-2"></i> Przypisz Zestaw (Panel Szefa)</h6>
                         <div class="row g-2 align-items-center">
-                            <div class="col-md-5">
-                                <label class="small text-white mb-1">Rejestracja:</label>
-                                <select id="assign_select_plate" class="form-select form-select-sm bg-dark text-white border-secondary">${optionsPlates}</select>
-                            </div>
-                            <div class="col-md-5">
-                                <label class="small text-white mb-1">Kierowca:</label>
-                                <select id="assign_select_driver" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                    <option value="">-- Zwolnij miejsce --</option>
-                                    ${optionsDrivers}
-                                </select>
-                            </div>
-                            <div class="col-md-2 mt-auto">
-                                <button class="btn btn-pill-white btn-sm w-100 fw-bold" onclick="saveDriverAssignment('${modelName}')">Zapisz</button>
-                            </div>
+                            <div class="col-md-5"><select id="assign_select_plate" class="form-select form-select-sm bg-dark text-white border-secondary">${optionsPlates}</select></div>
+                            <div class="col-md-5"><select id="assign_select_driver" class="form-select form-select-sm bg-dark text-white border-secondary"><option value="">-- Zwolnij --</option>${optionsDrivers}</select></div>
+                            <div class="col-md-2"><button class="btn btn-pill-white btn-sm w-100 fw-bold" onclick="saveDriverAssignment('${modelName}')">Zapisz</button></div>
                         </div>
                     </div>
                 `;
@@ -1286,22 +1074,17 @@
                 <div class="row g-4">
                     <div class="col-md-7">
                         <h2 class="fw-bold text-white mb-3">${modelName}</h2>
-                        <div class="mb-3">
-                            <img src="${spec.photo || '/volvo1.png'}" class="truck-img-preview">
-                        </div>
-                        <div>
-                            <img src="${spec.photoBack || '/volvo2.png'}" class="truck-img-preview">
-                        </div>
+                        <div class="mb-3"><img src="${spec.photo}" class="truck-img-preview" onerror="this.src='/logo.png'"></div>
+                        <div><img src="${spec.photoBack}" class="truck-img-preview" onerror="this.src='/logo.png'"></div>
                     </div>
                     <div class="col-md-5 border-start border-secondary ps-md-4">
                         ${bossAssignPanelHtml}
                         <ul class="list-unstyled lh-lg text-white fs-5 mb-4">
-                            <li><strong>Kabina:</strong> ${spec.cabin || 'Standard'}</li>
-                            <li><strong>Podwozie:</strong> ${spec.chassis || 'Standard'}</li>
-                            <li><strong>Silnik:</strong> ${spec.engine || 'Standard'}</li>
-                            <li><strong>Skrzynia biegów:</strong> ${spec.gearbox || 'Standard'}</li>
-                            <li><strong>Wnętrze:</strong> ${spec.interior || 'Standard'}</li>
-                            <li><strong>Akcesoria wnętrza:</strong> ${spec.accessories || 'Własne'}</li>
+                            <li><strong>Kabina:</strong> ${spec.cabin}</li>
+                            <li><strong>Podwozie:</strong> ${spec.chassis}</li>
+                            <li><strong>Silnik:</strong> ${spec.engine}</li>
+                            <li><strong>Skrzynia:</strong> ${spec.gearbox}</li>
+                            <li><strong>Wnętrze:</strong> ${spec.interior}</li>
                         </ul>
                         <hr class="border-secondary my-4">
                         <h5 class="fw-bold mb-3 text-white">Kierowcy (${activeCount}/${platesList.length}):</h5>
@@ -1314,15 +1097,10 @@
         function saveDriverAssignment(modelName) {
             const plate = document.getElementById('assign_select_plate').value;
             const driver = document.getElementById('assign_select_driver').value;
-
-            if (driver) {
-                assignedTrucksStorage[plate] = driver;
-            } else {
-                delete assignedTrucksStorage[plate];
-            }
-
+            if (driver) assignedTrucksStorage[plate] = driver;
+            else delete assignedTrucksStorage[plate];
             localStorage.setItem('vtc_assigned_drivers', JSON.stringify(assignedTrucksStorage));
-            alert(`Pomyślnie zaktualizowano przydział dla rejestracji ${plate}!`);
+            alert('Zaktualizowano przydział!');
             openTruckGroupDetail(modelName);
         }
 
@@ -1340,6 +1118,28 @@
                 expenses.forEach(exp => {
                     tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${exp.type}</td><td class="text-white">${exp.description}</td><td class="text-danger fw-bold">-${exp.amount} €</td><td>-</td></tr>`;
                 });
+            }
+        }
+
+        async function submitExpenseForm(e) {
+            e.preventDefault();
+            const data = {
+                type: document.getElementById('expense_type').value,
+                amount: document.getElementById('expense_amount').value,
+                description: document.getElementById('expense_desc').value
+            };
+            const res = await fetch('/api/expenses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                document.getElementById('expense-form').reset();
+                loadExpenses();
+                loadCompanyStats();
+                alert('Wydatek zostałdodany!');
+            } else {
+                alert('Błąd podczas dodawania wydatku.');
             }
         }
 
