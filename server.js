@@ -92,18 +92,28 @@ async function initDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS documents (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                category VARCHAR(100) DEFAULT 'Regulamin',
+                content TEXT NOT NULL,
+                file_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE TABLE IF NOT EXISTS notifications (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 title VARCHAR(255) NOT NULL,
                 message TEXT NOT NULL,
+                action_tab VARCHAR(50) DEFAULT 'jobs',
                 is_read BOOLEAN DEFAULT false,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // Dodatkowe zabezpieczenie migracyjne w razie gdyby tabela już istniała bez kolumny status
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
+        await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
 
         console.log('Baza danych zainicjalizowana pomyślnie.');
     } catch (err) {
@@ -122,9 +132,9 @@ app.use(session({
     saveUninitialized: false
 }));
 
-async function addNotification(userId, title, message) {
+async function addNotification(userId, title, message, actionTab = 'jobs') {
     try {
-        await pool.query('INSERT INTO notifications (user_id, title, message) VALUES ($1, $2, $3)', [userId, title, message]);
+        await pool.query('INSERT INTO notifications (user_id, title, message, action_tab) VALUES ($1, $2, $3, $4)', [userId, title, message, actionTab]);
     } catch (e) { console.error('Błąd powiadomień:', e); }
 }
 
@@ -145,7 +155,7 @@ app.post('/api/register', async (req, res) => {
         if (status === 'pending') {
             const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
             for (let adm of admins.rows) {
-                await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`);
+                await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`, 'management');
             }
         }
 
@@ -221,7 +231,7 @@ app.put('/api/users/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
-        await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!');
+        await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!', 'jobs');
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd zatwierdzania' }); }
 });
@@ -232,6 +242,36 @@ app.delete('/api/users/:id', async (req, res) => {
         await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania' }); }
+});
+
+// DOKUMENTY
+app.get('/api/documents', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM documents ORDER BY id DESC');
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: 'Błąd pobierania dokumentów' }); }
+});
+
+app.post('/api/documents', upload.single('doc_file'), async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    const { title, category, content } = req.body;
+    let fileUrl = req.file ? '/uploads/' + req.file.filename : null;
+
+    try {
+        await pool.query(
+            'INSERT INTO documents (title, category, content, file_url) VALUES ($1, $2, $3, $4)',
+            [title, category || 'Regulamin', content || '', fileUrl]
+        );
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd dodawania dokumentu' }); }
+});
+
+app.delete('/api/documents/:id', async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    try {
+        await pool.query('DELETE FROM documents WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania dokumentu' }); }
 });
 
 app.get('/api/dispatches', async (req, res) => {
@@ -264,7 +304,7 @@ app.post('/api/dispatches', async (req, res) => {
         if (assigned_to && assigned_to !== 'Wszyscy') {
             const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
             if (targetUser.rows.length > 0) {
-                await addNotification(targetUser.rows[0].id, 'Nowe Zlecenie', `Szef przydzielił Ci nową trasę: ${start_city} ➔ ${end_city}`);
+                await addNotification(targetUser.rows[0].id, 'Nowe Zlecenie', `Szef przydzielił Ci nową trasę: ${start_city} ➔ ${end_city}`, 'dispatcher');
             }
         }
 
@@ -344,7 +384,7 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
 
         const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
         for (let adm of admins.rows) {
-            await addNotification(adm.id, 'Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`);
+            await addNotification(adm.id, 'Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`, 'jobs');
         }
 
         res.json({ success: true });
@@ -374,9 +414,38 @@ app.post('/api/expenses', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd zapisu wydatku' }); }
 });
 
-app.delete('/api/expenses/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+app.put('/api/expenses/:id', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    const { type, amount, description } = req.body;
+    const parsedAmount = parseInt(amount) || 0;
+    if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
+
     try {
+        const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
+        if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
+
+        if (req.session.role !== 'admin' && expCheck.rows[0].user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Możesz edytować tylko własne wydatki!' });
+        }
+
+        await pool.query(
+            'UPDATE expenses SET type = $1, amount = $2, description = $3 WHERE id = $4',
+            [type, parsedAmount, description || '', req.params.id]
+        );
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd edycji wydatku' }); }
+});
+
+app.delete('/api/expenses/:id', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    try {
+        const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
+        if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
+
+        if (req.session.role !== 'admin' && expCheck.rows[0].user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Możesz usuwać tylko własne wydatki!' });
+        }
+
         await pool.query('DELETE FROM expenses WHERE id = $1', [req.params.id]);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania wydatku' }); }
@@ -390,7 +459,7 @@ app.get('/api/trucks', async (req, res) => {
 });
 
 app.post('/api/trucks', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Tylko Szef może dodawać pojazdy!' });
     const { truck_model, driver_name, plates, cabin, chassis, engine, gearbox, interior, accessories } = req.body;
     const defaultPhoto = '';
 
@@ -428,7 +497,7 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
         const job = jobRes.rows[0];
         await pool.query("UPDATE jobs SET status = 'approved' WHERE id = $1", [req.params.id]);
         
-        await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`);
+        await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`, 'jobs');
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
 });
@@ -441,7 +510,7 @@ app.delete('/api/jobs/:id', async (req, res) => {
         if (jobRes.rows.length > 0) {
             const job = jobRes.rows[0];
             const msg = reason ? `Szef odrzucił Twoją trasę (${job.start_city} ➔ ${job.end_city}). Powód: ${reason}` : `Szef odrzucił Twoją trasę (${job.start_city} ➔ ${job.end_city}).`;
-            await addNotification(job.user_id, 'Trasa Odrzucona', msg);
+            await addNotification(job.user_id, 'Trasa Odrzucona', msg, 'jobs');
         }
 
         await pool.query('DELETE FROM jobs WHERE id = $1', [req.params.id]);
