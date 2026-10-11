@@ -1229,51 +1229,50 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        async function submitJobReport(e) {
-    e.preventDefault();
-    
-    const dispatchId = document.getElementById('report_dispatch_id').value;
-    const startCity = document.getElementById('report_start').value;
-    const endCity = document.getElementById('report_end').value;
-    const distance = document.getElementById('report_distance').value;
-    const income = document.getElementById('report_income').value;
-    const cargo = document.getElementById('report_cargo').value || 'Standard';
+       async function submitJobReport(e) {
+            e.preventDefault();
+            
+            const dispatchId = document.getElementById('report_dispatch_id').value;
+            const startCity = document.getElementById('report_start').value;
+            const endCity = document.getElementById('report_end').value;
+            const distance = document.getElementById('report_distance').value;
+            const income = document.getElementById('report_income').value;
+            const cargo = document.getElementById('report_cargo').value || 'Standard';
 
-    const cmrFile = document.getElementById('report_cmr').files[0];
-    const summaryFile = document.getElementById('report_summary').files[0];
+            const cmrFile = document.getElementById('report_cmr').files[0];
+            const summaryFile = document.getElementById('report_summary').files[0];
 
-    const formData = new FormData();
-    formData.append('dispatch_id', dispatchId);
-    formData.append('start_city', startCity);
-    formData.append('end_city', endCity);
-    formData.append('distance', distance);
-    formData.append('income', income);
-    formData.append('cargo', cargo);
+            const formData = new FormData();
+            formData.append('distance', distance);
+            formData.append('income', income);
+            formData.append('cargo', cargo);
 
-    if (cmrFile) formData.append('cmr', cmrFile);
-    if (summaryFile) formData.append('summary', summaryFile);
+            // Nazwy muszą pasować do multer.fields w server.js: 'cmr_file' oraz 'summary_photo'
+            if (cmrFile) formData.append('cmr_file', cmrFile);
+            if (summaryFile) formData.append('summary_photo', summaryFile);
 
-    try {
-        const res = await fetch(`/api/dispatches/${dispatchId}`, {
-            method: 'PUT',
-            body: formData
-        });
+            try {
+                const res = await fetch(`/api/dispatches/${dispatchId}/complete`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-        if (res.ok) {
-            document.getElementById('job-report-form').reset();
-            document.getElementById('driver-report-section').style.display = 'none';
-            alert('Raport trasy został pomyślnie wysłany i dodany do statystyk firmy!');
-            if (typeof loadMyJobs === 'function') loadMyJobs();
-            if (typeof loadDispatches === 'function') loadDispatches();
-            if (typeof loadCompanyStats === 'function') loadCompanyStats();
-        } else {
-            alert('Błąd podczas wysyłania raportu trasy.');
+                if (res.ok) {
+                    document.getElementById('job-report-form').reset();
+                    document.getElementById('driver-report-section').style.display = 'none';
+                    alert('Raport trasy został pomyślnie wysłany i dodany do statystyk firmy!');
+                    if (typeof loadMyJobs === 'function') loadMyJobs();
+                    if (typeof loadDispatches === 'function') loadDispatches();
+                    if (typeof loadCompanyStats === 'function') loadCompanyStats();
+                } else {
+                    const errorData = await res.json().catch(() => ({}));
+                    alert(errorData.error || 'Błąd podczas wysyłania raportu trasy.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Wystąpił błąd połączenia z serwerem.');
+            }
         }
-    } catch (err) {
-        console.error(err);
-        alert('Wystąpił błąd połączenia z serwerem.');
-    }
-}
         async function loadGarage() {
             const grid = document.getElementById('garage-grid');
             grid.innerHTML = '';
