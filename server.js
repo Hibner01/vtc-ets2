@@ -102,7 +102,6 @@ app.post('/api/register', async (req, res) => {
         const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
         const count = parseInt(userCountRes.rows[0].count);
         
-        // Pierwszy użytkownik to Aktywny Admin, kolejni to Oczekujący na akceptację
         const role = count === 0 ? 'admin' : 'driver';
         const status = count === 0 ? 'approved' : 'pending';
 
@@ -264,7 +263,6 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
     }
 });
 
-// Ukończenie trasy przez kierowcę -> Traﬁa do weryfikacji Szefa
 app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name: 'summary' }]), async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     const dispatchId = req.params.id;
@@ -274,7 +272,6 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name:
         const dispRes = await pool.query('SELECT * FROM dispatches WHERE id = $1', [dispatchId]);
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         
-        // Rozliczenie trafia do zatwierdzenia przez Szefa
         await pool.query(
             'UPDATE dispatches SET status = $1, reported_distance = $2, reported_income = $3, cargo = $4 WHERE id = $5',
             ['Oczekuje na zatwierdzenie', parseInt(distance), parseInt(income), cargo || 'Towar', dispatchId]
@@ -293,7 +290,6 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr' }, { name:
     }
 });
 
-// Zatwierdzenie trasy przez Szefa -> Wpis do bazy + Powiadomienie Discord TrucksBook Style
 app.put('/api/dispatches/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     const dispatchId = req.params.id;
@@ -303,16 +299,13 @@ app.put('/api/dispatches/:id/approve', async (req, res) => {
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         const disp = dispRes.rows[0];
 
-        // 1. Zapis do oficjalnych tras (jobs)
         await pool.query(
             'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
             [disp.accepted_by_id, disp.start_city, disp.end_city, disp.cargo, disp.reported_distance, disp.reported_income, 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg', 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg']
         );
 
-        // 2. Zamknięcie zlecenia
         await pool.query('UPDATE dispatches SET status = $1 WHERE id = $2', ['Zakończone', dispatchId]);
 
-        // 3. Statystyka pozycji w rankingu
         const rankingRes = await pool.query(`
             SELECT users.id, users.username, SUM(jobs.distance) as km 
             FROM jobs JOIN users ON jobs.user_id = users.id 
@@ -324,7 +317,6 @@ app.put('/api/dispatches/:id/approve', async (req, res) => {
             if (parseInt(r.id) === parseInt(disp.accepted_by_id)) rankPosition = idx + 1;
         });
 
-        // 4. Discord Webhook - Styl TrucksBook
         const webhookUrl = "https://discord.com/api/webhooks/1558211120228073512/xYLNti0-1Q0Pn32oHAI_v0XJogBTw6LPnqNp6hbHNKK5qdbbtkjDKrdoKUWaBARI3m9J";
         const discordPayload = {
             embeds: [{
@@ -382,17 +374,23 @@ app.post('/api/expenses', async (req, res) => {
     
     const parsedAmount = parseInt(amount) || 0;
     const parsedLiters = parseInt(liters) || 0;
-    const finalDesc = description && description.trim() !== '' ? description.trim() : (type === 'fuel' ? 'Tankowanie' : 'Serwis/Naprawa');
+    const expType = type || 'fuel';
+    const finalDesc = (description && description.trim() !== '') 
+        ? description.trim() 
+        : (expType === 'fuel' ? 'Tankowanie' : 'Serwis / Naprawa');
 
-    if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
+    if (parsedAmount <= 0) {
+        return res.status(400).json({ error: 'Kwota wydatku musi być większa od 0.' });
+    }
 
     try {
         await pool.query(
             'INSERT INTO expenses (user_id, type, amount, description, liters) VALUES ($1, $2, $3, $4, $5)',
-            [req.session.userId, type || 'fuel', parsedAmount, finalDesc, parsedLiters]
+            [req.session.userId, expType, parsedAmount, finalDesc, parsedLiters]
         );
         res.json({ success: true });
     } catch (err) {
+        console.error('Błąd dodawania wydatku:', err);
         res.status(500).json({ error: 'Błąd zapisu wydatku' });
     }
 });
