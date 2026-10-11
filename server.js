@@ -548,9 +548,9 @@ app.delete('/api/jobs/:id', async (req, res) => {
 
 app.get('/api/company-stats', async (req, res) => {
     try {
-        const totalKmRes = await pool.query("SELECT SUM(distance) as total FROM jobs WHERE status = 'approved'");
-        const totalDeliveriesRes = await pool.query("SELECT COUNT(*) as total FROM jobs WHERE status = 'approved'");
-        const totalIncomeRes = await pool.query("SELECT SUM(income) as total_income FROM jobs WHERE status = 'approved'");
+        const totalKmRes = await pool.query("SELECT SUM(distance) as total FROM jobs");
+        const totalDeliveriesRes = await pool.query("SELECT COUNT(*) as total FROM jobs");
+        const totalIncomeRes = await pool.query("SELECT SUM(income) as total_income FROM jobs");
         const totalExpensesRes = await pool.query('SELECT SUM(amount) as total_expenses FROM expenses');
         
         const totalCompanyKm = parseInt(totalKmRes.rows[0].total || 0);
@@ -561,7 +561,6 @@ app.get('/api/company-stats', async (req, res) => {
         const rankingRes = await pool.query(`
             SELECT users.username, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries 
             FROM jobs JOIN users ON jobs.user_id = users.id 
-            WHERE jobs.status = 'approved'
             GROUP BY users.username ORDER BY km DESC
         `);
 
