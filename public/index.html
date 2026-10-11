@@ -14,7 +14,6 @@
             overflow-x: hidden;
         }
 
-        /* TŁA EKRANÓW AUTORYZACJI */
         .auth-bg-main { 
             background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.jpg') center/cover no-repeat fixed;
             min-height: 100vh; 
@@ -32,7 +31,6 @@
             backdrop-filter: blur(8px);
         }
 
-        /* SIDEBAR & NAV */
         .sidebar {
             width: 250px;
             background-color: #121418;
@@ -118,19 +116,18 @@
             gap: 8px;
         }
 
-        /* KARTY CIĘŻARÓWEK W GARAŻU */
         .truck-card { 
             background-color: #1a1d21; 
             border: 1px solid #2d3238; 
             border-radius: 20px; 
             padding: 20px;
-            text-center: center;
             transition: transform 0.2s, border-color 0.2s; 
             min-height: 220px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
         }
 
         .truck-card:hover { 
@@ -161,10 +158,6 @@
             width: 100%;
         }
 
-        .form-control-icon::placeholder {
-            color: #9ca3af;
-        }
-
         .btn-pill-white { 
             background-color: #ffffff;
             color: #121417;
@@ -187,10 +180,6 @@
             border: 1px solid #3c424c;
             padding: 12px 24px;
             transition: all 0.2s ease;
-        }
-
-        .btn-pill-dark:hover {
-            background-color: #2c323a;
         }
 
         .pill-row {
@@ -221,15 +210,6 @@
             max-height: 380px; 
             overflow-y: auto; 
         }
-
-        .notif-item {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .notif-item:hover {
-            background-color: #21252d;
-        }
     </style>
 </head>
 <body>
@@ -242,23 +222,23 @@
             
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
                 <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')">
-                    <i class="fa-solid fa-download me-2"></i> <span>Zaloguj się</span>
+                    <i class="fa-solid fa-download me-2"></i> <span data-i18n="loginBtn">Zaloguj się</span>
                 </button>
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')">
-                    <i class="fa-solid fa-user-plus me-2"></i> <span>Zarejestruj się</span>
+                    <i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="registerBtn">Zarejestruj się</span>
                 </button>
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="exitApp()">
-                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> <span>Wyjdź</span>
+                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> <span data-i18n="exitBtn">Wyjdź</span>
                 </button>
             </div>
 
             <!-- EKRAN LOGOWANIA -->
             <div id="auth-login-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
-                <h3 class="fw-bold mb-1 text-white">Witaj ponownie!</h3>
-                <p class="text-light small mb-4">Zaloguj się do Mazren Control System</p>
+                <h3 class="fw-bold mb-1 text-white" data-i18n="welcomeBack">Witaj ponownie!</h3>
+                <p class="text-light small mb-4" data-i18n="loginSubtitle">Zaloguj się do Mazren Control System</p>
                 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-white small ms-2 fw-semibold">Adres e-mail lub Login</label>
+                    <label class="form-label text-white small ms-2 fw-semibold" data-i18n="emailOrLogin">Adres e-mail lub Login</label>
                     <div class="input-group-custom">
                         <i class="fa-regular fa-envelope"></i>
                         <input type="text" id="login-email" class="form-control form-control-icon" placeholder="np. Wladek123@firma.pl lub login">
@@ -266,24 +246,24 @@
                 </div>
                 
                 <div class="mb-4 text-start">
-                    <label class="form-label text-white small ms-2 fw-semibold">Hasło</label>
+                    <label class="form-label text-white small ms-2 fw-semibold" data-i18n="password">Hasło</label>
                     <div class="input-group-custom">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="login-password" class="form-control form-control-icon" placeholder="••••••••">
                     </div>
                 </div>
 
-                <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()">Zaloguj się</button>
-                <div class="text-white small">Nie masz jeszcze konta? <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('register')">Zarejestruj się</a></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()" data-i18n="loginBtn">Zaloguj się</button>
+                <div class="text-white small"><span data-i18n="noAccount">Nie masz jeszcze konta?</span> <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('register')" data-i18n="registerBtn">Zarejestruj się</a></div>
             </div>
 
             <!-- EKRAN REJESTRACJI -->
             <div id="auth-register-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
-                <h3 class="fw-bold mb-1 text-white">Rejestracja konta</h3>
-                <p class="text-light small mb-4">Stwórz konto w Mazren Control System</p>
+                <h3 class="fw-bold mb-1 text-white" data-i18n="createAccount">Rejestracja konta</h3>
+                <p class="text-light small mb-4" data-i18n="registerSubtitle">Stwórz konto w Mazren Control System</p>
                 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-white small ms-2 fw-semibold">Nick z Discorda</label>
+                    <label class="form-label text-white small ms-2 fw-semibold" data-i18n="discordNick">Nick z Discorda</label>
                     <div class="input-group-custom">
                         <i class="fa-regular fa-user"></i>
                         <input type="text" id="reg-username" class="form-control form-control-icon" placeholder="np. WladekKiero">
@@ -291,7 +271,7 @@
                 </div>
 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-white small ms-2 fw-semibold">Adres e-mail</label>
+                    <label class="form-label text-white small ms-2 fw-semibold" data-i18n="emailAddress">Adres e-mail</label>
                     <div class="input-group-custom">
                         <i class="fa-regular fa-envelope"></i>
                         <input type="email" id="reg-email" class="form-control form-control-icon" placeholder="np. Wladek123@firma.pl">
@@ -300,14 +280,14 @@
 
                 <div class="row g-2 mb-4">
                     <div class="col-6 text-start">
-                        <label class="form-label text-white small ms-2 fw-semibold">Hasło</label>
+                        <label class="form-label text-white small ms-2 fw-semibold" data-i18n="password">Hasło</label>
                         <div class="input-group-custom">
                             <i class="fa-solid fa-lock"></i>
                             <input type="password" id="reg-password" class="form-control form-control-icon" placeholder="••••••••">
                         </div>
                     </div>
                     <div class="col-6 text-start">
-                        <label class="form-label text-white small ms-2 fw-semibold">Powtórz hasło</label>
+                        <label class="form-label text-white small ms-2 fw-semibold" data-i18n="repeatPassword">Powtórz hasło</label>
                         <div class="input-group-custom">
                             <i class="fa-solid fa-lock"></i>
                             <input type="password" id="reg-confirm-password" class="form-control form-control-icon" placeholder="••••••••">
@@ -315,8 +295,8 @@
                     </div>
                 </div>
 
-                <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()">Stwórz konto</button>
-                <div class="text-white small">Masz już konto? <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('login')">Zaloguj się</a></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()" data-i18n="createAccountBtn">Stwórz konto</button>
+                <div class="text-white small"><span data-i18n="hasAccount">Masz już konto?</span> <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('login')" data-i18n="loginBtn">Zaloguj się</a></div>
             </div>
 
             <div class="text-white small font-monospace">© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
@@ -325,53 +305,51 @@
         <!-- PANEL GŁÓWNY -->
         <div id="dashboard-section" style="display:none;">
             
-            <!-- SIDEBAR -->
             <aside class="sidebar">
                 <div class="sidebar-brand">
                     <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" onerror="this.style.display='none'">
                 </div>
 
                 <div class="sidebar-user">
-                    <div class="text-secondary small fw-semibold">ZALOGOWANY JAKO</div>
+                    <div class="text-secondary small fw-semibold" data-i18n="loggedInAs">ZALOGOWANY JAKO</div>
                     <div class="fw-bold text-white fs-6" id="user-display">WladekKiero</div>
-                    <span id="admin-badge" class="badge bg-danger mt-1 d-none">SZEF / WŁAŚCICIEL</span>
+                    <span id="admin-badge" class="badge bg-danger mt-1 d-none" data-i18n="bossRole">SZEF / WŁAŚCICIEL</span>
                 </div>
 
                 <nav class="nav-sidebar">
                     <a id="nav-dashboard" class="nav-item-bms active" onclick="switchTab('dashboard')">
-                        <i class="fa-solid fa-border-all"></i> Pulpit
+                        <i class="fa-solid fa-border-all"></i> <span data-i18n="navDashboard">Pulpit</span>
                     </a>
                     <a id="nav-company-stats" class="nav-item-bms" onclick="switchTab('company-stats')">
-                        <i class="fa-solid fa-chart-line"></i> Statystyki Firmy
+                        <i class="fa-solid fa-chart-line"></i> <span data-i18n="navStats">Statystyki Firmy</span>
                     </a>
                     <a id="nav-finances" class="nav-item-bms" onclick="switchTab('finances')">
-                        <i class="fa-solid fa-vault"></i> Finanse
+                        <i class="fa-solid fa-vault"></i> <span data-i18n="navFinances">Finanse</span>
                     </a>
                     <a id="nav-dispatcher" class="nav-item-bms" onclick="switchTab('dispatcher')">
-                        <i class="fa-solid fa-headset"></i> Dyspozytornia
+                        <i class="fa-solid fa-headset"></i> <span data-i18n="navDispatcher">Dyspozytornia</span>
                     </a>
                     <a id="nav-garage" class="nav-item-bms" onclick="switchTab('garage')">
-                        <i class="fa-solid fa-truck"></i> Garaż
+                        <i class="fa-solid fa-truck"></i> <span data-i18n="navGarage">Garaż</span>
                     </a>
                     <a id="nav-documents" class="nav-item-bms" onclick="switchTab('documents')">
-                        <i class="fa-solid fa-folder-open"></i> Dokumenty
+                        <i class="fa-solid fa-folder-open"></i> <span data-i18n="navDocuments">Dokumenty</span>
                     </a>
                     <a id="nav-about" class="nav-item-bms" onclick="switchTab('about')">
-                        <i class="fa-solid fa-circle-info"></i> O nas
+                        <i class="fa-solid fa-circle-info"></i> <span data-i18n="navAbout">O nas</span>
                     </a>
                     <a id="admin-tab-btn" class="nav-item-bms text-warning d-none" onclick="switchTab('management')">
-                        <i class="fa-solid fa-user-gear"></i> Zarządzanie
+                        <i class="fa-solid fa-user-gear"></i> <span data-i18n="navManagement">Zarządzanie</span>
                     </a>
                 </nav>
 
                 <div class="p-3 border-top border-dark">
                     <button class="nav-item-bms text-danger w-100 border-0 bg-transparent" onclick="performLogout()">
-                        <i class="fa-solid fa-right-from-bracket"></i> Wyloguj się
+                        <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="logout">Wyloguj się</span>
                     </button>
                 </div>
             </aside>
 
-            <!-- GŁÓWNA TREŚĆ -->
             <div class="main-wrapper">
                 
                 <header class="topbar">
@@ -409,7 +387,7 @@
                     <!-- PULPIT -->
                     <div id="tab-dashboard">
                         <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #6b21a8 0%, #9333ea 100%); border-radius: 20px; padding: 28px 32px;">
-                            <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> WITAJ Z POWROTEM</div>
+                            <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> <span data-i18n="welcomeBackBanner">WITAJ Z POWROTEM</span></div>
                             <h2 class="fw-bold display-6 mb-1" id="banner-username">WladekKiero</h2>
                             <span class="badge bg-white text-dark fw-bold px-3 py-2 rounded-pill" id="banner-role">Kierowca</span>
                         </div>
@@ -418,9 +396,9 @@
                             <div class="col-md-3">
                                 <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-white-50 small">Dystans (Miesiąc)</div>
+                                        <div class="text-white-50 small" data-i18n="distanceMonth">Dystans (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-km">0 km</div>
-                                        <div class="text-white-50 small">Cel: 6 000 km</div>
+                                        <div class="text-white-50 small" data-i18n="targetKm">Cel: 6 000 km</div>
                                     </div>
                                     <div class="fs-2 text-success"><i class="fa-solid fa-route"></i></div>
                                 </div>
@@ -428,9 +406,9 @@
                             <div class="col-md-3">
                                 <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-white-50 small">Dostawy (Miesiąc)</div>
+                                        <div class="text-white-50 small" data-i18n="deliveriesMonth">Dostawy (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-deliveries">0</div>
-                                        <div class="text-white-50 small">Zrealizowanych ładunków</div>
+                                        <div class="text-white-50 small" data-i18n="completedCargo">Zrealizowanych ładunków</div>
                                     </div>
                                     <div class="fs-2 text-warning"><i class="fa-solid fa-box"></i></div>
                                 </div>
@@ -438,9 +416,9 @@
                             <div class="col-md-3">
                                 <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-white-50 small">Budżet Firmy</div>
+                                        <div class="text-white-50 small" data-i18n="companyBudget">Budżet Firmy</div>
                                         <div class="fw-bold fs-4 text-white" id="dash-company-budget">0 EURO</div>
-                                        <div class="text-white-50 small">Dostępne środki</div>
+                                        <div class="text-white-50 small" data-i18n="availableFunds">Dostępne środki</div>
                                     </div>
                                     <div class="fs-2 text-info"><i class="fa-solid fa-wallet"></i></div>
                                 </div>
@@ -448,9 +426,9 @@
                             <div class="col-md-3">
                                 <div class="bg-card-bms p-3 d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div class="text-white-50 small">Kilometry Firmy</div>
+                                        <div class="text-white-50 small" data-i18n="companyKm">Kilometry Firmy</div>
                                         <div class="fw-bold fs-4 text-white" id="dash-company-km">0 km</div>
-                                        <div class="text-white-50 small">Łączny dystans</div>
+                                        <div class="text-white-50 small" data-i18n="totalDistance">Łączny dystans</div>
                                     </div>
                                     <div class="fs-2 text-primary"><i class="fa-solid fa-globe"></i></div>
                                 </div>
@@ -460,16 +438,16 @@
                         <div class="row g-4">
                             <div class="col-md-7">
                                 <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i> Wykonane Trasy</h5>
+                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-clock-rotate-left me-2"></i> <span data-i18n="completedRoutes">Wykonane Trasy</span></h5>
                                     <div id="my-jobs-container"></div>
                                 </div>
                             </div>
 
                             <div class="col-md-5">
                                 <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck-front me-2"></i> Twój Zestaw</h5>
+                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck-front me-2"></i> <span data-i18n="yourTruck">Twój Zestaw</span></h5>
                                     <div id="my-assigned-truck-box">
-                                        <div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>
+                                        <div class="text-white-50 text-center py-4" data-i18n="noTruckAssigned">Brak przypisanego zestawu w garażu.</div>
                                     </div>
                                 </div>
                             </div>
@@ -481,19 +459,19 @@
                         <div class="row g-4 mb-4">
                             <div class="col-md-4">
                                 <div class="bg-card-bms p-4">
-                                    <div class="text-white-50 small">Łączne kilometry firmy</div>
+                                    <div class="text-white-50 small" data-i18n="totalCompanyKm">Łączne kilometry firmy</div>
                                     <div class="fw-bold fs-3 text-white" id="company-total-km-full">0 km</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="bg-card-bms p-4">
-                                    <div class="text-white-50 small">Łączna liczba dostaw</div>
+                                    <div class="text-white-50 small" data-i18n="totalCompanyDeliveries">Łączna liczba dostaw</div>
                                     <div class="fw-bold fs-3 text-white" id="company-total-deliveries-full">0</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="bg-card-bms p-4">
-                                    <div class="text-white-50 small">Stan Budżetu</div>
+                                    <div class="text-white-50 small" data-i18n="budgetStatus">Stan Budżetu</div>
                                     <div class="fw-bold fs-3 text-success" id="company-budget-full">0 EURO</div>
                                 </div>
                             </div>
@@ -502,13 +480,13 @@
                         <div class="row g-4">
                             <div class="col-md-7">
                                 <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold text-white mb-4">Wszystkie Wykonane Trasy w Firmie</h5>
+                                    <h5 class="fw-bold text-white mb-4" data-i18n="allCompanyJobs">Wszystkie Wykonane Trasy w Firmie</h5>
                                     <div id="all-jobs-container"></div>
                                 </div>
                             </div>
                             <div class="col-md-5">
                                 <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold text-white mb-4">Ranking Kierowców</h5>
+                                    <h5 class="fw-bold text-white mb-4" data-i18n="driversRanking">Ranking Kierowców</h5>
                                     <div id="ranking-container"></div>
                                 </div>
                             </div>
@@ -520,40 +498,40 @@
                         <div class="row g-4">
                             <div class="col-md-4">
                                 <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold mb-3 text-white">Zgłoś wydatek</h5>
+                                    <h5 class="fw-bold mb-3 text-white" data-i18n="addExpense">Zgłoś wydatek</h5>
                                     <form id="expense-form">
                                         <div class="mb-3">
-                                            <label class="form-label text-white fw-semibold">Typ wydatku</label>
+                                            <label class="form-label text-white fw-semibold" data-i18n="expenseType">Typ wydatku</label>
                                             <select id="expense_type" class="form-select form-control-icon text-white" required>
-                                                <option value="fuel">⛽ Paliwo</option>
-                                                <option value="service">🔧 Serwis / Naprawa</option>
-                                                <option value="fine">🚨 Mandat</option>
+                                                <option value="fuel">⛽ Fuel / Paliwo</option>
+                                                <option value="service">🔧 Service / Serwis</option>
+                                                <option value="fine">🚨 Fine / Mandat</option>
                                             </select>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label text-white fw-semibold">Kwota (€)</label>
+                                            <label class="form-label text-white fw-semibold" data-i18n="amount">Kwota (€)</label>
                                             <input type="number" id="expense_amount" class="form-control form-control-icon text-white" placeholder="np. 450" required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label text-white fw-semibold">Opis / Miejsce</label>
+                                            <label class="form-label text-white fw-semibold" data-i18n="description">Opis / Miejsce</label>
                                             <input type="text" id="expense_desc" class="form-control form-control-icon text-white" placeholder="np. Tankowanie">
                                         </div>
-                                        <button type="submit" class="btn btn-pill-white w-100 fw-bold">+ Dodaj Wydatek</button>
+                                        <button type="submit" class="btn btn-pill-white w-100 fw-bold" data-i18n="submitExpense">+ Dodaj Wydatek</button>
                                     </form>
                                 </div>
                             </div>
                             <div class="col-md-8">
                                 <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold mb-3 text-white">Rejestr wydatków firmy</h5>
+                                    <h5 class="fw-bold mb-3 text-white" data-i18n="expensesLog">Rejestr wydatków firmy</h5>
                                     <div class="table-responsive">
                                         <table class="table table-dark align-middle mb-0">
                                             <thead>
                                                 <tr class="text-white border-secondary">
-                                                    <th>Kierowca</th>
-                                                    <th>Typ</th>
-                                                    <th>Opis</th>
-                                                    <th>Kwota</th>
-                                                    <th>Akcje</th>
+                                                    <th data-i18n="driver">Kierowca</th>
+                                                    <th data-i18n="type">Typ</th>
+                                                    <th data-i18n="description">Opis</th>
+                                                    <th data-i18n="amount">Kwota</th>
+                                                    <th data-i18n="actions">Akcje</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="expenses-table-body"></tbody>
@@ -569,84 +547,47 @@
                         <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4 border-info">
-                                    <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> Nowe Zlecenie w Dyspozytorni</h5>
+                                    <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> <span data-i18n="newDispatch">Nowe Zlecenie w Dyspozytorni</span></h5>
                                     <form id="dispatch-form" class="row g-3">
-                                        <div class="col-md-3"><label class="form-label text-white">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select></div>
-                                        <div class="col-md-3"><label class="form-label text-white">Zestaw z garażu</label><select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select></div>
-                                        <div class="col-md-3"><label class="form-label text-white">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
-                                        <div class="col-md-3"><label class="form-label text-white">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
-                                        <div class="col-md-12"><label class="form-label text-white">Uwagi</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
-                                        <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold">Opublikuj zlecenie</button></div>
+                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="assignDriver">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="selectTruck">Zestaw z garażu</label><select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select></div>
+                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="fromCity">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
+                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="toCity">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
+                                        <div class="col-md-12"><label class="form-label text-white" data-i18n="notes">Uwagi</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
+                                        <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold" data-i18n="publishDispatch">Opublikuj zlecenie</button></div>
                                     </form>
                                 </div>
                             </div>
                         </div>
 
                         <div class="bg-card-bms p-4">
-                            <h4 class="fw-bold mb-4 text-white">Dostępne trasy w Dyspozytorni:</h4>
+                            <h4 class="fw-bold mb-4 text-white" data-i18n="availableJobs">Dostępne trasy w Dyspozytorni:</h4>
                             <div id="dispatches-container" class="row g-3"></div>
                         </div>
                     </div>
 
-                    <!-- GARAŻ (ZGODNIE Z MAKIETAMI) -->
+                    <!-- GARAŻ -->
                     <div id="tab-garage" style="display:none;">
                         <div id="garage-main-view">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4 class="fw-bold mb-0 text-white">Ciężarówki</h4>
-                                <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> Dodaj do Garażu</button>
+                                <h4 class="fw-bold mb-0 text-white" data-i18n="trucksHeader">Ciężarówki</h4>
+                                <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> <span data-i18n="addTruck">Dodaj do Garażu</span></button>
                             </div>
                             <hr class="border-secondary mb-4">
-
-                            <div id="truck-add-form" class="bg-card-bms p-4 mb-4 d-none">
-                                <h5 class="fw-bold text-warning mb-3">Dodaj nowy zestaw do Floty</h5>
-                                <form id="truck-form">
-                                    <div class="row g-3">
-                                        <div class="col-md-4"><label class="form-label text-white">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control bg-dark text-white border-secondary" required placeholder="np. VOLVO FH2"></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select bg-dark text-white border-secondary"></select></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Rejestracja</label><input type="text" name="plates" class="form-control bg-dark text-white border-secondary" required placeholder="np. WRA 6509S"></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Kabina</label><input type="text" name="cabin" class="form-control bg-dark text-white border-secondary" placeholder="np. Globetrotter XL"></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Podwozie</label><input type="text" name="chassis" class="form-control bg-dark text-white border-secondary" placeholder="np. 4x2"></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Silnik</label><input type="text" name="engine" class="form-control bg-dark text-white border-secondary" placeholder="np. D13A500"></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control bg-dark text-white border-secondary" placeholder="np. I-Shift"></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Wnętrze</label><input type="text" name="interior" class="form-control bg-dark text-white border-secondary" placeholder="np. Standard"></div>
-                                        <div class="col-md-4"><label class="form-label text-white">Akcesoria</label><input type="text" name="accessories" class="form-control bg-dark text-white border-secondary" placeholder="np. Własne"></div>
-                                    </div>
-                                    <button type="submit" class="btn btn-pill-white fw-bold mt-3">Zapisz w Garażu</button>
-                                </form>
-                            </div>
 
                             <div id="garage-grid" class="row g-4"></div>
                         </div>
 
                         <div id="garage-detail-view" style="display: none;">
-                            <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> Powrót</button>
+                            <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> <span data-i18n="backBtn">Powrót</span></button>
                             <div class="bg-card-bms p-4 p-md-5" id="truck-detail-content"></div>
                         </div>
                     </div>
 
                     <!-- DOKUMENTY -->
                     <div id="tab-documents" style="display:none;">
-                        <div id="add-doc-admin-form" class="bg-card-bms p-4 mb-4 d-none border-warning">
-                            <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-file-circle-plus me-2"></i> Dodaj Nowy Dokument / Pakiet</h5>
-                            <form id="doc-form">
-                                <div class="row g-3">
-                                    <div class="col-md-6"><label class="form-label text-white">Tytuł Dokumentu</label><input type="text" id="doc_title" class="form-control bg-dark text-white border-secondary" required placeholder="np. Regulamin VTC 2026"></div>
-                                    <div class="col-md-6"><label class="form-label text-white">Kategoria</label>
-                                        <select id="doc_category" class="form-select bg-dark text-white border-secondary">
-                                            <option value="Regulamin">Regulamin</option>
-                                            <option value="Pakiety">Pakiety Modyfikacji</option>
-                                            <option value="Instrukcje">Instrukcje</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-12"><label class="form-label text-white">Treść</label><textarea id="doc_content" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Wpisz treść..."></textarea></div>
-                                    <div class="col-md-12"><label class="form-label text-white">Plik / Załącznik (opcjonalnie)</label><input type="file" id="doc_file" class="form-control bg-dark text-white border-secondary"></div>
-                                </div>
-                                <button type="submit" class="btn btn-pill-white fw-bold mt-3">Opublikuj Dokument</button>
-                            </form>
-                        </div>
-
                         <div class="bg-card-bms p-4">
-                            <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> Dokumenty i Regulaminy Firmowe</h4>
+                            <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="documentsHeader">Dokumenty i Regulaminy Firmowe</span></h4>
                             <div id="documents-container" class="row g-4"></div>
                         </div>
                     </div>
@@ -654,7 +595,7 @@
                     <!-- O NAS -->
                     <div id="tab-about" style="display:none;">
                         <div class="bg-card-bms p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
-                            <p class="fs-5 leading-relaxed text-white">
+                            <p class="fs-5 leading-relaxed text-white" data-i18n="aboutText">
                                 <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!
                             </p>
                         </div>
@@ -663,16 +604,16 @@
                     <!-- ZARZĄDZANIE -->
                     <div id="tab-management" style="display:none;">
                         <div class="bg-card-bms p-4">
-                            <h4 class="fw-bold mb-3 text-warning">Zarządzanie Kontami Kierowców</h4>
+                            <h4 class="fw-bold mb-3 text-warning" data-i18n="managementHeader">Zarządzanie Kontami Kierowców</h4>
                             <div class="table-responsive">
                                 <table class="table table-dark align-middle">
                                     <thead>
                                         <tr class="text-white">
-                                            <th>Kierowca</th>
+                                            <th data-i18n="driver">Kierowca</th>
                                             <th>E-mail</th>
-                                            <th>Rola</th>
+                                            <th data-i18n="role">Rola</th>
                                             <th>Status</th>
-                                            <th>Akcje</th>
+                                            <th data-i18n="actions">Akcje</th>
                                         </tr>
                                     </thead>
                                     <tbody id="management-users-list"></tbody>
@@ -682,44 +623,6 @@
                     </div>
 
                 </main>
-            </div>
-        </div>
-
-        <!-- MODALE -->
-        <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content bg-card-bms border-secondary text-light">
-                    <div class="modal-header border-secondary">
-                        <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-flag-checkered me-2"></i> Potwierdzenie i przesyłanie trasy</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="complete-dispatch-form">
-                        <div class="modal-body p-4">
-                            <input type="hidden" id="modal_dispatch_id" name="dispatch_id">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="mb-3"><label class="form-label text-white">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Części samochodowe"></div>
-                                    <div class="mb-3"><label class="form-label text-white">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control bg-dark text-white border-secondary" placeholder="np. 1250" required></div>
-                                    <div class="mb-3"><label class="form-label text-white">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control bg-dark text-white border-secondary" placeholder="np. 48000" required></div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label text-white">Dowód (zdjęcie z ETS2)</label>
-                                        <input type="file" id="modal_summary" name="summary_photo" accept="image/*" class="form-control bg-dark text-white border-secondary">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label text-white">CMR (plik)</label>
-                                        <input type="file" id="modal_cmr" name="cmr_file" accept="image/*" class="form-control bg-dark text-white border-secondary">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer border-secondary">
-                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal">Anuluj</button>
-                            <button type="submit" class="btn btn-pill-white btn-sm fw-bold px-4">Prześlij trasę</button>
-                        </div>
-                    </form>
-                </div>
             </div>
         </div>
 
@@ -733,12 +636,163 @@
         let currentLang = 'pl';
         let groupedTrucksData = {};
 
+        const i18n = {
+            pl: {
+                loginBtn: "Zaloguj się",
+                registerBtn: "Zarejestruj się",
+                exitBtn: "Wyjdź",
+                welcomeBack: "Witaj ponownie!",
+                loginSubtitle: "Zaloguj się do Mazren Control System",
+                emailOrLogin: "Adres e-mail lub Login",
+                password: "Hasło",
+                noAccount: "Nie masz jeszcze konta?",
+                createAccount: "Rejestracja konta",
+                registerSubtitle: "Stwórz konto w Mazren Control System",
+                discordNick: "Nick z Discorda",
+                emailAddress: "Adres e-mail",
+                repeatPassword: "Powtórz hasło",
+                createAccountBtn: "Stwórz konto",
+                hasAccount: "Masz już konto?",
+                loggedInAs: "ZALOGOWANY JAKO",
+                bossRole: "SZEF / WŁAŚCICIEL",
+                navDashboard: "Pulpit",
+                navStats: "Statystyki Firmy",
+                navFinances: "Finanse",
+                navDispatcher: "Dyspozytornia",
+                navGarage: "Garaż",
+                navDocuments: "Dokumenty",
+                navAbout: "O nas",
+                navManagement: "Zarządzanie",
+                logout: "Wyloguj się",
+                welcomeBackBanner: "WITAJ Z POWROTEM",
+                distanceMonth: "Dystans (Miesiąc)",
+                targetKm: "Cel: 6 000 km",
+                deliveriesMonth: "Dostawy (Miesiąc)",
+                completedCargo: "Zrealizowanych ładunków",
+                companyBudget: "Budżet Firmy",
+                availableFunds: "Dostępne środki",
+                companyKm: "Kilometry Firmy",
+                totalDistance: "Łączny dystans",
+                completedRoutes: "Wykonane Trasy",
+                yourTruck: "Twój Zestaw",
+                noTruckAssigned: "Brak przypisanego zestawu w garażu.",
+                moreInfo: "Więcej informacji",
+                trucksHeader: "Ciężarówki",
+                addTruck: "Dodaj do Garażu",
+                backBtn: "Powrót",
+                documentsHeader: "Dokumenty i Regulaminy Firmowe",
+                managementHeader: "Zarządzanie Kontami Kierowców",
+                driver: "Kierowca",
+                type: "Typ",
+                description: "Opis",
+                amount: "Kwota",
+                actions: "Akcje",
+                role: "Rola",
+                totalCompanyKm: "Łączne kilometry firmy",
+                totalCompanyDeliveries: "Łączna liczba dostaw",
+                budgetStatus: "Stan Budżetu",
+                allCompanyJobs: "Wszystkie Wykonane Trasy w Firmie",
+                driversRanking: "Ranking Kierowców",
+                addExpense: "Zgłoś wydatek",
+                expenseType: "Typ wydatku",
+                submitExpense: "+ Dodaj Wydatek",
+                expensesLog: "Rejestr wydatków firmy",
+                newDispatch: "Nowe Zlecenie w Dyspozytorni",
+                assignDriver: "Przypisz kierowcę",
+                selectTruck: "Zestaw z garażu",
+                fromCity: "Skąd",
+                toCity: "Dokąd",
+                notes: "Uwagi",
+                publishDispatch: "Opublikuj zlecenie",
+                availableJobs: "Dostępne trasy w Dyspozytorni:"
+            },
+            en: {
+                loginBtn: "Sign In",
+                registerBtn: "Register",
+                exitBtn: "Exit",
+                welcomeBack: "Welcome Back!",
+                loginSubtitle: "Log in to Mazren Control System",
+                emailOrLogin: "Email or Username",
+                password: "Password",
+                noAccount: "Don't have an account?",
+                createAccount: "Account Registration",
+                registerSubtitle: "Create an account in Mazren Control System",
+                discordNick: "Discord Username",
+                emailAddress: "Email Address",
+                repeatPassword: "Repeat Password",
+                createAccountBtn: "Create Account",
+                hasAccount: "Already have an account?",
+                loggedInAs: "LOGGED IN AS",
+                bossRole: "BOSS / OWNER",
+                navDashboard: "Dashboard",
+                navStats: "Company Stats",
+                navFinances: "Finances",
+                navDispatcher: "Dispatcher",
+                navGarage: "Garage",
+                navDocuments: "Documents",
+                navAbout: "About Us",
+                navManagement: "Management",
+                logout: "Logout",
+                welcomeBackBanner: "WELCOME BACK",
+                distanceMonth: "Distance (Month)",
+                targetKm: "Goal: 6,000 km",
+                deliveriesMonth: "Deliveries (Month)",
+                completedCargo: "Completed Loads",
+                companyBudget: "Company Budget",
+                availableFunds: "Available Funds",
+                companyKm: "Company Distance",
+                totalDistance: "Total Distance",
+                completedRoutes: "Completed Routes",
+                yourTruck: "Your Truck",
+                noTruckAssigned: "No truck assigned in garage.",
+                moreInfo: "More Info",
+                trucksHeader: "Trucks",
+                addTruck: "Add to Garage",
+                backBtn: "Back",
+                documentsHeader: "Company Documents & Rules",
+                managementHeader: "Driver Accounts Management",
+                driver: "Driver",
+                type: "Type",
+                description: "Description",
+                amount: "Amount",
+                actions: "Actions",
+                role: "Role",
+                totalCompanyKm: "Total Company Distance",
+                totalCompanyDeliveries: "Total Deliveries",
+                budgetStatus: "Budget Balance",
+                allCompanyJobs: "All Completed Company Routes",
+                driversRanking: "Drivers Leaderboard",
+                addExpense: "Report Expense",
+                expenseType: "Expense Type",
+                submitExpense: "+ Add Expense",
+                expensesLog: "Company Expense Log",
+                newDispatch: "New Dispatch Order",
+                assignDriver: "Assign Driver",
+                selectTruck: "Select Truck",
+                fromCity: "From",
+                toCity: "To",
+                notes: "Notes",
+                publishDispatch: "Publish Order",
+                availableJobs: "Available Dispatch Routes:"
+            }
+        };
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang] && i18n[lang][key]) {
+                    el.innerText = i18n[lang][key];
+                }
+            });
+        }
+
         function updateClock() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('pl-PL');
             
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            let dateStr = now.toLocaleDateString('pl-PL', options);
+            let dateStr = now.toLocaleDateString(currentLang === 'pl' ? 'pl-PL' : 'en-US', options);
             dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
             document.getElementById('live-clock').innerText = timeStr;
@@ -776,7 +830,7 @@
                 }
             });
             if (tab === 'company-stats') loadCompanyStatsFull();
-            else if (tab === 'dispatcher') { loadDispatches(); if (currentUserRole === 'admin') loadDispatcherOptions(); }
+            else if (tab === 'dispatcher') { loadDispatches(); }
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'garage') loadGarage();
             else if (tab === 'documents') loadDocuments();
@@ -800,7 +854,7 @@
                     
                     document.getElementById('user-display').innerText = data.username;
                     document.getElementById('banner-username').innerText = data.username;
-                    document.getElementById('banner-role').innerText = data.role === 'admin' ? 'Szef / Właściciel' : 'Kierowca';
+                    document.getElementById('banner-role').innerText = data.role === 'admin' ? (currentLang === 'pl' ? 'Szef / Właściciel' : 'Boss / Owner') : (currentLang === 'pl' ? 'Kierowca' : 'Driver');
 
                     document.getElementById('my-monthly-km').innerText = `${data.monthlyKm} km`;
                     document.getElementById('my-monthly-deliveries').innerText = data.monthlyDeliveries;
@@ -810,7 +864,6 @@
                         document.getElementById('admin-tab-btn').classList.remove('d-none');
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
                         document.getElementById('add-truck-btn').classList.remove('d-none');
-                        document.getElementById('add-doc-admin-form').classList.remove('d-none');
                     }
 
                     const truckBox = document.getElementById('my-assigned-truck-box');
@@ -828,11 +881,10 @@
                             </div>
                         `;
                     } else {
-                        truckBox.innerHTML = '<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>';
+                        truckBox.innerHTML = `<div class="text-white-50 text-center py-4">${i18n[currentLang].noTruckAssigned}</div>`;
                     }
 
                     switchTab('dashboard');
-                    loadNotifications();
                     loadCompanyStats();
                     loadMyJobs();
                 } else { showLogin(); }
@@ -1034,7 +1086,7 @@
                             <div class="truck-card" onclick="openTruckGroupDetail('${modelName}')">
                                 <h5 class="fw-bold text-white mb-2">${modelName}</h5>
                                 ${photoHtml}
-                                <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto">Więcej informacji</a>
+                                <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto" data-i18n="moreInfo">${i18n[currentLang].moreInfo}</a>
                             </div>
                         </div>
                     `;
@@ -1057,8 +1109,9 @@
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
+            // Domyślne wolne miejsca (bez przypisanego kierowcy)
             let defaultUnits = [
-                { plates: 'WRA 6509S', driver_name: 'miki' },
+                { plates: 'WRA 6509S', driver_name: '' },
                 { plates: 'WRA 6510S', driver_name: '' },
                 { plates: 'WRA 6511S', driver_name: '' },
                 { plates: 'WRA 6512S', driver_name: '' }
@@ -1135,32 +1188,6 @@
                     `;
                 });
             }
-        }
-
-        async function loadNotifications() {
-            try {
-                const res = await fetch('/api/notifications');
-                if (res.ok) {
-                    const notifs = await res.json();
-                    const list = document.getElementById('notif-list');
-                    const badge = document.getElementById('notif-count');
-                    let unread = notifs.filter(n => !n.is_read).length;
-                    if (unread > 0) { badge.innerText = unread; badge.classList.remove('d-none'); }
-                    else { badge.classList.add('d-none'); }
-
-                    list.innerHTML = notifs.length === 0 ? '<li class="text-center text-muted small py-2">Brak powiadomień</li>' : notifs.map(n => `
-                        <li class="p-2 border-bottom border-secondary notif-item">
-                            <div class="fw-bold text-white small">${n.title}</div>
-                            <div class="text-light small">${n.message}</div>
-                        </li>
-                    `).join('');
-                }
-            } catch (e) {}
-        }
-
-        async function markNotifsAsRead() {
-            await fetch('/api/notifications/read', { method: 'PUT' });
-            document.getElementById('notif-count').classList.add('d-none');
         }
 
         checkUser();
