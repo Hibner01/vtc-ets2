@@ -97,21 +97,33 @@
             padding: 12px 24px;
         }
 
-        .truck-card { 
-            background-color: #1a1d21; 
-            border: 1px solid #2d3238; 
-            border-radius: 24px; 
-            cursor: pointer; 
-            transition: transform 0.2s, border-color 0.2s; 
-            min-height: 220px;
+        /* DEDYKOWANE PIGUŁKI DLA TRAS I RANKINGU */
+        .pill-row {
+            border: 1px solid #3c424c;
+            border-radius: 50px;
+            background-color: #1d2126;
+            margin-bottom: 12px;
+            padding: 10px 20px;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: space-between;
+            text-align: center;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
         }
 
-        .truck-card:hover { 
-            transform: translateY(-4px); 
-            border-color: #58606d; 
+        .pill-row:hover {
+            border-color: #6c757d;
+        }
+
+        .pill-col {
+            flex: 1;
+            padding: 0 10px;
+            border-right: 1px solid #383e46;
+        }
+
+        .pill-col:last-child {
+            border-right: none;
         }
 
         footer { 
@@ -267,28 +279,14 @@
                     <div class="row g-4">
                         <div class="col-md-7">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white" data-i18n="completed_jobs">Wykonane trasy:</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-dark align-middle mb-0">
-                                        <thead>
-                                            <tr class="text-light border-secondary">
-                                                <th data-i18n="th_driver">Kierowca</th>
-                                                <th data-i18n="th_route">Trasa / Pliki</th>
-                                                <th data-i18n="th_dist">Dystans</th>
-                                                <th data-i18n="th_income">Zarobek</th>
-                                                <th data-i18n="th_cargo">Towar</th>
-                                                <th id="jobs-actions-header" class="d-none" data-i18n="th_actions">Akcje Szefa</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="jobs-table-body"></tbody>
-                                    </table>
-                                </div>
+                                <h4 class="fw-bold mb-4 text-white" data-i18n="completed_jobs">Wykonane trasy:</h4>
+                                <div id="jobs-pill-container"></div>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white" data-i18n="ranking">Ranking kierowców:</h5>
-                                <ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul>
+                                <h4 class="fw-bold mb-4 text-white" data-i18n="ranking">Ranking kierowców:</h4>
+                                <div id="ranking-pill-container"></div>
                             </div>
                         </div>
                     </div>
@@ -598,6 +596,22 @@
         let allDispatchesCache = [];
         let allExpensesCache = [];
 
+        const countryFlags = {
+            'PL': '🇵🇱', 'DE': '🇩🇪', 'ES': '🇪🇸', 'FR': '🇫🇷', 'IT': '🇮🇹', 'NL': '🇳🇱',
+            'BE': '🇧🇪', 'UK': '🇬🇧', 'GB': '🇬🇧', 'CZ': '🇨🇿', 'SK': '🇸🇰', 'AT': '🇦🇹',
+            'CH': '🇨🇭', 'SE': '🇸🇪', 'NO': '🇳🇴', 'FI': '🇫🇮', 'DK': '🇩🇰', 'HU': '🇭🇺',
+            'RO': '🇷🇴', 'BG': '🇧🇬', 'HR': '🇭🇷', 'SL': '🇸🇮', 'LT': '🇱🇹', 'LV': '🇱🇻', 'EE': '🇪🇪'
+        };
+
+        function getFlag(text) {
+            const match = text.match(/\(([^)]+)\)/);
+            if (match && match[1]) {
+                const code = match[1].toUpperCase().trim();
+                return countryFlags[code] ? countryFlags[code] + ' ' : '';
+            }
+            return '';
+        }
+
         const i18n = {
             pl: {
                 login_btn: "Zaloguj się", register_btn: "Zarejestruj się", login_title: "Witaj ponownie!",
@@ -665,7 +679,6 @@
             document.getElementById('dispatcher-admin-form').style.display = 'none';
             document.getElementById('add-truck-btn').classList.add('d-none');
             document.getElementById('add-doc-admin-form').classList.add('d-none');
-            document.getElementById('jobs-actions-header').classList.add('d-none');
         }
 
         function switchTab(tab) {
@@ -711,7 +724,6 @@
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
                         document.getElementById('add-truck-btn').classList.remove('d-none');
                         document.getElementById('add-doc-admin-form').classList.remove('d-none');
-                        document.getElementById('jobs-actions-header').classList.remove('d-none');
                     }
 
                     switchTab('jobs');
@@ -1240,10 +1252,22 @@
                 const data = await res.json();
                 document.getElementById('company-total-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' EURO';
                 document.getElementById('company-total-km').textContent = data.totalCompanyKm + ' km';
-                const rankList = document.getElementById('drivers-ranking-list');
-                rankList.innerHTML = '';
+                const container = document.getElementById('ranking-pill-container');
+                container.innerHTML = '';
+                
+                if (!data.driversRanking || data.driversRanking.length === 0) {
+                    container.innerHTML = '<div class="text-light p-2">Brak wpisów w rankingu.</div>';
+                    return;
+                }
+
                 data.driversRanking.forEach((d, idx) => {
-                    rankList.innerHTML += `<li class="list-group-item bg-transparent text-white border-secondary d-flex justify-content-between align-items-center"><span class="text-white">${d.username}</span><span class="badge bg-dark border border-secondary">${idx+1} miejsce</span><span class="fw-bold text-white">${d.km} km</span></li>`;
+                    container.innerHTML += `
+                        <div class="pill-row">
+                            <div class="pill-col fw-bold text-white">${d.username}</div>
+                            <div class="pill-col text-light">${idx + 1} miejsce</div>
+                            <div class="pill-col fw-bold text-white">${d.km}km</div>
+                        </div>
+                    `;
                 });
             }
         }
@@ -1252,37 +1276,54 @@
             const res = await fetch('/api/jobs');
             if (res.ok) {
                 const jobs = await res.json();
-                const tbody = document.getElementById('jobs-table-body');
-                tbody.innerHTML = '';
+                const container = document.getElementById('jobs-pill-container');
+                container.innerHTML = '';
+
+                if (jobs.length === 0) {
+                    container.innerHTML = '<div class="text-light p-2">Brak wykonanych tras.</div>';
+                    return;
+                }
+
                 jobs.forEach(j => {
+                    let startFlag = getFlag(j.start_city);
+                    let endFlag = getFlag(j.end_city);
+
                     let cmrLink = j.cmr_file ? `<a href="${j.cmr_file}" target="_blank" class="badge bg-secondary text-decoration-none ms-1"><i class="fa-solid fa-image"></i> CMR</a>` : '';
                     let summaryLink = j.summary_photo ? `<a href="${j.summary_photo}" target="_blank" class="badge bg-info text-decoration-none ms-1"><i class="fa-solid fa-camera"></i> Dowód</a>` : '';
-                    
-                    let actionsCell = '';
-                    if (currentUserRole === 'admin') {
-                        if (j.status === 'pending') {
-                            actionsCell = `
-                                <td>
-                                    <button class="btn btn-success btn-sm py-0 px-2 fw-bold me-1" onclick="approveJob(${j.id})"><i class="fa-solid fa-check"></i></button>
-                                    <button class="btn btn-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-xmark"></i></button>
-                                </td>
-                            `;
-                        } else {
-                            actionsCell = `<td><button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-trash"></i></button></td>`;
-                        }
-                    }
 
                     let statusBadge = j.status === 'pending' ? `<span class="badge bg-warning text-dark ms-1">Oczekuje</span>` : '';
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="text-white"><strong>${j.username}</strong></td>
-                            <td class="text-white">${j.start_city} ➔ ${j.end_city} ${cmrLink} ${summaryLink} ${statusBadge}</td>
-                            <td class="text-white">${j.distance} km</td>
-                            <td class="text-success">${j.income} €</td>
-                            <td class="text-white">${j.cargo}</td>
-                            ${actionsCell}
-                        </tr>
+                    let adminActions = '';
+                    if (currentUserRole === 'admin') {
+                        if (j.status === 'pending') {
+                            adminActions = `
+                                <div class="mt-1">
+                                    <button class="btn btn-success btn-sm py-0 px-2 fw-bold me-1" onclick="approveJob(${j.id})"><i class="fa-solid fa-check"></i></button>
+                                    <button class="btn btn-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            `;
+                        } else {
+                            adminActions = `
+                                <div class="mt-1">
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="openRejectJobModal(${j.id})"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    container.innerHTML += `
+                        <div class="pill-row flex-wrap">
+                            <div class="pill-col fw-bold text-white">${j.username}</div>
+                            <div class="pill-col text-white">
+                                ${startFlag}${j.start_city} – ${endFlag}${j.end_city}
+                                ${cmrLink} ${summaryLink} ${statusBadge}
+                                <div class="text-muted small" style="font-size: 11px;">${j.formatted_date || ''}</div>
+                            </div>
+                            <div class="pill-col text-white fw-bold">${j.distance}km</div>
+                            <div class="pill-col text-white fw-bold">${j.income} Euro</div>
+                            <div class="pill-col text-white fw-bold">${j.cargo}</div>
+                            ${adminActions ? `<div class="ms-2">${adminActions}</div>` : ''}
+                        </div>
                     `;
                 });
             }
