@@ -50,6 +50,7 @@
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid #1f2329;
+            cursor: pointer;
         }
 
         .sidebar-user {
@@ -135,26 +136,26 @@
             border-color: #ffffff; 
         }
 
-        /* ŁADNE, WYPEŁNIONE ZDJĘCIA BEZ PASKÓW */
+        /* POPRAWIONE PROPORCJE ZDJĘĆ CIĘŻARÓWEK */
         .truck-img-preview {
             width: 100%;
-            height: 220px;
+            height: 320px;
             object-fit: cover;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid #383e47;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6);
             transition: transform 0.3s ease;
         }
 
         .truck-img-preview:hover {
-            transform: scale(1.02);
+            transform: scale(1.015);
         }
 
         .truck-card-grid-img {
             width: 100%;
-            height: 120px;
+            height: 130px;
             object-fit: cover;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid #2d3238;
         }
 
@@ -250,7 +251,7 @@
 
         <!-- EKRAN AUTORYZACJI -->
         <div id="auth-section" class="auth-bg-main flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
-            <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 120px;" onerror="this.style.display='none'"></div>
+            <div style="cursor: pointer;" onclick="exitApp()"><img src="/logo.png" alt="Mazren Spedition" style="max-height: 120px;" onerror="this.style.display='none'"></div>
             
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
                 <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')">
@@ -336,7 +337,8 @@
         <div id="dashboard-section" style="display:none;">
             
             <aside class="sidebar">
-                <div class="sidebar-brand">
+                <!-- KLIKALNE LOGO - PRZEKRACZA NA PULPIT -->
+                <div class="sidebar-brand" onclick="switchTab('dashboard')" title="Strona Główna">
                     <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" onerror="this.style.display='none'">
                 </div>
 
@@ -437,7 +439,7 @@
                                     <div>
                                         <div class="text-white-50 small" data-i18n="deliveriesMonth">Dostawy (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-deliveries">0</div>
-                                        <div class="text-white-50 small" data-i18n="completedCargo">Zrealizovaných ładunków</div>
+                                        <div class="text-white-50 small" data-i18n="completedCargo">Zrealizowanych ładunków</div>
                                     </div>
                                     <div class="fs-2 text-warning"><i class="fa-solid fa-box"></i></div>
                                 </div>
@@ -608,10 +610,55 @@
                         </div>
                     </div>
 
+                    <!-- DOKUMENTY (Z WZOREM CMR I PRZYKŁADAMI) -->
                     <div id="tab-documents" style="display:none;">
                         <div class="bg-card-bms p-4">
                             <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="documentsHeader">Dokumenty i Regulaminy Firmowe</span></h4>
-                            <div id="documents-container" class="row g-4"></div>
+                            
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <div class="bg-dark p-4 rounded-3 border border-secondary text-center h-100 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <span class="badge bg-success mb-2">DO POBRANIA</span>
+                                            <h5 class="fw-bold text-white mb-3">Wzór CMR (Z Pieczątką)</h5>
+                                            <img src="/wzor.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 200px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <p class="text-white-50 small">Czysty wzór listu przewozowego z podpisem i pieczątką Mazren Spedition do wypełnienia podczas trasy.</p>
+                                        </div>
+                                        <a href="/wzor.jpg" target="_blank" download class="btn btn-pill-white w-100 fw-bold mt-3">
+                                            <i class="fa-solid fa-download me-2"></i> Pobierz Wzór CMR
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="bg-dark p-4 rounded-3 border border-secondary text-center h-100 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <span class="badge bg-info mb-2">PRZYKŁAD WYPEŁNIENIA</span>
+                                            <h5 class="fw-bold text-white mb-3">Przykładowo Wypełniony CMR</h5>
+                                            <img src="/cmr_przyklad.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 200px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <p class="text-white-50 small">Instrukcja krok po kroku jak poprawnie wypełnić pola w liście przewozowym przed oddaniem zlecenia.</p>
+                                        </div>
+                                        <a href="/cmr_przyklad.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                            <i class="fa-solid fa-eye me-2"></i> Zobacz Przykładowy CMR
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="bg-dark p-4 rounded-3 border border-secondary text-center h-100 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <span class="badge bg-warning text-dark mb-2">RAPORT TRASY</span>
+                                            <h5 class="fw-bold text-white mb-3">Podsumowanie Trasy (Summary)</h5>
+                                            <img src="/przyklad-summary.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 200px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <p class="text-white-50 small">Wzór zrzutu ekranu z podsumowania dostawy z gry ETS2 wymaganego do rozliczenia kilometrów.</p>
+                                        </div>
+                                        <a href="/przyklad-summary.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                            <i class="fa-solid fa-eye me-2"></i> Zobacz Przykładowy Raport
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -658,7 +705,6 @@
         let groupedTrucksData = {};
         let allUsersList = [];
 
-        // Przechowywanie przypisanych kierowców w pamięci przeglądarki
         let assignedTrucksStorage = JSON.parse(localStorage.getItem('vtc_assigned_drivers') || '{}');
 
         const staticTrucksSpecs = {
@@ -960,7 +1006,7 @@
             else if (tab === 'dispatcher') { loadDispatches(); }
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'garage') loadGarage();
-            else if (tab === 'documents') loadDocuments();
+            else if (tab === 'documents') {}
             else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
         }
 
@@ -1208,7 +1254,6 @@
                 `;
             }).join('');
 
-            // Pasek przypisywania zestawu widoczny TYLKO dla Szefa (currentUserRole === 'admin')
             let bossAssignPanelHtml = '';
             if (currentUserRole === 'admin') {
                 let optionsPlates = platesList.map(p => `<option value="${p}">${p}</option>`).join('');
@@ -1252,7 +1297,7 @@
                         ${bossAssignPanelHtml}
                         <ul class="list-unstyled lh-lg text-white fs-5 mb-4">
                             <li><strong>Kabina:</strong> ${spec.cabin || 'Standard'}</li>
-                            <li><strong>Podwozie:</strong> ${spec.chassis || '4x2'}</li>
+                            <li><strong>Podwozie:</strong> ${spec.chassis || 'Standard'}</li>
                             <li><strong>Silnik:</strong> ${spec.engine || 'Standard'}</li>
                             <li><strong>Skrzynia biegów:</strong> ${spec.gearbox || 'Standard'}</li>
                             <li><strong>Wnętrze:</strong> ${spec.interior || 'Standard'}</li>
@@ -1294,26 +1339,6 @@
                 tbody.innerHTML = '';
                 expenses.forEach(exp => {
                     tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${exp.type}</td><td class="text-white">${exp.description}</td><td class="text-danger fw-bold">-${exp.amount} €</td><td>-</td></tr>`;
-                });
-            }
-        }
-
-        async function loadDocuments() {
-            const res = await fetch('/api/documents');
-            if (res.ok) {
-                const docs = await res.json();
-                const container = document.getElementById('documents-container');
-                container.innerHTML = '';
-                docs.forEach(doc => {
-                    container.innerHTML += `
-                        <div class="col-md-6">
-                            <div class="bg-card-bms p-4">
-                                <span class="badge bg-warning text-dark mb-2">${doc.category}</span>
-                                <h4 class="fw-bold text-white mb-2">${doc.title}</h4>
-                                <p class="text-light mb-3">${doc.content}</p>
-                            </div>
-                        </div>
-                    `;
                 });
             }
         }
