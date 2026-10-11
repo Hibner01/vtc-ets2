@@ -101,6 +101,10 @@ async function initDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
+
+        // Dodatkowe zabezpieczenie migracyjne w razie gdyby tabela już istniała bez kolumny status
+        await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
+
         console.log('Baza danych zainicjalizowana pomyślnie.');
     } catch (err) {
         console.error('Błąd inicjalizacji bazy:', err.message);
@@ -415,7 +419,6 @@ app.get('/api/jobs', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania tras' }); }
 });
 
-// ZATWIERDZENIE TRASY PRZEZ SZEFA
 app.put('/api/jobs/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
@@ -430,7 +433,6 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
 });
 
-// ODRZUCENIE / USUNIĘCIE TRASY PRZEZ SZEFA Z POWODEM
 app.delete('/api/jobs/:id', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     const { reason } = req.body;
