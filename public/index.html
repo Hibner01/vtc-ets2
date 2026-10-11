@@ -17,6 +17,9 @@
         .truck-card { background-color: #1a1d21; border: 1px solid #2c3036; border-radius: 16px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
         .truck-card:hover { transform: translateY(-3px); border-color: #4f5660; }
         footer { margin-top: auto; background-color: #0d0f11; border-top: 1px solid #22252a; }
+        
+        .notif-badge { position: absolute; top: -5px; right: -5px; padding: 3px 6px; border-radius: 50%; font-size: 10px; }
+        .notif-dropdown { width: 320px; background-color: #1a1d21; border: 1px solid #2a2e35; }
     </style>
 </head>
 <body>
@@ -53,7 +56,19 @@
             <nav class="navbar navbar-expand-lg border-bottom border-dark py-3" style="background-color: #141619;">
                 <div class="container">
                     <a class="navbar-brand me-4" onclick="switchTab('jobs')"><img src="/logo.png" style="max-height: 45px;" onerror="this.style.display='none'"></a>
+                    
                     <div class="d-flex align-items-center order-lg-last ms-auto me-3">
+                        <!-- DZWONEK POWIADOMIEN -->
+                        <div class="dropdown me-3">
+                            <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" onclick="markNotifsAsRead()">
+                                <i class="fa-solid fa-bell"></i>
+                                <span id="notif-count" class="badge bg-danger notif-badge d-none">0</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end notif-dropdown p-2 shadow-lg" id="notif-list">
+                                <li class="text-center text-muted small py-2">Brak nowych powiadomień</li>
+                            </ul>
+                        </div>
+
                         <div class="badge bg-dark border border-secondary px-3 py-2 me-3 rounded-pill">
                             <i class="fa-solid fa-user me-1"></i> <span id="user-display"></span> <span id="admin-badge" class="badge bg-danger ms-1 d-none">SZEF</span>
                         </div>
@@ -63,6 +78,7 @@
                         </select>
                         <button class="btn btn-outline-danger btn-sm rounded-circle" onclick="performLogout()"><i class="fa-solid fa-power-off"></i></button>
                     </div>
+
                     <div class="navbar-nav ms-auto me-auto flex-row gap-3">
                         <a class="nav-link-custom active" onclick="switchTab('jobs')" data-i18n="navHome">Strona Główna</a>
                         <a class="nav-link-custom" onclick="switchTab('finances')" data-i18n="navFinances">Finanse</a>
@@ -75,7 +91,6 @@
             </nav>
 
             <div class="container py-4 flex-grow-1">
-                <!-- ZAKŁADKA GŁÓWNA -->
                 <div id="tab-jobs">
                     <div class="row g-4 mb-4">
                         <div class="col-md-4"><div class="bg-card p-4 h-100"><h6 class="text-muted" data-i18n="companyBudgetTitle">Budżet firmy:</h6><h2 id="company-total-budget" class="fw-bold text-success display-6 mb-0">0 EURO</h2></div></div>
@@ -88,7 +103,6 @@
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA DYSPOZYTOR -->
                 <div id="tab-dispatcher" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4" id="dispatcher-admin-form" style="display:none;">
@@ -110,7 +124,6 @@
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA FINANSE -->
                 <div id="tab-finances" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4">
@@ -130,15 +143,12 @@
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA GARAŻ VTC -->
                 <div id="tab-garage" style="display:none;">
                     <div id="garage-main-view">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold mb-0" data-i18n="garageTitle">Ciężarówki</h4>
                             <button id="add-truck-btn" class="btn btn-outline-light btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> <span data-i18n="addTruckBtn">Dodaj do Garażu</span></button>
                         </div>
-
-                        <!-- FORMULARZ Z RĘCZNYMI DANYMI SPECYFIKACJI -->
                         <div id="truck-add-form" class="bg-card p-4 mb-4 d-none">
                             <h5 class="fw-bold text-warning mb-3" data-i18n="addNewTruckTitle">Dodaj nowy zestaw do Floty</h5>
                             <form id="truck-form">
@@ -164,7 +174,6 @@
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA O NAS -->
                 <div id="tab-about" style="display:none;">
                     <div class="bg-card p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
                         <p class="fs-5 leading-relaxed text-light" data-i18n="aboutText">
@@ -177,7 +186,6 @@
                     </div>
                 </div>
 
-                <!-- ZARZĄDZANIE KONTAMI -->
                 <div id="tab-management" style="display:none;">
                     <div class="bg-card p-4">
                         <h4 class="fw-bold mb-3 text-warning" data-i18n="managementTitle">Zarządzanie Kontami Kierowców</h4>
@@ -241,6 +249,41 @@
             });
         }
 
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/notifications');
+                if (res.ok) {
+                    const notifs = await res.json();
+                    const list = document.getElementById('notif-list');
+                    const badge = document.getElementById('notif-count');
+                    
+                    let unread = notifs.filter(n => !n.is_read).length;
+                    if (unread > 0) {
+                        badge.innerText = unread;
+                        badge.classList.remove('d-none');
+                    } else {
+                        badge.classList.add('d-none');
+                    }
+
+                    if (notifs.length === 0) {
+                        list.innerHTML = '<li class="text-center text-muted small py-2">Brak nowych powiadomień</li>';
+                    } else {
+                        list.innerHTML = notifs.map(n => `
+                            <li class="p-2 border-bottom border-secondary">
+                                <div class="fw-bold text-light small">${n.title}</div>
+                                <div class="text-muted small">${n.message}</div>
+                            </li>
+                        `).join('');
+                    }
+                }
+            } catch (e) { console.log(e); }
+        }
+
+        async function markNotifsAsRead() {
+            await fetch('/api/notifications/read', { method: 'PUT' });
+            document.getElementById('notif-count').classList.add('d-none');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const savedLang = localStorage.getItem('vtc_lang') || 'pl';
             document.getElementById('lang-selector').value = savedLang;
@@ -289,6 +332,7 @@
                         document.getElementById('dispatcher-list-col').className = 'col-md-12';
                     }
 
+                    loadNotifications();
                     loadCompanyStats();
                     loadJobs();
                 } else { showLogin(); }
