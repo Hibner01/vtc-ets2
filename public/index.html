@@ -82,6 +82,7 @@
                         <a class="nav-link-custom" onclick="switchTab('finances')" data-i18n="navFinances">Finanse</a>
                         <a class="nav-link-custom" onclick="switchTab('dispatcher')" data-i18n="navDispatcher">Dyspozytornia</a>
                         <a class="nav-link-custom" onclick="switchTab('garage')" data-i18n="navGarage">Garaż</a>
+                        <a class="nav-link-custom" onclick="switchTab('docs')" data-i18n="navDocs">Dokumenty</a>
                         <a class="nav-link-custom" onclick="switchTab('about')" data-i18n="navAbout">O nas</a>
                         <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" onclick="switchTab('management')" data-i18n="navManagement">Zarządzanie</a>
                     </div>
@@ -176,6 +177,35 @@
                     </div>
                 </div>
 
+                <!-- DOKUMENTY (PRZYWRÓCONA ZAKŁADKA) -->
+                <div id="tab-docs" style="display:none;">
+                    <div class="bg-card p-4">
+                        <h4 class="fw-bold mb-3 text-light"><i class="fa-solid fa-file-contract me-2 text-warning"></i> Dokumenty Firmowe</h4>
+                        <p class="text-muted small mb-4">Pobierz niezbędne pliki i wzory dokumentów CMR wymaganych w firmie Mazren Spedition.</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-dark border border-secondary rounded d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-light">📄 Wzór Listu Przewozowego CMR</h6>
+                                        <div class="text-muted small">Oficjalny wzór czystego dokumentu CMR</div>
+                                    </div>
+                                    <a href="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg" target="_blank" class="btn btn-outline-light btn-sm fw-bold"><i class="fa-solid fa-download me-1"></i> Pobierz</a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-dark border border-secondary rounded d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-light">🖼️ Przykład Prawidłowego Podsumowania</h6>
+                                        <div class="text-muted small">Wzór zrzutu ekranu podsumowania trasy z ETS2</div>
+                                    </div>
+                                    <a href="https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg" target="_blank" class="btn btn-outline-light btn-sm fw-bold"><i class="fa-solid fa-eye me-1"></i> Zobacz</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- O NAS -->
                 <div id="tab-about" style="display:none;">
                     <div class="bg-card p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
                         <p class="fs-5 leading-relaxed text-light" data-i18n="aboutText">
@@ -188,10 +218,52 @@
                     </div>
                 </div>
 
+                <!-- ZARZĄDZANIE KONTAMI -->
                 <div id="tab-management" style="display:none;">
                     <div class="bg-card p-4">
                         <h4 class="fw-bold mb-3 text-warning" data-i18n="managementTitle">Zarządzanie Kontami Kierowców</h4>
                         <div class="table-responsive"><table class="table table-dark align-middle"><thead><tr><th data-i18n="tableDriver">Kierowca</th><th data-i18n="tableRole">Rola</th><th data-i18n="tableStatus">Status</th><th data-i18n="tableAction">Akcje</th></tr></thead><tbody id="management-users-list"></tbody></table></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL UKOŃCZENIA ZLECENIA (CMR & PODSUMOWANIE) -->
+            <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content bg-card border-secondary text-light">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-circle-check me-2"></i> Ukończenie Zlecenia</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="modal_dispatch_id">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Towar / Ładunek</label>
+                                <input type="text" id="modal_cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe">
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">Dystans (km)</label>
+                                    <input type="number" id="modal_distance" class="form-control form-control-dark" placeholder="np. 1250" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">Zarobek (€)</label>
+                                    <input type="number" id="modal_income" class="form-control form-control-dark" placeholder="np. 48000" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Link do zdjęcia CMR (opcjonalne)</label>
+                                <input type="url" id="modal_cmr" class="form-control form-control-dark" placeholder="https://imgur.com/...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Link do podsumowania z gry (opcjonalne)</label>
+                                <input type="url" id="modal_summary" class="form-control form-control-dark" placeholder="https://imgur.com/...">
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Anuluj</button>
+                            <button type="button" class="btn btn-success btn-sm fw-bold px-4" onclick="submitCompleteDispatch()">Wyślij Raport</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -210,6 +282,7 @@
     <script>
         let currentUserId = null;
         let currentUserRole = '';
+        let currentUsername = '';
         let groupedTrucksData = {};
 
         const translations = {
@@ -217,7 +290,7 @@
                 loginBtn: "Zaloguj się", registerBtn: "Zarejestruj się", welcomeBack: "Witaj ponownie!",
                 usernameLabel: "Login / Nick", passwordLabel: "Hasło", createAccBtn: "Stwórz konto",
                 registerTitle: "Rejestracja konta", noAccount: "Nie masz konta?", hasAccount: "Masz konto?",
-                navHome: "Strona Główna", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż", navAbout: "O nas", navManagement: "Zarządzanie",
+                navHome: "Strona Główna", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż", navDocs: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie",
                 companyBudgetTitle: "Budżet firmy:", myStatsTitle: "Twoje statystyki: (cel 6000km)", companyStatsTitle: "Statystyki firmy:",
                 completedRoutes: "Wykonane trasy:", driversRanking: "Ranking kierowców:",
                 newDispatchTitle: "📡 Nowe Zlecenie", assignDriver: "Przypisz kierowcę", selectTruck: "Zestaw z garażu", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi", publishDispatch: "Opublikuj zlecenie", availableRoutes: "! Dostępne trasy dla Ciebie:",
@@ -230,7 +303,7 @@
                 loginBtn: "Log in", registerBtn: "Register", welcomeBack: "Welcome back!",
                 usernameLabel: "Login / Nick", passwordLabel: "Password", createAccBtn: "Create account",
                 registerTitle: "Account Registration", noAccount: "Don't have an account?", hasAccount: "Already have an account?",
-                navHome: "Home", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage", navAbout: "About us", navManagement: "Management",
+                navHome: "Home", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage", navDocs: "Documents", navAbout: "About us", navManagement: "Management",
                 companyBudgetTitle: "Company Budget:", myStatsTitle: "Your stats: (goal 6000km)", companyStatsTitle: "Company stats:",
                 completedRoutes: "Completed routes:", driversRanking: "Drivers ranking:",
                 newDispatchTitle: "📡 New Dispatch", assignDriver: "Assign Driver", selectTruck: "Truck from Garage", fromCity: "From", toCity: "To", notes: "Notes", publishDispatch: "Publish Dispatch", availableRoutes: "! Available routes for you:",
@@ -260,23 +333,15 @@
                     const badge = document.getElementById('notif-count');
                     
                     let unread = notifs.filter(n => !n.is_read).length;
-                    if (unread > 0) {
-                        badge.innerText = unread;
-                        badge.classList.remove('d-none');
-                    } else {
-                        badge.classList.add('d-none');
-                    }
+                    if (unread > 0) { badge.innerText = unread; badge.classList.remove('d-none'); }
+                    else { badge.classList.add('d-none'); }
 
-                    if (notifs.length === 0) {
-                        list.innerHTML = '<li class="text-center text-muted small py-2">Brak powiadomień</li>';
-                    } else {
-                        list.innerHTML = notifs.map(n => `
-                            <li class="p-2 border-bottom border-secondary">
-                                <div class="fw-bold text-light small">${n.title}</div>
-                                <div class="text-muted small">${n.message}</div>
-                            </li>
-                        `).join('');
-                    }
+                    list.innerHTML = notifs.length === 0 ? '<li class="text-center text-muted small py-2">Brak powiadomień</li>' : notifs.map(n => `
+                        <li class="p-2 border-bottom border-secondary">
+                            <div class="fw-bold text-light small">${n.title}</div>
+                            <div class="text-muted small">${n.message}</div>
+                        </li>
+                    `).join('');
                 }
             } catch (e) { console.error('Błąd powiadomień:', e); }
         }
@@ -299,7 +364,7 @@
         }
 
         function switchTab(tab) {
-            ['jobs', 'dispatcher', 'finances', 'garage', 'about', 'management'].forEach(t => {
+            ['jobs', 'dispatcher', 'finances', 'garage', 'docs', 'about', 'management'].forEach(t => {
                 document.getElementById('tab-' + t).style.display = (tab === t) ? 'block' : 'none';
             });
             if (tab === 'dispatcher') { loadDispatches(); if (currentUserRole === 'admin') loadDispatcherOptions(); }
@@ -318,6 +383,7 @@
                     const data = await res.json();
                     currentUserId = data.id;
                     currentUserRole = data.role;
+                    currentUsername = data.username;
 
                     document.getElementById('auth-section').style.display = 'none';
                     document.getElementById('dashboard-section').style.display = 'flex';
@@ -522,20 +588,17 @@
                 dispatches.forEach(d => {
                     let actionHtml = '';
                     
+                    // Czy to zlecenie może przyjąć dany użytkownik?
+                    const canAccept = (d.assigned_to === 'Wszyscy' || d.assigned_to === currentUsername);
+
                     if (d.status === 'W wolnym obiegu') {
-                        actionHtml = `<button class="btn btn-light btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
-                    } else if (d.accepted_by_id === currentUserId || currentUserRole === 'admin') {
-                        actionHtml = `
-                            <div class="mt-3 p-3 bg-dark rounded border border-secondary">
-                                <h6 class="text-warning small fw-bold mb-2">Raport z wykonania trasy:</h6>
-                                <div class="mb-2">
-                                    <input type="text" id="report_cargo_${d.id}" class="form-control form-control-dark form-control-sm mb-1" placeholder="Towar (np. Części samochodowe)">
-                                    <input type="number" id="report_dist_${d.id}" class="form-control form-control-dark form-control-sm mb-1" placeholder="Dystans w km (np. 1200)">
-                                    <input type="number" id="report_inc_${d.id}" class="form-control form-control-dark form-control-sm" placeholder="Zarobek w € (np. 45000)">
-                                </div>
-                                <button class="btn btn-success btn-sm w-100 fw-bold" onclick="completeDispatch(${d.id})">Zatwierdź i wyślij raport</button>
-                            </div>
-                        `;
+                        if (canAccept) {
+                            actionHtml = `<button class="btn btn-light btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                        } else {
+                            actionHtml = `<span class="badge bg-secondary">Zlecenie dla innego kierowcy</span>`;
+                        }
+                    } else if (d.accepted_by_id === currentUserId) {
+                        actionHtml = `<button class="btn btn-success btn-sm fw-bold" onclick="openCompleteModal(${d.id})"><i class="fa-solid fa-flag-checkered me-1"></i> Ukończ zlecenie</button>`;
                     } else {
                         actionHtml = `<span class="badge bg-secondary">W trakcie realizacji przez @${d.accepted_by_username}</span>`;
                     }
@@ -601,33 +664,57 @@
 
         async function acceptDispatch(id) {
             const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
-            if (res.ok) loadDispatches();
+            if (res.ok) {
+                loadDispatches();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Nie możesz przyjąć tego zlecenia.');
+            }
         }
 
-        async function completeDispatch(id) {
-            const cargo = document.getElementById(`report_cargo_${id}`).value;
-            const distance = document.getElementById(`report_dist_${id}`).value;
-            const income = document.getElementById(`report_inc_${id}`).value;
+        function openCompleteModal(id) {
+            document.getElementById('modal_dispatch_id').value = id;
+            document.getElementById('modal_cargo').value = '';
+            document.getElementById('modal_distance').value = '';
+            document.getElementById('modal_income').value = '';
+            document.getElementById('modal_cmr').value = '';
+            document.getElementById('modal_summary').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('completeModal'));
+            modal.show();
+        }
+
+        async function submitCompleteDispatch() {
+            const id = document.getElementById('modal_dispatch_id').value;
+            const cargo = document.getElementById('modal_cargo').value;
+            const distance = document.getElementById('modal_distance').value;
+            const income = document.getElementById('modal_income').value;
+            const cmr_file = document.getElementById('modal_cmr').value;
+            const summary_photo = document.getElementById('modal_summary').value;
 
             if (!distance || !income) {
-                alert('Uzupełnij dystans oraz zarobek!');
+                alert('Uzupełnij przynajmniej dystans i zarobek!');
                 return;
             }
 
             const res = await fetch(`/api/dispatches/${id}/complete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cargo, distance, income })
+                body: JSON.stringify({ cargo, distance, income, cmr_file, summary_photo })
             });
 
             if (res.ok) {
-                alert('Trasa została pomyślnie zraportowana i dodana do statystyk firmy!');
+                const modalEl = document.getElementById('completeModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+
+                alert('Trasa zraportowana pomyślnie!');
                 loadDispatches();
                 loadCompanyStats();
                 loadJobs();
             } else {
                 const err = await res.json();
-                alert(err.error || 'Błąd raportowania');
+                alert(err.error || 'Błąd wysyłania raportu.');
             }
         }
 
@@ -685,7 +772,9 @@
                 const tbody = document.getElementById('jobs-table-body');
                 tbody.innerHTML = '';
                 jobs.forEach(j => {
-                    tbody.innerHTML += `<tr><td>${j.username}</td><td>${j.start_city} - ${j.end_city}</td><td>${j.distance}km</td><td>${j.income} Euro</td><td>${j.cargo}</td></tr>`;
+                    let cmrLink = j.cmr_file ? `<a href="${j.cmr_file}" target="_blank" class="badge bg-secondary text-decoration-none ms-1">CMR</a>` : '';
+                    let summaryLink = j.summary_photo ? `<a href="${j.summary_photo}" target="_blank" class="badge bg-info text-decoration-none ms-1">Foto</a>` : '';
+                    tbody.innerHTML += `<tr><td>${j.username}</td><td>${j.start_city} - ${j.end_city} ${cmrLink} ${summaryLink}</td><td>${j.distance}km</td><td>${j.income} Euro</td><td>${j.cargo}</td></tr>`;
                 });
             }
         }
