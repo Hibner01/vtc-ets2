@@ -1255,10 +1255,25 @@
     if (summaryFile) formData.append('summary', summaryFile);
 
     try {
-        const res = await fetch('/api/dispatches', {
-            method: 'POST',
-            body: formData // Wysyłamy jako FormData bez ręcznego nagłówka Content-Type
+        const res = await fetch(`/api/dispatches/${dispatchId}`, {
+            method: 'PUT',
+            body: formData
         });
+
+        if (res.ok) {
+            document.getElementById('job-report-form').reset();
+            document.getElementById('driver-report-section').style.display = 'none';
+            alert('Raport trasy został pomyślnie wysłany i dodany do statystyk firmy!');
+            loadMyJobs();
+            loadDispatches();
+            loadCompanyStats();
+        } else {
+            alert('Błąd podczas wysyłania raportu trasy.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Wystąpił błąd połączenia z serwerem.');
+    }
 
         if (res.ok) {
             document.getElementById('job-report-form').reset();
