@@ -70,8 +70,6 @@ async function initDB() {
                 status VARCHAR(50) DEFAULT 'W wolnym obiegu',
                 accepted_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
                 accepted_by_username VARCHAR(255),
-                reported_distance INTEGER DEFAULT 0,
-                reported_income INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -103,11 +101,13 @@ app.use(session({
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Pomocnicza funkcja powiadomień
+// Pomocnicza funkcja dodawania powiadomienia
 async function addNotification(userId, title, message) {
     try {
         await pool.query('INSERT INTO notifications (user_id, title, message) VALUES ($1, $2, $3)', [userId, title, message]);
-    } catch (e) { console.log(e); }
+    } catch (e) {
+        console.error('Błąd zapisu powiadomienia:', e);
+    }
 }
 
 // --- AUTORYZACJA ---
@@ -128,7 +128,9 @@ app.post('/api/register', async (req, res) => {
         
         if (status === 'pending') {
             const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
-            admins.rows.forEach(adm => addNotification(adm.id, '👤 Nowy Kierowca', `Kierowca @${username} czeka na akceptację.`));
+            for (let adm of admins.rows) {
+                await addNotification(adm.id, '👤 Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`);
+            }
         }
 
         res.json({ success: true, message: status === 'pending' ? 'Konto oczekuje na akceptację Szefa!' : 'Konto Szefa utworzone!' });
@@ -188,9 +190,9 @@ app.post('/api/logout', (req, res) => {
 app.get('/api/notifications', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY id DESC LIMIT 10', [req.session.userId]);
+        const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY id DESC LIMIT 15', [req.session.userId]);
         res.json(result.rows);
-    } catch (err) { res.status(500).json({ error: 'Błąd powiadomień' }); }
+    } catch (err) { res.status(500).json({ error: 'Błąd pobierania powiadomień' }); }
 });
 
 app.put('/api/notifications/read', async (req, res) => {
@@ -215,7 +217,7 @@ app.put('/api/users/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
-        addNotification(req.params.id, '🎉 Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!');
+        await addNotification(req.params.id, '🎉 Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!');
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd zatwierdzania' }); }
 });
@@ -228,13 +230,26 @@ app.delete('/api/users/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania' }); }
 });
 
-// --- DYSPOZYTOR ---
+// --- DYSPOZYTOR (Z FILTRO WANIEM TRAS) ---
 
 app.get('/api/dispatches', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const result = await pool.query('SELECT * FROM dispatches ORDER BY id DESC');
+        let query = '';
+        let params = [];
+
+        if (req.session.role === 'admin') {
+            // Szef widzi wszystkie trasy
+            query = 'SELECT * FROM dispatches ORDER BY id DESC';
+        } else {
+            // Kierowca widzi TYLKO trasy dla "Wszyscy" LUB przypisane do niego LUB zaakceptowane przez niego
+            query = 'SELECT * FROM dispatches WHERE assigned_to = $1 OR assigned_to = $2 OR accepted_by_id = $3 ORDER BY id DESC';
+            params = ['Wszyscy', req.session.username, req.session.userId];
+        }
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
-    } catch (err) { res.status(500).json({ error: 'Błąd zleceń' }); }
+    } catch (err) { res.status(500).json({ error: 'Błąd pobierania zleceń' }); }
 });
 
 app.post('/api/dispatches', async (req, res) => {
@@ -242,13 +257,21 @@ app.post('/api/dispatches', async (req, res) => {
     const { assigned_to, start_city, end_city, truck_name, notes } = req.body;
     try {
         await pool.query(
-            'INSERT INTO dispatches (assigned_to, start_city, end_city, truck_name, notes) VALUES ($1, $2, $3, $4, $5)',
-            [assigned_to || 'Wszyscy', start_city, end_city, truck_name || 'Standardowy Zestaw', notes || '']
+            'INSERT INTO dispatches (assigned_to, start_city, end_city, truck_name, notes, status) VALUES ($1, $2, $3, $4, $5, $6)',
+            [assigned_to || 'Wszyscy', start_city, end_city, truck_name || 'Standardowy Zestaw', notes || '', 'W wolnym obiegu']
         );
+
+        // Wysyłamy powiadomienie jeśli trasa została przypisana do konkretnego kierowcy
+        if (assigned_to && assigned_to !== 'Wszyscy') {
+            const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
+            if (targetUser.rows.length > 0) {
+                await addNotification(targetUser.rows[0].id, '📡 Nowe Zlecenie', `Szef przydzielił Ci nową trasę: ${start_city} ➔ ${end_city}`);
+            }
+        }
+
         res.json({ success: true });
     } catch (err) {
-        console.error('Błąd dyspozytora:', err);
-        res.status(500).json({ error: 'Błąd dodawania zlecenia: ' + err.message });
+        res.status(500).json({ error: 'Błąd dodawania zlecenia' });
     }
 });
 
@@ -264,6 +287,32 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
         );
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji' }); }
+});
+
+app.post('/api/dispatches/:id/complete', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    const { distance, income, cargo } = req.body;
+    const parsedDist = parseInt(distance) || 0;
+    const parsedInc = parseInt(income) || 0;
+
+    if (parsedDist <= 0) return res.status(400).json({ error: 'Podaj prawidłowy dystans w km.' });
+
+    try {
+        const dispRes = await pool.query('SELECT * FROM dispatches WHERE id = $1', [req.params.id]);
+        if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zlecenia' });
+        const disp = dispRes.rows[0];
+
+        await pool.query(
+            'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income) VALUES ($1, $2, $3, $4, $5, $6)',
+            [req.session.userId, disp.start_city, disp.end_city, cargo || 'Standard', parsedDist, parsedInc]
+        );
+
+        await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd raportowania trasy' });
+    }
 });
 
 // --- FINANSE ---
@@ -332,8 +381,7 @@ app.post('/api/trucks', async (req, res) => {
         );
         res.json({ success: true });
     } catch (err) {
-        console.error('Błąd garażu:', err);
-        res.status(500).json({ error: 'Błąd dodawania pojazdu: ' + err.message });
+        res.status(500).json({ error: 'Błąd dodawania pojazdu' });
     }
 });
 
