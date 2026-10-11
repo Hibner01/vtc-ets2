@@ -9,13 +9,11 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Konfiguracja bazy danych
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Katalog na pliki multimedialne
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -52,7 +50,7 @@ async function initDB() {
                 income INTEGER DEFAULT 0,
                 cmr_file TEXT,
                 summary_photo TEXT,
-                status VARCHAR(50) DEFAULT 'pending',
+                status VARCHAR(50) DEFAULT 'approved',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -126,8 +124,6 @@ async function addNotification(userId, title, message) {
     } catch (e) { console.error('Błąd powiadomień:', e); }
 }
 
-// --- AUTORYZACJA ---
-
 app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Uzupełnij login i hasło.' });
@@ -145,7 +141,7 @@ app.post('/api/register', async (req, res) => {
         if (status === 'pending') {
             const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
             for (let adm of admins.rows) {
-                await addNotification(adm.id, '👤 Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`);
+                await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`);
             }
         }
 
@@ -193,8 +189,6 @@ app.get('/api/user', async (req, res) => {
 
 app.post('/api/logout', (req, res) => { req.session.destroy(() => res.json({ success: true })); });
 
-// --- POWIADOMIENIA ---
-
 app.get('/api/notifications', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
@@ -211,8 +205,6 @@ app.put('/api/notifications/read', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd aktualizacji' }); }
 });
 
-// --- ZARZĄDZANIE KONTAMI ---
-
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
@@ -225,7 +217,7 @@ app.put('/api/users/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
-        await addNotification(req.params.id, '🎉 Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!');
+        await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!');
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd zatwierdzania' }); }
 });
@@ -237,8 +229,6 @@ app.delete('/api/users/:id', async (req, res) => {
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania' }); }
 });
-
-// --- DYSPOZYTOR ---
 
 app.get('/api/dispatches', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
@@ -270,7 +260,7 @@ app.post('/api/dispatches', async (req, res) => {
         if (assigned_to && assigned_to !== 'Wszyscy') {
             const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
             if (targetUser.rows.length > 0) {
-                await addNotification(targetUser.rows[0].id, '📡 Nowe Zlecenie', `Szef przydzielił Ci nową trasę: ${start_city} ➔ ${end_city}`);
+                await addNotification(targetUser.rows[0].id, 'Nowe Zlecenie', `Szef przydzielił Ci nową trasę: ${start_city} ➔ ${end_city}`);
             }
         }
 
@@ -286,14 +276,6 @@ app.put('/api/dispatches/:id', async (req, res) => {
             'UPDATE dispatches SET assigned_to = $1, start_city = $2, end_city = $3, truck_name = $4, notes = $5 WHERE id = $6',
             [assigned_to || 'Wszyscy', start_city, end_city, truck_name, notes || '', req.params.id]
         );
-
-        if (assigned_to && assigned_to !== 'Wszyscy') {
-            const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
-            if (targetUser.rows.length > 0) {
-                await addNotification(targetUser.rows[0].id, '✏️ Zaktualizowano Zlecenie', `Szef zaktualizował Twoją trasę: ${start_city} ➔ ${end_city}`);
-            }
-        }
-
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd edycji zlecenia' }); }
 });
@@ -349,7 +331,6 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zlecenia' });
         const disp = dispRes.rows[0];
 
-        // Zapisujemy trasę ze statusem 'pending' (oczekuje na weryfikację Szefa)
         await pool.query(
             'INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
             [req.session.userId, disp.start_city, disp.end_city, cargo || 'Standard', parsedDist, parsedInc, cmrPath, summaryPath, 'pending']
@@ -357,17 +338,14 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
 
         await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
 
-        // Powiadomienie dla Szefów
         const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
         for (let adm of admins.rows) {
-            await addNotification(adm.id, '📑 Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`);
+            await addNotification(adm.id, 'Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`);
         }
 
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd raportowania trasy' }); }
 });
-
-// --- FINANSE ---
 
 app.get('/api/expenses', async (req, res) => {
     try {
@@ -400,8 +378,6 @@ app.delete('/api/expenses/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania wydatku' }); }
 });
 
-// --- GARAŻ VTC ---
-
 app.get('/api/trucks', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM trucks ORDER BY id DESC');
@@ -432,8 +408,6 @@ app.delete('/api/trucks/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania pojazdu' }); }
 });
 
-// --- STATYSTYKI I ZARZĄDZANIE TRASAMI ---
-
 app.get('/api/jobs', async (req, res) => {
     try {
         const result = await pool.query('SELECT jobs.*, users.username FROM jobs JOIN users ON jobs.user_id = users.id ORDER BY jobs.id DESC');
@@ -441,7 +415,7 @@ app.get('/api/jobs', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania tras' }); }
 });
 
-// AKCEPTACJA TRASY PRZEZ SZEFA
+// ZATWIERDZENIE TRASY PRZEZ SZEFA
 app.put('/api/jobs/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
@@ -451,15 +425,23 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
         const job = jobRes.rows[0];
         await pool.query("UPDATE jobs SET status = 'approved' WHERE id = $1", [req.params.id]);
         
-        await addNotification(job.user_id, '✅ Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`);
+        await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
 });
 
-// USUWANIE / ODRZUCENIE TRASY PRZEZ SZEFA
+// ODRZUCENIE / USUNIĘCIE TRASY PRZEZ SZEFA Z POWODEM
 app.delete('/api/jobs/:id', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    const { reason } = req.body;
     try {
+        const jobRes = await pool.query('SELECT user_id, start_city, end_city FROM jobs WHERE id = $1', [req.params.id]);
+        if (jobRes.rows.length > 0) {
+            const job = jobRes.rows[0];
+            const msg = reason ? `Szef odrzucił Twoją trasę (${job.start_city} ➔ ${job.end_city}). Powód: ${reason}` : `Szef odrzucił Twoją trasę (${job.start_city} ➔ ${job.end_city}).`;
+            await addNotification(job.user_id, 'Trasa Odrzucona', msg);
+        }
+
         await pool.query('DELETE FROM jobs WHERE id = $1', [req.params.id]);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania trasy' }); }
@@ -467,7 +449,6 @@ app.delete('/api/jobs/:id', async (req, res) => {
 
 app.get('/api/company-stats', async (req, res) => {
     try {
-        // Zliczamy tylko zatwierdzone trasy ('approved')
         const totalKmRes = await pool.query("SELECT SUM(distance) as total FROM jobs WHERE status = 'approved'");
         const totalIncomeRes = await pool.query("SELECT SUM(income) as total_income FROM jobs WHERE status = 'approved'");
         const totalExpensesRes = await pool.query('SELECT SUM(amount) as total_expenses FROM expenses');
