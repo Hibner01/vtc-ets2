@@ -528,22 +528,47 @@
                                     <form id="expense-form" onsubmit="submitExpenseForm(event)">
                                         <div class="mb-3">
                                             <label class="form-label text-white fw-semibold" data-i18n="expenseType">Typ wydatku</label>
-                                            <select id="expense_type" class="form-select form-control-icon text-white" required>
+                                            <select id="expense_type" class="form-select form-control-icon text-white" onchange="toggleFuelFields()" required>
                                                 <option value="fuel">⛽ Fuel / Paliwo</option>
                                                 <option value="service">🔧 Service / Serwis</option>
                                                 <option value="fine">🚨 Fine / Mandat</option>
                                             </select>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label text-white fw-semibold" data-i18n="amount">Kwota (€)</label>
-                                            <input type="number" id="expense_amount" class="form-control form-control-icon text-white" placeholder="np. 450" required>
+
+                                        <!-- Pola dedykowane dla Paliwa -->
+                                        <div id="fuel-fields">
+                                            <div class="mb-3">
+                                                <label class="form-label text-white fw-semibold">Data tankowania</label>
+                                                <input type="date" id="expense_date" class="form-control text-white">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-white fw-semibold">Litry (L)</label>
+                                                <input type="number" id="expense_liters" class="form-control form-control-icon text-white" placeholder="np. 400" step="0.1">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-white fw-semibold">Koszt (€)</label>
+                                                <input type="number" id="expense_fuel_cost" class="form-control form-control-icon text-white" placeholder="np. 600">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-white fw-semibold">Km od ostatniego tankowania</label>
+                                                <input type="number" id="expense_km" class="form-control form-control-icon text-white" placeholder="np. 1200">
+                                            </div>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label text-white fw-semibold" data-i18n="description">Opis / Miejsce</label>
-                                            <input type="text" id="expense_desc" class="form-control form-control-icon text-white" placeholder="np. Tankowanie">
+
+                                        <!-- Pola dla pozostałych wydatków (Serwis / Mandat) -->
+                                        <div id="standard-fields" style="display: none;">
+                                            <div class="mb-3">
+                                                <label class="form-label text-white fw-semibold" data-i18n="amount">Kwota (€)</label>
+                                                <input type="number" id="expense_amount" class="form-control form-control-icon text-white" placeholder="np. 450">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-white fw-semibold" data-i18n="description">Opis / Miejsce</label>
+                                                <input type="text" id="expense_desc" class="form-control form-control-icon text-white" placeholder="np. Naprawa naczepy">
+                                            </div>
                                         </div>
-                                        <button type="submit" class="btn btn-pill-white w-100 fw-bold" data-i18n="submitExpense">+ Dodaj Wydatek</button>
-                                    </form>
+
+                                        <button type="submit" class="btn btn-pill-white w-100 fw-bold mt-2" data-i18n="submitExpense">+ Dodaj Wydatek</button>
+                                        </form>
                                 </div>
                             </div>
                             <div class="col-md-8">
