@@ -369,11 +369,14 @@ app.get('/api/expenses', async (req, res) => {
 });
 
 app.post('/api/expenses', async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    if (!req.session.userId) {
+        return res.status(401).json({ error: 'Brak aktywnej sesji. Zaloguj się ponownie.' });
+    }
+
     const { type, amount, description, liters } = req.body;
     
-    const parsedAmount = parseInt(amount) || 0;
-    const parsedLiters = parseInt(liters) || 0;
+    const parsedAmount = parseInt(amount, 10) || 0;
+    const parsedLiters = parseInt(liters, 10) || 0;
     const expType = type || 'fuel';
     const finalDesc = (description && description.trim() !== '') 
         ? description.trim() 
@@ -390,8 +393,8 @@ app.post('/api/expenses', async (req, res) => {
         );
         res.json({ success: true });
     } catch (err) {
-        console.error('Błąd dodawania wydatku:', err);
-        res.status(500).json({ error: 'Błąd zapisu wydatku' });
+        console.error('Błąd zapisu w /api/expenses:', err.message);
+        res.status(500).json({ error: 'Błąd zapisu wydatku w bazie danych: ' + err.message });
     }
 });
 
