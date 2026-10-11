@@ -220,10 +220,10 @@
                 <p class="text-light small mb-4" data-i18n="login_sub">Zaloguj się do Mazren Control System</p>
                 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-light small ms-2">Adres e-mail</label>
+                    <label class="form-label text-light small ms-2">Adres e-mail lub Login</label>
                     <div class="input-group-custom">
                         <i class="fa-regular fa-envelope"></i>
-                        <input type="email" id="login-email" class="form-control form-control-icon" placeholder="np. Wladek123@firma.pl">
+                        <input type="text" id="login-email" class="form-control form-control-icon" placeholder="np. WladekKiero lub e-mail">
                     </div>
                 </div>
                 
@@ -832,7 +832,7 @@
         async function performLogin() {
             const email = document.getElementById('login-email').value.trim();
             const p = document.getElementById('login-password').value.trim();
-            if (!email || !p) { alert('Uzupełnij e-mail i hasło!'); return; }
+            if (!email || !p) { alert('Uzupełnij login/e-mail i hasło!'); return; }
 
             try {
                 const res = await fetch('/api/login', {
