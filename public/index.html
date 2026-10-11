@@ -14,13 +14,14 @@
             overflow-x: hidden;
         }
 
+        /* Przywrócone tła volvo1.png i volvo2.png */
         .auth-bg-main { 
-            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvoprzod.jpg') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
         .auth-bg-side { 
-            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvotyl.jpg') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvo2.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
@@ -635,7 +636,6 @@
         let currentLang = 'pl';
         let groupedTrucksData = {};
 
-        // Wbudowane dane ciężarówek zgodnie z Twoim opisem (Volvo ze zaktualizowanymi zdjęciami)
         const staticTrucksSpecs = {
             "SCANIA R500": {
                 cabin: "Highline",
@@ -1202,7 +1202,7 @@
                 });
 
                 const grid = document.getElementById('garage-grid');
-                    grid.innerHTML = '';
+                grid.innerHTML = '';
 
                 const modelsList = Object.keys(staticTrucksSpecs);
                 
@@ -1214,7 +1214,8 @@
                         units: []
                     };
 
-                    let photoHtml = spec.photo ? `<img src="${spec.photo}" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : `<div style="height: 100px;"></div>`;
+                    // Zmieniono object-fit na contain, aby miniatury w siatce garażu też się nie przycinały
+                    let photoHtml = spec.photo ? `<img src="${spec.photo}" class="img-fluid rounded mb-2 bg-black p-1" style="max-height: 140px; width: 100%; object-fit: contain;">` : `<div style="height: 120px;"></div>`;
 
                     grid.innerHTML += `
                         <div class="col-md-3">
@@ -1248,18 +1249,19 @@
                 </div>
             `).join('');
 
+            // Zwiększono wysokość (max-height: 380px) oraz zmieniono na object-fit: contain, aby całe zdjęcia mieściły się w oknach bez przycinania
             document.getElementById('truck-detail-content').innerHTML = `
                 <div class="row g-4">
-                    <div class="col-md-6">
+                    <div class="col-md-7">
                         <h2 class="fw-bold text-white mb-4">${group.model}</h2>
-                        <div class="mb-3">
-                            <img src="${spec.photo || '/volvo1.png'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                        <div class="mb-3 bg-black p-2 rounded border border-secondary text-center">
+                            <img src="${spec.photo || '/volvo1.png'}" class="img-fluid rounded shadow" style="width: 100%; max-height: 360px; object-fit: contain;">
                         </div>
-                        <div>
-                            <img src="${spec.photoBack || '/volvo2.png'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                        <div class="bg-black p-2 rounded border border-secondary text-center">
+                            <img src="${spec.photoBack || '/volvo2.png'}" class="img-fluid rounded shadow" style="width: 100%; max-height: 360px; object-fit: contain;">
                         </div>
                     </div>
-                    <div class="col-md-6 border-start border-secondary ps-md-4">
+                    <div class="col-md-5 border-start border-secondary ps-md-4">
                         <ul class="list-unstyled lh-lg text-white fs-5 mb-4">
                             <li><strong>Kabina:</strong> ${spec.cabin || 'Standard'}</li>
                             <li><strong>Podwozie:</strong> ${spec.chassis || '4x2'}</li>
