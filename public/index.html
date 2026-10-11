@@ -1124,55 +1124,79 @@
         }
 
         async function loadMyJobs() {
-            const res = await fetch('/api/jobs');
-            if (res.ok) {
+            try {
+                const res = await fetch('/api/jobs');
+                if (!res.ok) return;
                 const jobs = await res.json();
                 const myJobs = jobs.filter(j => j.username === currentUsername);
                 const container = document.getElementById('my-jobs-container');
+                
+                if (!container) return;
                 container.innerHTML = myJobs.length === 0 ? '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>' : '';
+                
                 myJobs.forEach(j => {
                     let filesHtml = '';
-                    if (j.cmr_file) filesHtml += `<a href="${j.cmr_file}" target="_blank" class="btn btn-sm btn-outline-info me-1" title="Skan CMR"><i class="fa-solid fa-file-invoice"></i> CMR</a>`;
-                    if (j.summary_photo) filesHtml += `<a href="${j.summary_photo}" target="_blank" class="btn btn-sm btn-outline-success" title="Zdjęcie podsumowania"><i class="fa-solid fa-image"></i> Podsumowanie</a>`;
+                    if (j.cmr_file) filesHtml += `<a href="${j.cmr_file}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
+                    if (j.summary_photo) filesHtml += `<a href="${j.summary_photo}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
 
                     container.innerHTML += `
-                        <div class="pill-row flex-column align-items-start gap-2">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                <div><strong class="text-white">${j.start_city}</strong> ➔ <strong class="text-white">${j.end_city}</strong> (${j.cargo})</div>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="fw-bold text-white">${j.distance} km</div>
-                                    <div class="text-success fw-bold">${j.income} €</div>
+                        <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge bg-primary mb-1">${j.cargo || 'Standard'}</span>
+                                    <h5 class="fw-bold text-white mb-0">${j.start_city} <i class="fa-solid fa-arrow-right text-muted mx-1"></i> ${j.end_city}</h5>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success fs-5">${j.income || 0} €</div>
+                                    <div class="text-info small fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</div>
                                 </div>
                             </div>
-                            ${filesHtml ? `<div class="mt-1">${filesHtml}</div>` : ''}
+                            <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
+                                <span class="text-muted small"><i class="fa-regular fa-calendar-days me-1"></i> ${j.formatted_date || 'Dzisiaj'}</span>
+                                <div class="d-flex gap-2">${filesHtml}</div>
+                            </div>
                         </div>`;
                 });
+            } catch (err) {
+                console.error("Błąd ładowania moich tras:", err);
             }
         }
 
         async function loadAllJobs() {
-            const res = await fetch('/api/jobs');
-            if (res.ok) {
+            try {
+                const res = await fetch('/api/jobs');
+                if (!res.ok) return;
                 const jobs = await res.json();
                 const container = document.getElementById('all-jobs-container');
-                container.innerHTML = '';
+                
+                if (!container) return;
+                container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
+                
                 jobs.forEach(j => {
                     let filesHtml = '';
-                    if (j.cmr_file) filesHtml += `<a href="${j.cmr_file}" target="_blank" class="btn btn-sm btn-outline-info me-1" title="Skan CMR"><i class="fa-solid fa-file-invoice"></i> CMR</a>`;
-                    if (j.summary_photo) filesHtml += `<a href="${j.summary_photo}" target="_blank" class="btn btn-sm btn-outline-success" title="Zdjęcie podsumowania"><i class="fa-solid fa-image"></i> Podsumowanie</a>`;
+                    if (j.cmr_file) filesHtml += `<a href="${j.cmr_file}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
+                    if (j.summary_photo) filesHtml += `<a href="${j.summary_photo}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
 
                     container.innerHTML += `
-                        <div class="pill-row flex-column align-items-start gap-2">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                <div><strong class="text-white">${j.username}</strong>: ${j.start_city} ➔ ${j.end_city} (${j.cargo})</div>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="fw-bold text-white">${j.distance} km</div>
-                                    <div class="text-success fw-bold">${j.income} €</div>
+                        <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="text-warning small fw-bold mb-1"><i class="fa-solid fa-user me-1"></i> ${j.username}</div>
+                                    <h5 class="fw-bold text-white mb-0">${j.start_city} <i class="fa-solid fa-arrow-right text-muted mx-1"></i> ${j.end_city}</h5>
                                 </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success fs-5">${j.income || 0} €</div>
+                                    <div class="text-info small fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</div>
+                                }
                             </div>
-                            ${filesHtml ? `<div class="mt-1">${filesHtml}</div>` : ''}
+                            <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
+                                <span class="text-muted small"><i class="fa-regular fa-calendar-days me-1"></i> ${j.formatted_date || 'Dzisiaj'}</span>
+                                <div class="d-flex gap-2">${filesHtml}</div>
+                            </div>
                         </div>`;
                 });
+            } catch (err) {
+                console.error("Błąd ładowania wszystkich tras:", err);
             }
         }
 
