@@ -259,6 +259,36 @@ app.post('/api/dispatches', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd dodawania zlecenia' }); }
 });
 
+// EDYCJA ZLECENIA PRZEZ SZEFA
+app.put('/api/dispatches/:id', async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    const { assigned_to, start_city, end_city, truck_name, notes } = req.body;
+    try {
+        await pool.query(
+            'UPDATE dispatches SET assigned_to = $1, start_city = $2, end_city = $3, truck_name = $4, notes = $5 WHERE id = $6',
+            [assigned_to || 'Wszyscy', start_city, end_city, truck_name, notes || '', req.params.id]
+        );
+
+        if (assigned_to && assigned_to !== 'Wszyscy') {
+            const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
+            if (targetUser.rows.length > 0) {
+                await addNotification(targetUser.rows[0].id, '✏️ Zaktualizowano Zlecenie', `Szef zaktualizował Twoją trasę: ${start_city} ➔ ${end_city}`);
+            }
+        }
+
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd edycji zlecenia' }); }
+});
+
+// USUWANIE ZLECENIA PRZEZ SZEFA
+app.delete('/api/dispatches/:id', async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    try {
+        await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania zlecenia' }); }
+});
+
 app.put('/api/dispatches/:id/accept', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
@@ -266,7 +296,6 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zlecenia' });
 
         const disp = dispRes.rows[0];
-        // Blokada: Nikt nie może przyjąć imiennego zlecenia przeznaczonego dla kogoś innego!
         if (disp.assigned_to !== 'Wszyscy' && disp.assigned_to !== req.session.username) {
             return res.status(403).json({ error: 'To zlecenie jest przypisane do innego kierowcy!' });
         }
