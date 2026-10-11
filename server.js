@@ -15,17 +15,14 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// Upewniamy się, że katalog na przesłane zdjęcia istnieje
+// Katalog na pliki multimedialne
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Konfiguracja zapisu plików przez Multer
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
+    destination: (req, file, cb) => cb(null, uploadDir),
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
@@ -327,7 +324,6 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji' }); }
 });
 
-// WGRYWANIE RAPORTU TRASY ZE ZDJĘCIAMI (MULTER UPLOAD)
 app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { name: 'summary_photo' }]), async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     
@@ -428,13 +424,22 @@ app.delete('/api/trucks/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania pojazdu' }); }
 });
 
-// --- STATYSTYKI ---
+// --- STATYSTYKI I ZARZĄDZANIE TRASAMI ---
 
 app.get('/api/jobs', async (req, res) => {
     try {
         const result = await pool.query('SELECT jobs.*, users.username FROM jobs JOIN users ON jobs.user_id = users.id ORDER BY jobs.id DESC');
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania tras' }); }
+});
+
+// USUWANIE WYKONANEJ TRASY PRZEZ SZEFA
+app.delete('/api/jobs/:id', async (req, res) => {
+    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    try {
+        await pool.query('DELETE FROM jobs WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania wykonanej trasy' }); }
 });
 
 app.get('/api/company-stats', async (req, res) => {
