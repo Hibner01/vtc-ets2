@@ -1144,18 +1144,20 @@
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <span class="badge bg-primary mb-1">${j.cargo || 'Standard'}</span>
-                                    <h5 class="fw-bold text-white mb-0">${j.start_city} <i class="fa-solid fa-arrow-right text-muted mx-1"></i> ${j.end_city}</h5>
-                                </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold text-white mb-0">
+                                    ${j.start_city} <i class="fa-solid fa-arrow-right text-info mx-2"></i> ${j.end_city}
+                                </h5>
                                 <div class="text-end">
-                                    <div class="fw-bold text-success fs-5">${j.income || 0} €</div>
-                                    <div class="text-info small fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</div>
+                                    <span class="fw-bold text-success fs-5">${j.income || 0} €</span>
+                                    <span class="text-info ms-3 fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</span>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
-                                <span class="text-muted small"><i class="fa-regular fa-calendar-days me-1"></i> ${j.formatted_date || 'Dzisiaj'}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary text-light">${j.cargo || 'Standard'}</span>
+                                    <span class="text-light small"><i class="fa-regular fa-calendar-days me-1 text-warning"></i> ${j.formatted_date || 'Dzisiaj'}</span>
+                                </div>
                                 <div class="d-flex gap-2">${filesHtml}</div>
                             </div>
                         </div>`;
@@ -1185,18 +1187,23 @@
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div>
-                                    <div class="text-warning small fw-bold mb-1"><i class="fa-solid fa-user me-1"></i> ${j.username}</div>
-                                    <h5 class="fw-bold text-white mb-0">${j.start_city} <i class="fa-solid fa-arrow-right text-muted mx-1"></i> ${j.end_city}</h5>
+                                    <span class="text-warning small fw-bold d-block mb-1"><i class="fa-solid fa-user me-1"></i> ${j.username}</span>
+                                    <h5 class="fw-bold text-white mb-0">
+                                        ${j.start_city} <i class="fa-solid fa-arrow-right text-info mx-2"></i> ${j.end_city}
+                                    </h5>
                                 </div>
                                 <div class="text-end">
-                                    <div class="fw-bold text-success fs-5">${j.income || 0} €</div>
-                                    <div class="text-info small fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</div>
+                                    <span class="fw-bold text-success fs-5">${j.income || 0} €</span>
+                                    <span class="text-info ms-3 fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</span>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
-                                <span class="text-muted small"><i class="fa-regular fa-calendar-days me-1"></i> ${j.formatted_date || 'Dzisiaj'}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary text-light">${j.cargo || 'Standard'}</span>
+                                    <span class="text-light small"><i class="fa-regular fa-calendar-days me-1 text-warning"></i> ${j.formatted_date || 'Dzisiaj'}</span>
+                                </div>
                                 <div class="d-flex gap-2">${filesHtml}</div>
                             </div>
                         </div>`;
@@ -1205,7 +1212,6 @@
                 console.error("Błąd ładowania wszystkich tras:", err);
             }
         }
-
         async function loadDispatches() {
             const res = await fetch('/api/dispatches');
             if (res.ok) {
