@@ -71,9 +71,9 @@
 </head>
 <body>
 
-    <div id="app">
+    <div id="app" class="w-100 flex-grow-1 d-flex flex-column">
         <!-- EKRAN STARTOWY / LOGOWANIE / REJESTRACJA -->
-        <div id="auth-section" class="auth-bg d-flex flex-column justify-content-between align-items-center py-4" style="display: flex;">
+        <div id="auth-section" class="auth-bg flex-column justify-content-between align-items-center py-4" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
             <div>
                 <img src="/logo.png" alt="Mazren Spedition" style="max-height: 80px;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
             </div>
@@ -141,7 +141,7 @@
         </div>
 
         <!-- PANEL GŁÓWNY -->
-        <div id="dashboard-section" style="display:none;">
+        <div id="dashboard-section" class="flex-grow-1 flex-column" style="display:none;">
             <nav class="navbar navbar-expand-lg border-bottom border-dark py-3" style="background-color: #141619;">
                 <div class="container">
                     <a class="navbar-brand me-4" href="#" onclick="switchTab('jobs')">
@@ -157,20 +157,20 @@
                         </select>
                         <button class="btn btn-outline-danger btn-sm rounded-circle" onclick="performLogout()"><i class="fa-solid fa-power-off"></i></button>
                     </div>
-                    <div class="collapse navbar-collapse">
+                    <div class="collapse navbar-collapse show">
                         <div class="navbar-nav ms-auto me-auto">
-                            <a class="nav-link-custom active" href="#" onclick="switchTab('jobs')" data-i18n="navHome">Strona Główna</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('finances')" data-i18n="navFinances">Finanse</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('dispatcher')" data-i18n="navDispatcher">Dyspozytornia</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('garage')" data-i18n="navGarage">Garaż</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('about')" data-i18n="navAbout">O nas</a>
+                            <a class="nav-link-custom active" href="#" onclick="switchTab('jobs')">Strona Główna</a>
+                            <a class="nav-link-custom" href="#" onclick="switchTab('finances')">Finanse</a>
+                            <a class="nav-link-custom" href="#" onclick="switchTab('dispatcher')">Dyspozytornia</a>
+                            <a class="nav-link-custom" href="#" onclick="switchTab('garage')">Garaż</a>
+                            <a class="nav-link-custom" href="#" onclick="switchTab('about')">O nas</a>
                             <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" href="#" onclick="switchTab('management')">Zarządzanie</a>
                         </div>
                     </div>
                 </div>
             </nav>
 
-            <div class="container py-4">
+            <div class="container py-4 flex-grow-1">
                 <div id="tab-jobs">
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
@@ -413,7 +413,7 @@
                     currentUserRole = data.role;
 
                     document.getElementById('auth-section').style.display = 'none';
-                    document.getElementById('dashboard-section').style.display = 'block';
+                    document.getElementById('dashboard-section').style.display = 'flex';
                     document.getElementById('user-display').innerText = data.username;
 
                     if (data.role === 'admin') {
@@ -429,8 +429,12 @@
 
                     loadCompanyStats();
                     loadJobs();
-                } else showLogin();
-            } catch (e) { showLogin(); }
+                } else {
+                    showLogin();
+                }
+            } catch (e) {
+                showLogin();
+            }
         }
 
         function showLogin() {
