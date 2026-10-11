@@ -1135,9 +1135,12 @@
                 container.innerHTML = myJobs.length === 0 ? '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>' : '';
                 
                 myJobs.forEach(j => {
+                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : j.cmr_file) : '';
+                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : j.summary_photo) : '';
+
                     let filesHtml = '';
-                    if (j.cmr_file) filesHtml += `<a href="${j.cmr_file}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
-                    if (j.summary_photo) filesHtml += `<a href="${j.summary_photo}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
+                    if (cmrLink) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
+                    if (summaryLink) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
@@ -1173,9 +1176,12 @@
                 container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
                 
                 jobs.forEach(j => {
+                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : j.cmr_file) : '';
+                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : j.summary_photo) : '';
+
                     let filesHtml = '';
-                    if (j.cmr_file) filesHtml += `<a href="${j.cmr_file}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
-                    if (j.summary_photo) filesHtml += `<a href="${j.summary_photo}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
+                    if (cmrLink) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
+                    if (summaryLink) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
@@ -1187,7 +1193,7 @@
                                 <div class="text-end">
                                     <div class="fw-bold text-success fs-5">${j.income || 0} €</div>
                                     <div class="text-info small fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</div>
-                                }
+                                </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
                                 <span class="text-muted small"><i class="fa-regular fa-calendar-days me-1"></i> ${j.formatted_date || 'Dzisiaj'}</span>
