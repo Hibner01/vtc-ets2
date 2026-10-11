@@ -609,49 +609,64 @@
                         </div>
                     </div>
 
+                    <!-- DOKUMENTY (POPRAWIONE ŚCIEŻKI DO PLIKÓW /uploads/) -->
                     <div id="tab-documents" style="display:none;">
                         <div class="bg-card-bms p-4">
                             <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="documentsHeader">Dokumenty i Regulaminy Firmowe</span></h4>
                             
                             <div class="row g-4">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="bg-dark p-4 rounded-3 border border-secondary text-center h-100 d-flex flex-column justify-content-between">
                                         <div>
                                             <span class="badge bg-success mb-2">DO POBRANIA</span>
-                                            <h5 class="fw-bold text-white mb-3">Wzór CMR (Z Pieczątką)</h5>
-                                            <img src="/wzor.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 200px; object-fit: cover;" onerror="this.src='/logo.png'">
-                                            <p class="text-white-50 small">Czysty wzór listu przewozowego z podpisem i pieczątką Mazren Spedition do wypełnienia podczas trasy.</p>
+                                            <h5 class="fw-bold text-white mb-3">Wzór CMR</h5>
+                                            <img src="/uploads/wzor.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <p class="text-white-50 small">Czysty wzór listu przewozowego Mazren Spedition.</p>
                                         </div>
-                                        <a href="/wzor.jpg" target="_blank" download class="btn btn-pill-white w-100 fw-bold mt-3">
-                                            <i class="fa-solid fa-download me-2"></i> Pobierz Wzór CMR
+                                        <a href="/uploads/wzor.jpg" target="_blank" download class="btn btn-pill-white w-100 fw-bold mt-3">
+                                            <i class="fa-solid fa-download me-2"></i> Pobierz
                                         </a>
                                     </div>
                                 </div>
 
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="bg-dark p-4 rounded-3 border border-secondary text-center h-100 d-flex flex-column justify-content-between">
                                         <div>
-                                            <span class="badge bg-info mb-2">PRZYKŁAD WYPEŁNIENIA</span>
-                                            <h5 class="fw-bold text-white mb-3">Przykładowo Wypełniony CMR</h5>
-                                            <img src="/cmr_przyklad.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 200px; object-fit: cover;" onerror="this.src='/logo.png'">
-                                            <p class="text-white-50 small">Instrukcja krok po kroku jak poprawnie wypełnić pola w liście przewozowym przed oddaniem zlecenia.</p>
+                                            <span class="badge bg-danger mb-2">OFICJALNA</span>
+                                            <h5 class="fw-bold text-white mb-3">Pieczątka Firmowa</h5>
+                                            <img src="/uploads/pieczatka.jpg" class="img-fluid rounded border border-secondary mb-3 bg-white p-2" style="max-height: 160px; object-fit: contain;" onerror="this.src='/logo.png'">
+                                            <p class="text-white-50 small">Firmowa pieczęć Mazren Spedition Sp. z o.o.</p>
                                         </div>
-                                        <a href="/cmr_przyklad.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
-                                            <i class="fa-solid fa-eye me-2"></i> Zobacz Przykładowy CMR
+                                        <a href="/uploads/pieczatka.jpg" target="_blank" download class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                            <i class="fa-solid fa-download me-2"></i> Pobierz Stempel
                                         </a>
                                     </div>
                                 </div>
 
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="bg-dark p-4 rounded-3 border border-secondary text-center h-100 d-flex flex-column justify-content-between">
                                         <div>
-                                            <span class="badge bg-warning text-dark mb-2">RAPORT TRASY</span>
-                                            <h5 class="fw-bold text-white mb-3">Podsumowanie Trasy (Summary)</h5>
-                                            <img src="/przyklad-summary.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 200px; object-fit: cover;" onerror="this.src='/logo.png'">
-                                            <p class="text-white-50 small">Wzór zrzutu ekranu z podsumowania dostawy z gry ETS2 wymaganego do rozliczenia kilometrów.</p>
+                                            <span class="badge bg-info mb-2">PRZYKŁAD</span>
+                                            <h5 class="fw-bold text-white mb-3">Wypełniony CMR</h5>
+                                            <img src="/uploads/cmr_przyklad.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <p class="text-white-50 small">Instrukcja poprawnego wypełniania listu przewozowego.</p>
                                         </div>
-                                        <a href="/przyklad-summary.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
-                                            <i class="fa-solid fa-eye me-2"></i> Zobacz Przykładowy Raport
+                                        <a href="/uploads/cmr_przyklad.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                            <i class="fa-solid fa-eye me-2"></i> Zobacz
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="bg-dark p-4 rounded-3 border border-secondary text-center h-100 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <span class="badge bg-warning text-dark mb-2">RAPORT</span>
+                                            <h5 class="fw-bold text-white mb-3">Podsumowanie Trasy</h5>
+                                            <img src="/uploads/przyklad-summary.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <p class="text-white-50 small">Przykładowy zrzut ekranu z gry ETS2.</p>
+                                        </div>
+                                        <a href="/uploads/przyklad-summary.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                            <i class="fa-solid fa-eye me-2"></i> Zobacz
                                         </a>
                                     </div>
                                 </div>
@@ -726,7 +741,7 @@
                 navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
                 navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
                 welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 6 000 km",
-                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizowanych ładunków", companyBudget: "Budżet Firmy",
+                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizovaných ładunków", companyBudget: "Budżet Firmy",
                 availableFunds: "Dostępne środki", companyKm: "Kilometry Firmy", totalDistance: "Łączny dystans",
                 completedRoutes: "Wykonane Trasy", yourTruck: "Twój Zestaw", noTruckAssigned: "Brak przypisanego zestawu w garażu.",
                 moreInfo: "Więcej informacji", trucksHeader: "Ciężarówki", addTruck: "Dodaj do Garażu", backBtn: "Powrót",
@@ -1116,8 +1131,31 @@
                 const tbody = document.getElementById('expenses-table-body');
                 tbody.innerHTML = '';
                 expenses.forEach(exp => {
-                    tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${exp.type}</td><td class="text-white">${exp.description}</td><td class="text-danger fw-bold">-${exp.amount} €</td><td>-</td></tr>`;
+                    let deleteBtn = currentUserRole === 'admin' 
+                        ? `<button class="btn btn-danger btn-sm rounded-pill" onclick="deleteExpense(${exp.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`
+                        : `-`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="text-white">${exp.username}</td>
+                            <td class="text-white">${exp.type}</td>
+                            <td class="text-white">${exp.description}</td>
+                            <td class="text-danger fw-bold">-${exp.amount} €</td>
+                            <td>${deleteBtn}</td>
+                        </tr>`;
                 });
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (!confirm('Czy na pewno chcesz usunąć ten wydatek z budżetu firmy?')) return;
+            const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadExpenses();
+                loadCompanyStats();
+                alert('Wydatek został usunięty!');
+            } else {
+                alert('Błąd podczas usuwania wydatku.');
             }
         }
 
@@ -1137,7 +1175,7 @@
                 document.getElementById('expense-form').reset();
                 loadExpenses();
                 loadCompanyStats();
-                alert('Wydatek zostałdodany!');
+                alert('Wydatek został dodany!');
             } else {
                 alert('Błąd podczas dodawania wydatku.');
             }
