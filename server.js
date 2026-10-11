@@ -35,7 +35,7 @@ async function initDB() {
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(50) DEFAULT 'driver',
                 status VARCHAR(50) DEFAULT 'approved'
@@ -168,17 +168,23 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Uzupełnij e-mail i hasło.' });
+    if (!email || !password) return res.status(400).json({ error: 'Uzupełnij login/e-mail i hasło.' });
+
+    const inputVal = email.toLowerCase().trim();
 
     try {
-        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase().trim()]);
-        if (result.rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowy e-mail lub hasło.' });
+        const result = await pool.query(
+            'SELECT * FROM users WHERE LOWER(email) = $1 OR LOWER(username) = $1',
+            [inputVal]
+        );
+
+        if (result.rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowy e-mail/login lub hasło.' });
 
         const user = result.rows[0];
         if (user.status === 'pending') return res.status(403).json({ error: 'Konto oczekuje na akceptację Szefa!' });
 
         const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(401).json({ error: 'Nieprawidłowy e-mail lub hasło.' });
+        if (!match) return res.status(401).json({ error: 'Nieprawidłowy e-mail/login lub hasło.' });
 
         req.session.userId = user.id;
         req.session.username = user.username;
