@@ -6,137 +6,45 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #121417;
-            color: #e1e3e6;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .bg-card {
-            background-color: #1a1d21;
-            border: 1px solid #2a2e35;
-            border-radius: 12px;
-        }
-        .nav-link-custom {
-            color: #9a9ea6;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 8px 16px;
-            transition: color 0.2s;
-        }
-        .nav-link-custom:hover, .nav-link-custom.active {
-            color: #ffffff;
-            border-bottom: 2px solid #ffffff;
-        }
-        .auth-bg {
-            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg');
-            background-size: cover;
-            background-position: center;
-            min-height: 100vh;
-        }
-        .form-control-dark {
-            background-color: #24282e;
-            border: 1px solid #343a40;
-            color: #ffffff;
-            border-radius: 8px;
-        }
-        .form-control-dark:focus {
-            background-color: #2b3036;
-            color: #ffffff;
-            border-color: #6c757d;
-            box-shadow: none;
-        }
-        .btn-pill {
-            border-radius: 20px;
-        }
-        .truck-card {
-            background-color: #1a1d21;
-            border: 1px solid #2c3036;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-        .truck-card:hover {
-            transform: translateY(-3px);
-            border-color: #4f5660;
-        }
-        footer {
-            margin-top: auto;
-            background-color: #0d0f11;
-            border-top: 1px solid #22252a;
-        }
+        body { background-color: #121417; color: #e1e3e6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+        .bg-card { background-color: #1a1d21; border: 1px solid #2a2e35; border-radius: 12px; }
+        .nav-link-custom { color: #9a9ea6; text-decoration: none; font-weight: 500; padding: 8px 16px; transition: color 0.2s; cursor: pointer; }
+        .nav-link-custom:hover, .nav-link-custom.active { color: #ffffff; border-bottom: 2px solid #ffffff; }
+        .auth-bg { background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/przyklad-summary.jpg'); background-size: cover; background-position: center; min-height: 100vh; }
+        .form-control-dark { background-color: #24282e; border: 1px solid #343a40; color: #ffffff; border-radius: 8px; }
+        .form-control-dark:focus { background-color: #2b3036; color: #ffffff; border-color: #6c757d; box-shadow: none; }
+        .btn-pill { border-radius: 20px; }
+        .truck-card { background-color: #1a1d21; border: 1px solid #2c3036; border-radius: 16px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+        .truck-card:hover { transform: translateY(-3px); border-color: #4f5660; }
+        footer { margin-top: auto; background-color: #0d0f11; border-top: 1px solid #22252a; }
     </style>
 </head>
 <body>
 
     <div id="app" class="w-100 flex-grow-1 d-flex flex-column">
-        <!-- EKRAN STARTOWY / LOGOWANIE / REJESTRACJA -->
-        <div id="auth-section" class="auth-bg flex-column justify-content-between align-items-center py-4" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
-            <div>
-                <img src="/logo.png" alt="Mazren Spedition" style="max-height: 80px;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
-            </div>
-
+        <!-- EKRAN LOGOWANIA -->
+        <div id="auth-section" class="auth-bg flex-column justify-content-between align-items-center py-4" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
+            <div><img src="/logo.png" alt="Mazren" style="max-height: 80px;" onerror="this.style.display='none'"></div>
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
-                <button class="btn btn-light btn-lg w-100 mb-3 fw-bold btn-pill py-3" onclick="showAuthForm('login')">
-                    <i class="fa-solid fa-download me-2"></i> Zaloguj się
-                </button>
-                <button class="btn btn-dark border-secondary btn-lg w-100 mb-3 fw-bold btn-pill py-3" onclick="showAuthForm('register')">
-                    <i class="fa-solid fa-user-plus me-2"></i> Zarejestruj się
-                </button>
+                <button class="btn btn-light btn-lg w-100 mb-3 fw-bold btn-pill py-3" onclick="showAuthForm('login')"><i class="fa-solid fa-download me-2"></i> <span data-i18n="loginBtn">Zaloguj się</span></button>
+                <button class="btn btn-dark border-secondary btn-lg w-100 mb-3 fw-bold btn-pill py-3" onclick="showAuthForm('register')"><i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="registerBtn">Zarejestruj się</span></button>
             </div>
-
-            <!-- FORMULARZ LOGOWANIA -->
             <div id="auth-login-card" class="bg-card p-4 shadow-lg text-center" style="display: none; width: 100%; max-width: 420px;">
-                <h3 class="fw-bold mb-1">Witaj ponownie!</h3>
+                <h3 class="fw-bold mb-1" data-i18n="welcomeBack">Witaj ponownie!</h3>
                 <p class="text-muted small mb-4">Zaloguj się do Mazren Control System</p>
-
-                <div class="mb-3 text-start">
-                    <label class="form-label text-muted small">Login / Nick</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" id="login-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
-                    </div>
-                </div>
-
-                <div class="mb-4 text-start">
-                    <label class="form-label text-muted small">Hasło</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" id="login-password" class="form-control form-control-dark" placeholder="••••••••">
-                    </div>
-                </div>
-
-                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performLogin()">Zaloguj się</button>
-                <div class="text-muted small">Nie masz konta? <a href="#" class="text-light" onclick="showAuthForm('register')">Zarejestruj się</a></div>
+                <div class="mb-3 text-start"><label class="form-label text-muted small" data-i18n="usernameLabel">Login / Nick</label><input type="text" id="login-username" class="form-control form-control-dark" placeholder="np. WladekKiero"></div>
+                <div class="mb-4 text-start"><label class="form-label text-muted small" data-i18n="passwordLabel">Hasło</label><input type="password" id="login-password" class="form-control form-control-dark" placeholder="••••••••"></div>
+                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performLogin()" data-i18n="loginBtn">Zaloguj się</button>
+                <div class="text-muted small"><span data-i18n="noAccount">Nie masz konta?</span> <a href="#" class="text-light" onclick="showAuthForm('register')" data-i18n="registerBtn">Zarejestruj się</a></div>
             </div>
-
-            <!-- FORMULARZ REJESTRACJI -->
             <div id="auth-register-card" class="bg-card p-4 shadow-lg text-center" style="display: none; width: 100%; max-width: 420px;">
-                <h3 class="fw-bold mb-1">Rejestracja konta</h3>
+                <h3 class="fw-bold mb-1" data-i18n="registerTitle">Rejestracja konta</h3>
                 <p class="text-muted small mb-4">Stwórz konto w Mazren Control System</p>
-
-                <div class="mb-3 text-start">
-                    <label class="form-label text-muted small">Login / Nick</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" id="reg-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
-                    </div>
-                </div>
-
-                <div class="mb-3 text-start">
-                    <label class="form-label text-muted small">Hasło</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" id="reg-password" class="form-control form-control-dark" placeholder="••••••••">
-                    </div>
-                </div>
-
-                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performRegister()">Stwórz konto</button>
-                <div class="text-muted small">Masz konto? <a href="#" class="text-light" onclick="showAuthForm('login')">Zaloguj się</a></div>
+                <div class="mb-3 text-start"><label class="form-label text-muted small" data-i18n="usernameLabel">Login / Nick</label><input type="text" id="reg-username" class="form-control form-control-dark" placeholder="np. WladekKiero"></div>
+                <div class="mb-3 text-start"><label class="form-label text-muted small" data-i18n="passwordLabel">Hasło</label><input type="password" id="reg-password" class="form-control form-control-dark" placeholder="••••••••"></div>
+                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performRegister()" data-i18n="createAccBtn">Stwórz konto</button>
+                <div class="text-muted small"><span data-i18n="hasAccount">Masz konto?</span> <a href="#" class="text-light" onclick="showAuthForm('login')" data-i18n="loginBtn">Zaloguj się</a></div>
             </div>
-
             <div class="text-muted small">© Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
         </div>
 
@@ -144,205 +52,115 @@
         <div id="dashboard-section" class="flex-grow-1 flex-column" style="display:none;">
             <nav class="navbar navbar-expand-lg border-bottom border-dark py-3" style="background-color: #141619;">
                 <div class="container">
-                    <a class="navbar-brand me-4" href="#" onclick="switchTab('jobs')">
-                        <img src="/logo.png" alt="Mazren" style="max-height: 45px;" onerror="this.style.display='none'">
-                    </a>
-                    <div class="d-flex align-items-center order-lg-last ms-auto me-3 me-lg-0">
+                    <a class="navbar-brand me-4" onclick="switchTab('jobs')"><img src="/logo.png" style="max-height: 45px;" onerror="this.style.display='none'"></a>
+                    <div class="d-flex align-items-center order-lg-last ms-auto me-3">
                         <div class="badge bg-dark border border-secondary px-3 py-2 me-3 rounded-pill">
                             <i class="fa-solid fa-user me-1"></i> <span id="user-display"></span> <span id="admin-badge" class="badge bg-danger ms-1 d-none">SZEF</span>
                         </div>
-                        <select class="form-select form-select-sm form-control-dark w-auto me-2" onchange="setLanguage(this.value)">
+                        <select id="lang-selector" class="form-select form-select-sm form-control-dark w-auto me-2" onchange="changeLanguage(this.value)">
                             <option value="pl">🇵🇱 PL</option>
                             <option value="en">🇬🇧 EN</option>
                         </select>
                         <button class="btn btn-outline-danger btn-sm rounded-circle" onclick="performLogout()"><i class="fa-solid fa-power-off"></i></button>
                     </div>
-                    <div class="collapse navbar-collapse show">
-                        <div class="navbar-nav ms-auto me-auto">
-                            <a class="nav-link-custom active" href="#" onclick="switchTab('jobs')">Strona Główna</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('finances')">Finanse</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('dispatcher')">Dyspozytornia</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('garage')">Garaż</a>
-                            <a class="nav-link-custom" href="#" onclick="switchTab('about')">O nas</a>
-                            <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" href="#" onclick="switchTab('management')">Zarządzanie</a>
-                        </div>
+                    <div class="navbar-nav ms-auto me-auto flex-row gap-3">
+                        <a class="nav-link-custom active" onclick="switchTab('jobs')" data-i18n="navHome">Strona Główna</a>
+                        <a class="nav-link-custom" onclick="switchTab('finances')" data-i18n="navFinances">Finanse</a>
+                        <a class="nav-link-custom" onclick="switchTab('dispatcher')" data-i18n="navDispatcher">Dyspozytornia</a>
+                        <a class="nav-link-custom" onclick="switchTab('garage')" data-i18n="navGarage">Garaż</a>
+                        <a class="nav-link-custom" onclick="switchTab('about')" data-i18n="navAbout">O nas</a>
+                        <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" onclick="switchTab('management')" data-i18n="navManagement">Zarządzanie</a>
                     </div>
                 </div>
             </nav>
 
             <div class="container py-4 flex-grow-1">
+                <!-- ZAKŁADKA GŁÓWNA -->
                 <div id="tab-jobs">
                     <div class="row g-4 mb-4">
-                        <div class="col-md-4">
-                            <div class="bg-card p-4 h-100">
-                                <h6 class="text-muted">Budżet firmy:</h6>
-                                <h2 id="company-total-budget" class="fw-bold text-success display-6 mb-0">0 EURO</h2>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="bg-card p-4 h-100">
-                                <h6 class="text-muted">Twoje statystyki: (cel 6000km)</h6>
-                                <h3 id="my-km-status" class="fw-bold mb-0">0 / 6000 km</h3>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="bg-card p-4 h-100">
-                                <h6 class="text-muted">Statystyki firmy:</h6>
-                                <h3 id="company-total-km" class="fw-bold text-info mb-0">0 km</h3>
-                            </div>
-                        </div>
+                        <div class="col-md-4"><div class="bg-card p-4 h-100"><h6 class="text-muted" data-i18n="companyBudgetTitle">Budżet firmy:</h6><h2 id="company-total-budget" class="fw-bold text-success display-6 mb-0">0 EURO</h2></div></div>
+                        <div class="col-md-4"><div class="bg-card p-4 h-100"><h6 class="text-muted" data-i18n="myStatsTitle">Twoje statystyki: (cel 6000km)</h6><h3 id="my-km-status" class="fw-bold mb-0">0 / 6000 km</h3></div></div>
+                        <div class="col-md-4"><div class="bg-card p-4 h-100"><h6 class="text-muted" data-i18n="companyStatsTitle">Statystyki firmy:</h6><h3 id="company-total-km" class="fw-bold text-info mb-0">0 km</h3></div></div>
                     </div>
                     <div class="row g-4">
-                        <div class="col-md-7">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Wykonane trasy:</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-dark table-hover align-middle mb-0">
-                                        <tbody id="jobs-table-body"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-5">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Ranking kierowców:</h5>
-                                <ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul>
-                            </div>
-                        </div>
+                        <div class="col-md-7"><div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="completedRoutes">Wykonane trasy:</h5><div class="table-responsive"><table class="table table-dark table-hover align-middle mb-0"><tbody id="jobs-table-body"></tbody></table></div></div></div>
+                        <div class="col-md-5"><div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="driversRanking">Ranking kierowców:</h5><ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul></div></div>
                     </div>
                 </div>
 
+                <!-- ZAKŁADKA DYSPOZYTOR -->
                 <div id="tab-dispatcher" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4" id="dispatcher-admin-form" style="display:none;">
                             <div class="bg-card p-4 border-info">
-                                <h5 class="fw-bold text-info mb-3">📡 Nowe Zlecenie</h5>
+                                <h5 class="fw-bold text-info mb-3" data-i18n="newDispatchTitle">📡 Nowe Zlecenie</h5>
                                 <form id="dispatch-form">
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Przypisz kierowcę</label>
-                                        <select id="dispatch_assigned" class="form-select form-control-dark"></select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Zestaw z garażu</label>
-                                        <select id="dispatch_truck" class="form-select form-control-dark"></select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Skąd</label>
-                                        <input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Dokąd</label>
-                                        <input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Uwagi</label>
-                                        <textarea id="dispatch_notes" class="form-control form-control-dark" rows="2"></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-info w-100 fw-bold">Opublikuj zlecenie</button>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="assignDriver">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select form-control-dark"></select></div>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="selectTruck">Zestaw z garażu</label><select id="dispatch_truck" class="form-select form-control-dark"></select></div>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="fromCity">Skąd</label><input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)"></div>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="toCity">Dokąd</label><input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)"></div>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="notes">Uwagi</label><textarea id="dispatch_notes" class="form-control form-control-dark" rows="2"></textarea></div>
+                                    <button type="submit" class="btn btn-info w-100 fw-bold" data-i18n="publishDispatch">Opublikuj zlecenie</button>
                                 </form>
                             </div>
                         </div>
                         <div id="dispatcher-list-col" class="col-md-12">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-4">! Nowe dostępne trasy:</h5>
-                                <div id="dispatches-container" class="row g-3"></div>
-                            </div>
+                            <div class="bg-card p-4"><h5 class="fw-bold mb-4" data-i18n="availableRoutes">! Nowe dostępne trasy:</h5><div id="dispatches-container" class="row g-3"></div></div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ZAKŁADKA FINANSE -->
                 <div id="tab-finances" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Zgłoś wydatek</h5>
+                                <h5 class="fw-bold mb-3" data-i18n="reportExpense">Zgłoś wydatek</h5>
                                 <form id="expense-form">
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Typ wydatku</label>
-                                        <select id="expense_type" class="form-select form-control-dark" required>
-                                            <option value="fuel">⛽ Paliwo</option>
-                                            <option value="service">🔧 Serwis / Naprawa</option>
-                                            <option value="fine">🚨 Mandat</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Kwota (€)</label>
-                                        <input type="number" id="expense_amount" class="form-control form-control-dark" placeholder="np. 450" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small text-muted">Opis / Miejsce</label>
-                                        <input type="text" id="expense_desc" class="form-control form-control-dark" placeholder="np. Tankowanie">
-                                    </div>
-                                    <button type="submit" class="btn btn-warning w-100 fw-bold">Dodaj wydatek</button>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="expenseType">Typ wydatku</label><select id="expense_type" class="form-select form-control-dark" required><option value="fuel" data-i18n="fuelOpt">⛽ Paliwo</option><option value="service" data-i18n="serviceOpt">🔧 Serwis / Naprawa</option><option value="fine" data-i18n="fineOpt">🚨 Mandat</option></select></div>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="amountEuro">Kwota (€)</label><input type="number" id="expense_amount" class="form-control form-control-dark" placeholder="np. 450" required></div>
+                                    <div class="mb-3"><label class="form-label small text-muted" data-i18n="description">Opis / Miejsce</label><input type="text" id="expense_desc" class="form-control form-control-dark" placeholder="np. Tankowanie"></div>
+                                    <button type="submit" class="btn btn-warning w-100 fw-bold" data-i18n="addExpenseBtn">Dodaj wydatek</button>
                                 </form>
                             </div>
                         </div>
                         <div class="col-md-8">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3">Rejestr wydatków firmy</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-dark table-hover align-middle mb-0">
-                                        <thead>
-                                            <tr class="text-muted border-secondary">
-                                                <th>Kierowca</th>
-                                                <th>Typ</th>
-                                                <th>Opis</th>
-                                                <th>Kwota</th>
-                                                <th>Akcja</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="expenses-table-body"></tbody>
-                                    </table>
-                                </div>
-                            </div>
+                            <div class="bg-card p-4"><h5 class="fw-bold mb-3" data-i18n="expenseRegistry">Rejestr wydatków firmy</h5><div class="table-responsive"><table class="table table-dark table-hover align-middle mb-0"><thead><tr class="text-muted border-secondary"><th data-i18n="tableDriver">Kierowca</th><th data-i18n="tableType">Typ</th><th data-i18n="tableDesc">Opis</th><th data-i18n="tableAmount">Kwota</th><th data-i18n="tableAction">Akcja</th></tr></thead><tbody id="expenses-table-body"></tbody></table></div></div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ZAKŁADKA GARAŻ VTC -->
                 <div id="tab-garage" style="display:none;">
                     <div id="garage-main-view">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 class="fw-bold mb-0">Ciężarówki</h4>
-                            <button id="add-truck-btn" class="btn btn-outline-light btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> Dodaj do Garażu</button>
+                            <h4 class="fw-bold mb-0" data-i18n="garageTitle">Ciężarówki</h4>
+                            <button id="add-truck-btn" class="btn btn-outline-light btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> <span data-i18n="addTruckBtn">Dodaj do Garażu</span></button>
                         </div>
                         <div id="truck-add-form" class="bg-card p-4 mb-4 d-none">
-                            <h5 class="fw-bold text-warning mb-3">Dodaj nowy zestaw do Floty</h5>
+                            <h5 class="fw-bold text-warning mb-3" data-i18n="addNewTruckTitle">Dodaj nowy zestaw do Floty</h5>
                             <form id="truck-form">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label small text-muted">Model Ciężarówki</label>
-                                        <input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small text-muted">Przypisany Kierowca</label>
-                                        <select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small text-muted">Rejestracja</label>
-                                        <input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S">
-                                    </div>
+                                    <div class="col-md-4"><label class="form-label small text-muted" data-i18n="truckModel">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted" data-i18n="assignedDriver">Przypisany Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted" data-i18n="plates">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
                                 </div>
-                                <button type="submit" class="btn btn-warning w-100 fw-bold mt-3">Zapisz w Garażu</button>
+                                <button type="submit" class="btn btn-warning w-100 fw-bold mt-3" data-i18n="saveTruckBtn">Zapisz w Garażu</button>
                             </form>
                         </div>
                         <div id="garage-grid" class="row g-4"></div>
                     </div>
                     <div id="garage-detail-view" style="display: none;">
-                        <button class="btn btn-outline-secondary btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> Powrót</button>
+                        <button class="btn btn-outline-secondary btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> <span data-i18n="backBtn">Powrót</span></button>
                         <div class="bg-card p-4" id="truck-detail-content"></div>
                     </div>
                 </div>
 
+                <!-- ZAKŁADKA O NAS -->
                 <div id="tab-about" style="display:none;">
                     <div class="bg-card p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
-                        <p class="fs-5 leading-relaxed text-light">
-                            <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie 
-                            Euro Truck Simulator 2, stworzona 20 września. Naszym celem jest stworzenie aktywnej i zgranej 
-                            społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz 
-                            uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. 
-                            (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy 
-                            i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem 
-                            razem z nami!
+                        <p class="fs-5 leading-relaxed text-light" data-i18n="aboutText">
+                            <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!
                         </p>
                         <div class="d-flex justify-content-center gap-3 mt-4">
                             <a href="https://discord.gg/x9v8XKYwz6" target="_blank" class="btn btn-primary btn-lg px-4 rounded-pill"><i class="fa-brands fa-discord me-2"></i> Discord</a>
@@ -351,17 +169,11 @@
                     </div>
                 </div>
 
+                <!-- ZARZĄDZANIE KONTAMI -->
                 <div id="tab-management" style="display:none;">
                     <div class="bg-card p-4">
-                        <h4 class="fw-bold mb-3 text-warning">Zarządzanie Kontami Kierowców</h4>
-                        <div class="table-responsive">
-                            <table class="table table-dark align-middle">
-                                <thead>
-                                    <tr><th>Kierowca</th><th>Rola</th><th>Status</th><th>Akcje</th></tr>
-                                </thead>
-                                <tbody id="management-users-list"></tbody>
-                            </table>
-                        </div>
+                        <h4 class="fw-bold mb-3 text-warning" data-i18n="managementTitle">Zarządzanie Kontami Kierowców</h4>
+                        <div class="table-responsive"><table class="table table-dark align-middle"><thead><tr><th data-i18n="tableDriver">Kierowca</th><th data-i18n="tableRole">Rola</th><th data-i18n="tableStatus">Status</th><th data-i18n="tableAction">Akcje</th></tr></thead><tbody id="management-users-list"></tbody></table></div>
                     </div>
                 </div>
             </div>
@@ -369,10 +181,7 @@
             <footer class="py-3 text-center text-muted small">
                 <div class="container d-flex justify-content-between align-items-center">
                     <div>© Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
-                    <div class="d-flex gap-3">
-                        <a href="https://discord.gg/x9v8XKYwz6" target="_blank" class="text-muted"><i class="fa-brands fa-discord fs-5"></i></a>
-                        <a href="https://tiktok.com" target="_blank" class="text-muted"><i class="fa-brands fa-tiktok fs-5"></i></a>
-                    </div>
+                    <div class="d-flex gap-3"><a href="https://discord.gg/x9v8XKYwz6" target="_blank" class="text-muted"><i class="fa-brands fa-discord fs-5"></i></a><a href="https://tiktok.com" target="_blank" class="text-muted"><i class="fa-brands fa-tiktok fs-5"></i></a></div>
                     <div>Mazren Control System</div>
                 </div>
             </footer>
@@ -384,6 +193,51 @@
         let currentUserId = null;
         let currentUserRole = '';
         let allTrucksData = [];
+
+        const translations = {
+            pl: {
+                loginBtn: "Zaloguj się", registerBtn: "Zarejestruj się", welcomeBack: "Witaj ponownie!",
+                usernameLabel: "Login / Nick", passwordLabel: "Hasło", createAccBtn: "Stwórz konto",
+                registerTitle: "Rejestracja konta", noAccount: "Nie masz konta?", hasAccount: "Masz konto?",
+                navHome: "Strona Główna", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż", navAbout: "O nas", navManagement: "Zarządzanie",
+                companyBudgetTitle: "Budżet firmy:", myStatsTitle: "Twoje statystyki: (cel 6000km)", companyStatsTitle: "Statystyki firmy:",
+                completedRoutes: "Wykonane trasy:", driversRanking: "Ranking kierowców:",
+                newDispatchTitle: "📡 Nowe Zlecenie", assignDriver: "Przypisz kierowcę", selectTruck: "Zestaw z garażu", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi", publishDispatch: "Opublikuj zlecenie", availableRoutes: "! Nowe dostępne trasy:",
+                reportExpense: "Zgłoś wydatek", expenseType: "Typ wydatku", fuelOpt: "⛽ Paliwo", serviceOpt: "🔧 Serwis / Naprawa", fineOpt: "🚨 Mandat", amountEuro: "Kwota (€)", description: "Opis / Miejsce", addExpenseBtn: "Dodaj wydatek", expenseRegistry: "Rejestr wydatków firmy",
+                tableDriver: "Kierowca", tableType: "Typ", tableDesc: "Opis", tableAmount: "Kwota", tableAction: "Akcje", tableRole: "Rola", tableStatus: "Status",
+                garageTitle: "Ciężarówki", addTruckBtn: "Dodaj do Garażu", addNewTruckTitle: "Dodaj nowy zestaw do Floty", truckModel: "Model Ciężarówki", assignedDriver: "Przypisany Kierowca", plates: "Rejestracja", saveTruckBtn: "Zapisz w Garażu", backBtn: "Powrót",
+                managementTitle: "Zarządzanie Kontami Kierowców"
+            },
+            en: {
+                loginBtn: "Log in", registerBtn: "Register", welcomeBack: "Welcome back!",
+                usernameLabel: "Login / Nick", passwordLabel: "Password", createAccBtn: "Create account",
+                registerTitle: "Account Registration", noAccount: "Don't have an account?", hasAccount: "Already have an account?",
+                navHome: "Home", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage", navAbout: "About us", navManagement: "Management",
+                companyBudgetTitle: "Company Budget:", myStatsTitle: "Your stats: (goal 6000km)", companyStatsTitle: "Company stats:",
+                completedRoutes: "Completed routes:", driversRanking: "Drivers ranking:",
+                newDispatchTitle: "📡 New Dispatch", assignDriver: "Assign Driver", selectTruck: "Truck from Garage", fromCity: "From", toCity: "To", notes: "Notes", publishDispatch: "Publish Dispatch", availableRoutes: "! New available routes:",
+                reportExpense: "Report Expense", expenseType: "Expense Type", fuelOpt: "⛽ Fuel", serviceOpt: "🔧 Service / Repair", fineOpt: "🚨 Fine", amountEuro: "Amount (€)", description: "Description / Place", addExpenseBtn: "Add Expense", expenseRegistry: "Company Expense Registry",
+                tableDriver: "Driver", tableType: "Type", tableDesc: "Description", tableAmount: "Amount", tableAction: "Action", tableRole: "Role", tableStatus: "Status",
+                garageTitle: "Trucks", addTruckBtn: "Add to Garage", addNewTruckTitle: "Add New Truck to Fleet", truckModel: "Truck Model", assignedDriver: "Assigned Driver", plates: "Plates", saveTruckBtn: "Save to Garage", backBtn: "Back",
+                managementTitle: "Drivers Account Management"
+            }
+        };
+
+        function changeLanguage(lang) {
+            localStorage.setItem('vtc_lang', lang);
+            const t = translations[lang];
+            if (!t) return;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('vtc_lang') || 'pl';
+            document.getElementById('lang-selector').value = savedLang;
+            changeLanguage(savedLang);
+        });
 
         function showAuthForm(type) {
             document.getElementById('auth-main-card').style.display = 'none';
@@ -429,12 +283,8 @@
 
                     loadCompanyStats();
                     loadJobs();
-                } else {
-                    showLogin();
-                }
-            } catch (e) {
-                showLogin();
-            }
+                } else { showLogin(); }
+            } catch (e) { showLogin(); }
         }
 
         function showLogin() {
@@ -460,12 +310,8 @@
                 if (res.ok && data.success) {
                     localStorage.setItem('vtc_logged_user', u);
                     checkUser();
-                } else {
-                    alert(data.error || 'Błąd logowania');
-                }
-            } catch (err) {
-                alert('Błąd połączenia z serwerem.');
-            }
+                } else { alert(data.error || 'Błąd logowania'); }
+            } catch (err) { alert('Błąd połączenia z serwerem.'); }
         }
 
         async function performRegister() {
@@ -482,9 +328,7 @@
                 const data = await res.json();
                 alert(data.message || data.error);
                 if (res.ok) showAuthForm('login');
-            } catch (err) {
-                alert('Błąd połączenia z serwerem.');
-            }
+            } catch (err) { alert('Błąd połączenia z serwerem.'); }
         }
 
         async function performLogout() {
@@ -493,6 +337,7 @@
             showLogin();
         }
 
+        // --- GARAŻ ---
         async function loadGarage() {
             const res = await fetch('/api/trucks');
             if (res.ok) {
@@ -538,8 +383,13 @@
                             <li><strong>Akcesoria wnętrza:</strong> ${t.accessories}</li>
                         </ul>
                         <hr class="border-secondary">
-                        <h6 class="fw-bold mb-2">Kierowca:</h6>
-                        <p class="text-muted small">${t.plates} - @${t.driver_name}</p>
+                        <h6 class="fw-bold mb-2">Kierowcy (1/4):</h6>
+                        <ul class="list-unstyled text-muted small">
+                            <li>${t.plates} - @${t.driver_name}</li>
+                            <li>WRA 6510S - Wolne</li>
+                            <li>WRA 6511S - Wolne</li>
+                            <li>WRA 6512S - Wolne</li>
+                        </ul>
                         ${deleteBtn}
                     </div>
                 </div>
@@ -577,6 +427,7 @@
             }
         }
 
+        // --- FINANSE ---
         async function loadExpenses() {
             const res = await fetch('/api/expenses');
             if (res.ok) {
@@ -609,6 +460,7 @@
             if (confirm('Usunąć wydatek?')) { await fetch(`/api/expenses/${id}`, { method: 'DELETE' }); loadExpenses(); loadCompanyStats(); }
         }
 
+        // --- DYSPOZYTOR ---
         async function loadDispatches() {
             const res = await fetch('/api/dispatches');
             if (res.ok) {
