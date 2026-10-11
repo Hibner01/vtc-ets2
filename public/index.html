@@ -1336,39 +1336,61 @@
             }
         }
 
-        async function deleteExpense(id) {
-            if (!confirm('Czy na pewno chcesz usunąć ten wydatek z budżetu firmy?')) return;
-            const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                loadExpenses();
-                loadCompanyStats();
-                alert('Wydatek został usunięty!');
-            } else {
-                alert('Błąd podczas usuwania wydatku.');
-            }
-        }
+        function toggleFuelFields() {
+    const type = document.getElementById('expense_type').value;
+    const fuelFields = document.getElementById('fuel-fields');
+    const standardFields = document.getElementById('standard-fields');
 
-        async function submitExpenseForm(e) {
-            e.preventDefault();
-            const data = {
-                type: document.getElementById('expense_type').value,
-                amount: document.getElementById('expense_amount').value,
-                description: document.getElementById('expense_desc').value
-            };
-            const res = await fetch('/api/expenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                document.getElementById('expense-form').reset();
-                loadExpenses();
-                loadCompanyStats();
-                alert('Wydatek został dodany!');
-            } else {
-                alert('Błąd podczas dodawania wydatku.');
-            }
-        }
+    if (type === 'fuel') {
+        fuelFields.style.display = 'block';
+        standardFields.style.display = 'none';
+    } else {
+        fuelFields.style.display = 'none';
+        standardFields.style.display = 'block';
+    }
+}
+
+async function submitExpenseForm(e) {
+    e.preventDefault();
+    const type = document.getElementById('expense_type').value;
+    let amount = 0;
+    let description = '';
+
+    if (type === 'fuel') {
+        const date = document.getElementById('expense_date').value || new Date().toISOString().split('T')[0];
+        const liters = document.getElementById('expense_liters').value || '0';
+        const cost = document.getElementById('expense_fuel_cost').value || '0';
+        const km = document.getElementById('expense_km').value || '0';
+
+        amount = cost;
+        description = `Data: ${date} | Litry: ${liters}L | Trasa od tankowania: ${km} km`;
+    } else {
+        amount = document.getElementById('expense_amount').value;
+        description = document.getElementById('expense_desc').value;
+    }
+
+    const data = {
+        type: type,
+        amount: amount,
+        description: description
+    };
+
+    const res = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+        document.getElementById('expense-form').reset();
+        toggleFuelFields();
+        loadExpenses();
+        loadCompanyStats();
+        alert('Wydatek został pomyślnie dodany!');
+    } else {
+        alert('Błąd podczas dodawania wydatku.');
+    }
+}        
 
         checkUser();
     </script>
