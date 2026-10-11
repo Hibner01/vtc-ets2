@@ -17,7 +17,6 @@
         .truck-card { background-color: #1a1d21; border: 1px solid #2c3036; border-radius: 16px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
         .truck-card:hover { transform: translateY(-3px); border-color: #4f5660; }
         footer { margin-top: auto; background-color: #0d0f11; border-top: 1px solid #22252a; }
-        
         .notif-badge { position: absolute; top: -5px; right: -5px; padding: 3px 6px; border-radius: 50%; font-size: 10px; }
         .notif-dropdown { width: 320px; background-color: #1a1d21; border: 1px solid #2a2e35; }
     </style>
@@ -58,7 +57,6 @@
                     <a class="navbar-brand me-4" onclick="switchTab('jobs')"><img src="/logo.png" style="max-height: 45px;" onerror="this.style.display='none'"></a>
                     
                     <div class="d-flex align-items-center order-lg-last ms-auto me-3">
-                        <!-- DZWONEK POWIADOMIEN -->
                         <div class="dropdown me-3">
                             <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" onclick="markNotifsAsRead()">
                                 <i class="fa-solid fa-bell"></i>
@@ -91,6 +89,7 @@
             </nav>
 
             <div class="container py-4 flex-grow-1">
+                <!-- STRONA GŁÓWNA -->
                 <div id="tab-jobs">
                     <div class="row g-4 mb-4">
                         <div class="col-md-4"><div class="bg-card p-4 h-100"><h6 class="text-muted" data-i18n="companyBudgetTitle">Budżet firmy:</h6><h2 id="company-total-budget" class="fw-bold text-success display-6 mb-0">0 EURO</h2></div></div>
@@ -103,6 +102,7 @@
                     </div>
                 </div>
 
+                <!-- DYSPOZYTOR -->
                 <div id="tab-dispatcher" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4" id="dispatcher-admin-form" style="display:none;">
@@ -124,6 +124,7 @@
                     </div>
                 </div>
 
+                <!-- FINANSE -->
                 <div id="tab-finances" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4">
@@ -143,6 +144,7 @@
                     </div>
                 </div>
 
+                <!-- GARAŻ VTC (Grupowany po modelach) -->
                 <div id="tab-garage" style="display:none;">
                     <div id="garage-main-view">
                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -153,15 +155,15 @@
                             <h5 class="fw-bold text-warning mb-3" data-i18n="addNewTruckTitle">Dodaj nowy zestaw do Floty</h5>
                             <form id="truck-form">
                                 <div class="row g-3">
-                                    <div class="col-md-4"><label class="form-label small text-muted" data-i18n="truckModel">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted" data-i18n="assignedDriver">Przypisany Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted" data-i18n="truckModel">Model Ciężarówki</label><input type="text" id="truck_model_input" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted" data-i18n="assignedDriver">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
                                     <div class="col-md-4"><label class="form-label small text-muted" data-i18n="plates">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Kabina</label><input type="text" name="cabin" class="form-control form-control-dark" placeholder="np. Globetrotter XL (dolne)"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Podwozie</label><input type="text" name="chassis" class="form-control form-control-dark" placeholder="np. 4x2 (górne)"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Kabina</label><input type="text" name="cabin" class="form-control form-control-dark" placeholder="np. Globetrotter XL"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Podwozie</label><input type="text" name="chassis" class="form-control form-control-dark" placeholder="np. 4x2"></div>
                                     <div class="col-md-4"><label class="form-label small text-muted">Silnik</label><input type="text" name="engine" class="form-control form-control-dark" placeholder="np. D13A500"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control form-control-dark" placeholder="np. I-Shift ATO3512D R"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Skrzynia biegów</label><input type="text" name="gearbox" class="form-control form-control-dark" placeholder="np. I-Shift"></div>
                                     <div class="col-md-4"><label class="form-label small text-muted">Wnętrze</label><input type="text" name="interior" class="form-control form-control-dark" placeholder="np. Standard"></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">Akcesoria wnętrza</label><input type="text" name="accessories" class="form-control form-control-dark" placeholder="np. Własne"></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">Akcesoria</label><input type="text" name="accessories" class="form-control form-control-dark" placeholder="np. Własne"></div>
                                 </div>
                                 <button type="submit" class="btn btn-warning w-100 fw-bold mt-3" data-i18n="saveTruckBtn">Zapisz w Garażu</button>
                             </form>
@@ -208,7 +210,7 @@
     <script>
         let currentUserId = null;
         let currentUserRole = '';
-        let allTrucksData = [];
+        let groupedTrucksData = {};
 
         const translations = {
             pl: {
@@ -256,27 +258,18 @@
                     const notifs = await res.json();
                     const list = document.getElementById('notif-list');
                     const badge = document.getElementById('notif-count');
-                    
                     let unread = notifs.filter(n => !n.is_read).length;
-                    if (unread > 0) {
-                        badge.innerText = unread;
-                        badge.classList.remove('d-none');
-                    } else {
-                        badge.classList.add('d-none');
-                    }
+                    if (unread > 0) { badge.innerText = unread; badge.classList.remove('d-none'); }
+                    else { badge.classList.add('d-none'); }
 
-                    if (notifs.length === 0) {
-                        list.innerHTML = '<li class="text-center text-muted small py-2">Brak nowych powiadomień</li>';
-                    } else {
-                        list.innerHTML = notifs.map(n => `
-                            <li class="p-2 border-bottom border-secondary">
-                                <div class="fw-bold text-light small">${n.title}</div>
-                                <div class="text-muted small">${n.message}</div>
-                            </li>
-                        `).join('');
-                    }
+                    list.innerHTML = notifs.length === 0 ? '<li class="text-center text-muted small py-2">Brak powiadomień</li>' : notifs.map(n => `
+                        <li class="p-2 border-bottom border-secondary">
+                            <div class="fw-bold text-light small">${n.title}</div>
+                            <div class="text-muted small">${n.message}</div>
+                        </li>
+                    `).join('');
                 }
-            } catch (e) { console.log(e); }
+            } catch (e) {}
         }
 
         async function markNotifsAsRead() {
@@ -389,20 +382,41 @@
             showLogin();
         }
 
-        // --- GARAŻ ---
+        // --- GARAŻ (Grupowanie po modelu) ---
         async function loadGarage() {
             const res = await fetch('/api/trucks');
             if (res.ok) {
-                allTrucksData = await res.json();
+                const trucks = await res.json();
+                groupedTrucksData = {};
+
+                trucks.forEach(t => {
+                    if (!groupedTrucksData[t.truck_model]) {
+                        groupedTrucksData[t.truck_model] = {
+                            model: t.truck_model,
+                            photo: t.photo,
+                            cabin: t.cabin,
+                            chassis: t.chassis,
+                            engine: t.engine,
+                            gearbox: t.gearbox,
+                            interior: t.interior,
+                            accessories: t.accessories,
+                            units: []
+                        };
+                    }
+                    groupedTrucksData[t.truck_model].units.push(t);
+                });
+
                 const grid = document.getElementById('garage-grid');
                 grid.innerHTML = '';
-                allTrucksData.forEach(t => {
+                
+                Object.keys(groupedTrucksData).forEach(modelName => {
+                    const group = groupedTrucksData[modelName];
                     grid.innerHTML += `
                         <div class="col-md-3">
-                            <div class="truck-card p-3 text-center" onclick="openTruckDetail(${t.id})">
-                                <h5 class="fw-bold text-light mb-3">${t.truck_model}</h5>
-                                <img src="${t.photo}" class="img-fluid rounded mb-2" style="max-height: 120px; object-fit: cover;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
-                                <div class="text-muted small mt-2">Więcej informacji</div>
+                            <div class="truck-card p-3 text-center" onclick="openTruckGroupDetail('${modelName}')">
+                                <h5 class="fw-bold text-light mb-3">${modelName}</h5>
+                                <img src="${group.photo}" class="img-fluid rounded mb-2" style="max-height: 120px; object-fit: cover;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
+                                <div class="text-muted small mt-2">Więcej informacji (${group.units.length} przypisań)</div>
                             </div>
                         </div>
                     `;
@@ -410,39 +424,38 @@
             }
         }
 
-        function openTruckDetail(id) {
-            const t = allTrucksData.find(truck => truck.id === id);
-            if (!t) return;
+        function openTruckGroupDetail(modelName) {
+            const group = groupedTrucksData[modelName];
+            if (!group) return;
+
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
-            let deleteBtn = currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm mt-3" onclick="deleteTruck(${t.id})">Usuń pojazd z garażu</button>` : '';
+            let unitsHtml = group.units.map(u => `
+                <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-1">
+                    <span><strong>${u.plates}</strong> - @${u.driver_name}</span>
+                    ${currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm py-0 px-2" onclick="deleteTruckUnit(${u.id})">Usuń</button>` : ''}
+                </div>
+            `).join('');
 
             document.getElementById('truck-detail-content').innerHTML = `
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <h3 class="fw-bold text-light mb-3">${t.truck_model}</h3>
-                        <img src="${t.photo}" class="img-fluid rounded mb-3 shadow" style="width: 100%; max-height: 220px; object-fit: cover;">
-                        <img src="${t.photo_back || t.photo}" class="img-fluid rounded shadow" style="width: 100%; max-height: 220px; object-fit: cover;">
+                        <h3 class="fw-bold text-light mb-3">${group.model}</h3>
+                        <img src="${group.photo}" class="img-fluid rounded mb-3 shadow" style="width: 100%; max-height: 250px; object-fit: cover;">
                     </div>
                     <div class="col-md-6">
                         <ul class="list-unstyled lh-lg">
-                            <li><strong>Kabina:</strong> ${t.cabin || 'Standard'}</li>
-                            <li><strong>Podwozie:</strong> ${t.chassis || 'Standard'}</li>
-                            <li><strong>Silnik:</strong> ${t.engine || 'Standard'}</li>
-                            <li><strong>Skrzynia biegów:</strong> ${t.gearbox || 'Standard'}</li>
-                            <li><strong>Wnętrze:</strong> ${t.interior || 'Standard'}</li>
-                            <li><strong>Akcesoria wnętrza:</strong> ${t.accessories || 'Standard'}</li>
+                            <li><strong>Kabina:</strong> ${group.cabin}</li>
+                            <li><strong>Podwozie:</strong> ${group.chassis}</li>
+                            <li><strong>Silnik:</strong> ${group.engine}</li>
+                            <li><strong>Skrzynia biegów:</strong> ${group.gearbox}</li>
+                            <li><strong>Wnętrze:</strong> ${group.interior}</li>
+                            <li><strong>Akcesoria wnętrza:</strong> ${group.accessories}</li>
                         </ul>
                         <hr class="border-secondary">
-                        <h6 class="fw-bold mb-2">Kierowcy (1/4):</h6>
-                        <ul class="list-unstyled text-muted small">
-                            <li>${t.plates} - @${t.driver_name}</li>
-                            <li>WRA 6510S - Wolne</li>
-                            <li>WRA 6511S - Wolne</li>
-                            <li>WRA 6512S - Wolne</li>
-                        </ul>
-                        ${deleteBtn}
+                        <h6 class="fw-bold mb-2">Kierowcy (${group.units.length}/4):</h6>
+                        <div class="text-muted small">${unitsHtml}</div>
                     </div>
                 </div>
             `;
@@ -467,19 +480,95 @@
 
         document.getElementById('truck-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const res = await fetch('/api/trucks', { method: 'POST', body: new FormData(e.target) });
+            const formData = new FormData(e.target);
+            const res = await fetch('/api/trucks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(formData))
+            });
             if (res.ok) { toggleTruckForm(); loadGarage(); }
         });
 
-        async function deleteTruck(id) {
-            if (confirm('Usunąć pojazd?')) {
+        async function deleteTruckUnit(id) {
+            if (confirm('Usunąć ten wpis z garażu?')) {
                 await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
                 closeTruckDetail();
                 loadGarage();
             }
         }
 
-        // --- FINANSE ---
+        // --- DYSPOZYTOR ---
+        async function loadDispatches() {
+            const res = await fetch('/api/dispatches');
+            if (res.ok) {
+                const dispatches = await res.json();
+                const container = document.getElementById('dispatches-container');
+                container.innerHTML = '';
+                dispatches.forEach(d => {
+                    container.innerHTML += `
+                        <div class="col-md-6">
+                            <div class="bg-card p-4">
+                                <h5 class="fw-bold text-light">${d.start_city} ➔ ${d.end_city}</h5>
+                                <hr class="border-secondary">
+                                <p class="mb-1"><strong>Zestaw:</strong> ${d.truck_name || 'Standard'}</p>
+                                <p class="mb-1"><strong>Uwagi:</strong> ${d.notes || 'Brak'}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="badge bg-secondary">${d.status}</span>
+                                    <button class="btn btn-light btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        document.getElementById('dispatch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const res = await fetch('/api/dispatches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assigned_to: document.getElementById('dispatch_assigned').value,
+                    truck_name: document.getElementById('dispatch_truck').value,
+                    start_city: document.getElementById('dispatch_start').value,
+                    end_city: document.getElementById('dispatch_end').value,
+                    notes: document.getElementById('dispatch_notes').value
+                })
+            });
+            if (res.ok) {
+                document.getElementById('dispatch-form').reset();
+                loadDispatches();
+                alert('Zlecenie opublikowane pomyślnie!');
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Błąd publikowania zlecenia');
+            }
+        });
+
+        async function loadDispatcherOptions() {
+            const uRes = await fetch('/api/users');
+            if (uRes.ok) {
+                const users = await uRes.json();
+                const sel = document.getElementById('dispatch_assigned');
+                sel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
+                users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
+            }
+            const tRes = await fetch('/api/trucks');
+            if (tRes.ok) {
+                const trucks = await tRes.json();
+                const tSel = document.getElementById('dispatch_truck');
+                tSel.innerHTML = '<option value="Standard">Standardowy Zestaw</option>';
+                trucks.forEach(t => tSel.innerHTML += `<option value="${t.truck_model} (${t.plates})">${t.truck_model} - ${t.plates}</option>`);
+            }
+        }
+
+        async function acceptDispatch(id) {
+            const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
+            if (res.ok) loadDispatches();
+        }
+
+        // --- FINANSE & STATYSTYKI ---
         async function loadExpenses() {
             const res = await fetch('/api/expenses');
             if (res.ok) {
@@ -510,54 +599,6 @@
 
         async function deleteExpense(id) {
             if (confirm('Usunąć wydatek?')) { await fetch(`/api/expenses/${id}`, { method: 'DELETE' }); loadExpenses(); loadCompanyStats(); }
-        }
-
-        // --- DYSPOZYTOR ---
-        async function loadDispatches() {
-            const res = await fetch('/api/dispatches');
-            if (res.ok) {
-                const dispatches = await res.json();
-                const container = document.getElementById('dispatches-container');
-                container.innerHTML = '';
-                dispatches.forEach(d => {
-                    container.innerHTML += `
-                        <div class="col-md-6">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold text-light">${d.start_city} - ${d.end_city}</h5>
-                                <hr class="border-secondary">
-                                <p class="mb-1"><strong>Zestaw:</strong> ${d.truck_name || 'Standard'}</p>
-                                <p class="mb-1"><strong>Uwagi:</strong> ${d.notes || 'Brak'}</p>
-                                <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <span class="badge bg-secondary">${d.status}</span>
-                                    <button class="btn btn-light btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-        }
-
-        async function loadDispatcherOptions() {
-            const uRes = await fetch('/api/users');
-            if (uRes.ok) {
-                const users = await uRes.json();
-                const sel = document.getElementById('dispatch_assigned');
-                sel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
-                users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
-            }
-            const tRes = await fetch('/api/trucks');
-            if (tRes.ok) {
-                const trucks = await tRes.json();
-                const tSel = document.getElementById('dispatch_truck');
-                tSel.innerHTML = '';
-                trucks.forEach(t => tSel.innerHTML += `<option value="${t.truck_model}">${t.truck_model}</option>`);
-            }
-        }
-
-        async function acceptDispatch(id) {
-            const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
-            if (res.ok) loadDispatches();
         }
 
         async function loadCompanyStats() {
