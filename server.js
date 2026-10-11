@@ -79,6 +79,15 @@ async function initDB() {
                 reported_income INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS notifications (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                message TEXT NOT NULL,
+                is_read BOOLEAN DEFAULT false,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         `);
         console.log('Baza danych zainicjalizowana pomyślnie.');
     } catch (err) {
@@ -99,6 +108,43 @@ app.use(session({
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+// --- POWIADOMIENIA ---
+
+app.get('/api/notifications', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    try {
+        const result = await pool.query(
+            'SELECT * FROM notifications WHERE user_id = $1 ORDER BY id DESC LIMIT 10',
+            [req.session.userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd pobierania powiadomień' });
+    }
+});
+
+app.put('/api/notifications/read', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    try {
+        await pool.query('UPDATE notifications SET is_read = true WHERE user_id = $1', [req.session.userId]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Błąd aktualizacji powiadomień' });
+    }
+});
+
+// Helper dodawania powiadomienia
+async function addNotification(userId, title, message) {
+    try {
+        await pool.query(
+            'INSERT INTO notifications (user_id, title, message) VALUES ($1, $2, $3)',
+            [userId, title, message]
+        );
+    } catch (err) {
+        console.error('Błąd dodawania powiadomienia:', err);
+    }
+}
+
 // --- AUTORYZACJA ---
 
 app.post('/api/register', async (req, res) => {
@@ -114,6 +160,15 @@ app.post('/api/register', async (req, res) => {
         const status = count === 0 ? 'approved' : 'pending';
 
         await pool.query('INSERT INTO users (username, password, role, status) VALUES ($1, $2, $3, $4)', [username, hashedPassword, role, status]);
+        
+        // Powiadomienie dla adminów o nowym kierowcy
+        if (status === 'pending') {
+            const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
+            admins.rows.forEach(adm => {
+                addNotification(adm.id, '👤 Nowy Kierowca', `Kierowca @${username} zarejestrował się i oczekuje na zatwierdzenie konta.`);
+            });
+        }
+
         res.json({ success: true, message: status === 'pending' ? 'Konto oczekuje na akceptację Szefa!' : 'Konto Szefa utworzone!' });
     } catch (err) {
         res.status(400).json({ error: 'Użytkownik już istnieje.' });
@@ -182,6 +237,10 @@ app.put('/api/users/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
+        
+        // Powiadomienie dla zaakceptowanego kierowcy
+        addNotification(req.params.id, '🎉 Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa. Witamy w firmie!');
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Błąd zatwierdzania' });
@@ -217,6 +276,15 @@ app.post('/api/dispatches', async (req, res) => {
             'INSERT INTO dispatches (assigned_to, start_city, end_city, truck_name, notes) VALUES ($1, $2, $3, $4, $5)',
             [assigned_to || 'Wszyscy', start_city, end_city, truck_name || 'Standardowy Zestaw', notes || '']
         );
+
+        // Powiadomienie kierowcy jeśli przypisano konkretnego
+        if (assigned_to && assigned_to !== 'Wszyscy') {
+            const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
+            if (targetUser.rows.length > 0) {
+                addNotification(targetUser.rows[0].id, '📡 Nowe Zlecenie', `Szef wystawił dla Ciebie trasę: ${start_city} ➔ ${end_city}`);
+            }
+        }
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Błąd dodawania zlecenia' });
@@ -239,7 +307,7 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
     }
 });
 
-// --- FINANSE (PALIWO, SERWIS, MANDATY) ---
+// --- FINANSE ---
 
 app.get('/api/expenses', async (req, res) => {
     try {
@@ -294,14 +362,6 @@ app.post('/api/trucks', upload.fields([{ name: 'photo' }, { name: 'photo_back' }
     const { driver_name, truck_model, trailer_model, plates, cabin, chassis, engine, gearbox, interior, accessories } = req.body;
     const defaultPhoto = 'https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg';
 
-    let photoUrl = defaultPhoto;
-    let photoBackUrl = defaultPhoto;
-
-    if (req.files) {
-        if (req.files['photo']) photoUrl = defaultPhoto;
-        if (req.files['photo_back']) photoBackUrl = defaultPhoto;
-    }
-
     try {
         await pool.query(
             `INSERT INTO trucks (driver_name, truck_model, trailer_model, plates, photo, photo_back, cabin, chassis, engine, gearbox, interior, accessories) 
@@ -311,14 +371,14 @@ app.post('/api/trucks', upload.fields([{ name: 'photo' }, { name: 'photo_back' }
                 truck_model,
                 trailer_model || '',
                 plates,
-                photoUrl,
-                photoBackUrl,
-                cabin || 'Globetrotter XL (dolne)',
-                chassis || '4x2 (górne)',
-                engine || 'D13A500',
-                gearbox || 'I-Shift ATO3512D R',
+                defaultPhoto,
+                defaultPhoto,
+                cabin || 'Standard',
+                chassis || 'Standard',
+                engine || 'Standard',
+                gearbox || 'Standard',
                 interior || 'Standard',
-                accessories || 'Własne'
+                accessories || 'Standard'
             ]
         );
         res.json({ success: true });
