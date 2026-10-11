@@ -227,7 +227,7 @@
                 </div>
             </div>
 
-            <!-- MODAL UKOŃCZENIA ZLECENIA -->
+            <!-- MODAL UKOŃCZENIA ZLECENIA (UPLOAD ZDJĘĆ) -->
             <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content bg-card border-secondary text-light">
@@ -235,20 +235,28 @@
                             <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-circle-check me-2"></i> Ukończenie Zlecenia</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
-                            <input type="hidden" id="modal_dispatch_id">
-                            <div class="mb-3"><label class="form-label small text-muted">Towar / Ładunek</label><input type="text" id="modal_cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
-                            <div class="row g-2 mb-3">
-                                <div class="col-6"><label class="form-label small text-muted">Dystans (km)</label><input type="number" id="modal_distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
-                                <div class="col-6"><label class="form-label small text-muted">Zarobek (€)</label><input type="number" id="modal_income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
+                        <form id="complete-dispatch-form">
+                            <div class="modal-body">
+                                <input type="hidden" id="modal_dispatch_id" name="dispatch_id">
+                                <div class="mb-3"><label class="form-label small text-muted">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6"><label class="form-label small text-muted">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
+                                    <div class="col-6"><label class="form-label small text-muted">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted"><i class="fa-solid fa-file-image me-1 text-warning"></i> Dodaj zdjęcie CMR (plik)</label>
+                                    <input type="file" id="modal_cmr" name="cmr_file" accept="image/*" class="form-control form-control-dark">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted"><i class="fa-solid fa-camera me-1 text-info"></i> Dodaj Podsumowanie z gry (plik)</label>
+                                    <input type="file" id="modal_summary" name="summary_photo" accept="image/*" class="form-control form-control-dark">
+                                </div>
                             </div>
-                            <div class="mb-3"><label class="form-label small text-muted">Link do zdjęcia CMR (opcjonalne)</label><input type="url" id="modal_cmr" class="form-control form-control-dark" placeholder="https://imgur.com/..."></div>
-                            <div class="mb-3"><label class="form-label small text-muted">Link do podsumowania z gry (opcjonalne)</label><input type="url" id="modal_summary" class="form-control form-control-dark" placeholder="https://imgur.com/..."></div>
-                        </div>
-                        <div class="modal-footer border-secondary">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Anuluj</button>
-                            <button type="button" class="btn btn-success btn-sm fw-bold px-4" onclick="submitCompleteDispatch()">Wyślij Raport</button>
-                        </div>
+                            <div class="modal-footer border-secondary">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Anuluj</button>
+                                <button type="submit" class="btn btn-success btn-sm fw-bold px-4">Wyślij Raport</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -611,7 +619,6 @@
                         actionHtml = `<span class="badge bg-secondary">W trakcie realizacji przez @${d.accepted_by_username}</span>`;
                     }
 
-                    // PRZYCISKI DLA SZEFA (Edycja i Usuwanie)
                     let adminControls = '';
                     if (currentUserRole === 'admin') {
                         adminControls = `
@@ -702,7 +709,6 @@
             }
         }
 
-        // EDYCJA I USUWANIE DLA SZEFA
         function openEditDispatchModal(id) {
             const disp = allDispatchesCache.find(d => d.id === id);
             if (!disp) return;
@@ -757,33 +763,21 @@
 
         function openCompleteModal(id) {
             document.getElementById('modal_dispatch_id').value = id;
-            document.getElementById('modal_cargo').value = '';
-            document.getElementById('modal_distance').value = '';
-            document.getElementById('modal_income').value = '';
-            document.getElementById('modal_cmr').value = '';
-            document.getElementById('modal_summary').value = '';
+            document.getElementById('complete-dispatch-form').reset();
+            document.getElementById('modal_dispatch_id').value = id;
 
             const modal = new bootstrap.Modal(document.getElementById('completeModal'));
             modal.show();
         }
 
-        async function submitCompleteDispatch() {
+        document.getElementById('complete-dispatch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
             const id = document.getElementById('modal_dispatch_id').value;
-            const cargo = document.getElementById('modal_cargo').value;
-            const distance = document.getElementById('modal_distance').value;
-            const income = document.getElementById('modal_income').value;
-            const cmr_file = document.getElementById('modal_cmr').value;
-            const summary_photo = document.getElementById('modal_summary').value;
-
-            if (!distance || !income) {
-                alert('Uzupełnij przynajmniej dystans i zarobek!');
-                return;
-            }
+            const formData = new FormData(e.target);
 
             const res = await fetch(`/api/dispatches/${id}/complete`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cargo, distance, income, cmr_file, summary_photo })
+                body: formData
             });
 
             if (res.ok) {
@@ -791,7 +785,7 @@
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 modal.hide();
 
-                alert('Trasa zraportowana pomyślnie!');
+                alert('Trasa zraportowana pomyślnie ze zdjęciami!');
                 loadDispatches();
                 loadCompanyStats();
                 loadJobs();
@@ -799,7 +793,7 @@
                 const err = await res.json();
                 alert(err.error || 'Błąd wysyłania raportu.');
             }
-        }
+        });
 
         // --- FINANSE & STATYSTYKI ---
         async function loadExpenses() {
@@ -855,8 +849,8 @@
                 const tbody = document.getElementById('jobs-table-body');
                 tbody.innerHTML = '';
                 jobs.forEach(j => {
-                    let cmrLink = j.cmr_file ? `<a href="${j.cmr_file}" target="_blank" class="badge bg-secondary text-decoration-none ms-1">CMR</a>` : '';
-                    let summaryLink = j.summary_photo ? `<a href="${j.summary_photo}" target="_blank" class="badge bg-info text-decoration-none ms-1">Foto</a>` : '';
+                    let cmrLink = j.cmr_file ? `<a href="${j.cmr_file}" target="_blank" class="badge bg-secondary text-decoration-none ms-1"><i class="fa-solid fa-image"></i> CMR</a>` : '';
+                    let summaryLink = j.summary_photo ? `<a href="${j.summary_photo}" target="_blank" class="badge bg-info text-decoration-none ms-1"><i class="fa-solid fa-camera"></i> Foto</a>` : '';
                     tbody.innerHTML += `<tr><td>${j.username}</td><td>${j.start_city} - ${j.end_city} ${cmrLink} ${summaryLink}</td><td>${j.distance}km</td><td>${j.income} Euro</td><td>${j.cargo}</td></tr>`;
                 });
             }
