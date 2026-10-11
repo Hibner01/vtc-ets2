@@ -78,23 +78,22 @@
                 <img src="/logo.png" alt="Mazren Spedition" style="max-height: 80px;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
             </div>
 
-            <!-- MENU WYBORU LOGOWANIE / REJESTRACJA -->
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
                 <button class="btn btn-light btn-lg w-100 mb-3 fw-bold btn-pill py-3" onclick="showAuthForm('login')">
-                    <i class="fa-solid fa-download me-2"></i> <span data-i18n="loginBtn">Zaloguj się</span>
+                    <i class="fa-solid fa-download me-2"></i> Zaloguj się
                 </button>
                 <button class="btn btn-dark border-secondary btn-lg w-100 mb-3 fw-bold btn-pill py-3" onclick="showAuthForm('register')">
-                    <i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="registerBtn">Zarejestruj się</span>
+                    <i class="fa-solid fa-user-plus me-2"></i> Zarejestruj się
                 </button>
             </div>
 
             <!-- FORMULARZ LOGOWANIA -->
             <div id="auth-login-card" class="bg-card p-4 shadow-lg text-center" style="display: none; width: 100%; max-width: 420px;">
-                <h3 class="fw-bold mb-1" data-i18n="welcomeBack">Witaj ponownie!</h3>
+                <h3 class="fw-bold mb-1">Witaj ponownie!</h3>
                 <p class="text-muted small mb-4">Zaloguj się do Mazren Control System</p>
 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-muted small" data-i18n="usernameLabel">Nick z Discorda / Login</label>
+                    <label class="form-label text-muted small">Login / Nick</label>
                     <div class="input-group">
                         <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-user"></i></span>
                         <input type="text" id="login-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
@@ -102,24 +101,24 @@
                 </div>
 
                 <div class="mb-4 text-start">
-                    <label class="form-label text-muted small" data-i18n="passwordLabel">Hasło</label>
+                    <label class="form-label text-muted small">Hasło</label>
                     <div class="input-group">
                         <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-lock"></i></span>
                         <input type="password" id="login-password" class="form-control form-control-dark" placeholder="••••••••">
                     </div>
                 </div>
 
-                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performLogin()" data-i18n="loginBtn">Zaloguj się</button>
-                <div class="text-muted small">Nie masz jeszcze konta? <a href="#" class="text-light" onclick="showAuthForm('register')" data-i18n="registerLink">Zarejestruj się</a></div>
+                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performLogin()">Zaloguj się</button>
+                <div class="text-muted small">Nie masz konta? <a href="#" class="text-light" onclick="showAuthForm('register')">Zarejestruj się</a></div>
             </div>
 
             <!-- FORMULARZ REJESTRACJI -->
             <div id="auth-register-card" class="bg-card p-4 shadow-lg text-center" style="display: none; width: 100%; max-width: 420px;">
-                <h3 class="fw-bold mb-1" data-i18n="registerTitle">Rejestracja konta</h3>
+                <h3 class="fw-bold mb-1">Rejestracja konta</h3>
                 <p class="text-muted small mb-4">Stwórz konto w Mazren Control System</p>
 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-muted small" data-i18n="usernameLabel">Nick z Discorda</label>
+                    <label class="form-label text-muted small">Login / Nick</label>
                     <div class="input-group">
                         <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-user"></i></span>
                         <input type="text" id="reg-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
@@ -127,31 +126,27 @@
                 </div>
 
                 <div class="mb-3 text-start">
-                    <label class="form-label text-muted small" data-i18n="passwordLabel">Hasło</label>
+                    <label class="form-label text-muted small">Hasło</label>
                     <div class="input-group">
                         <span class="input-group-text bg-dark border-secondary text-muted"><i class="fa-solid fa-lock"></i></span>
                         <input type="password" id="reg-password" class="form-control form-control-dark" placeholder="••••••••">
                     </div>
                 </div>
 
-                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performRegister()" data-i18n="createAccBtn">Stwórz konto</button>
-                <div class="text-muted small">Masz już konto? <a href="#" class="text-light" onclick="showAuthForm('login')" data-i18n="loginLink">Zaloguj się</a></div>
+                <button class="btn btn-light btn-lg w-100 fw-bold btn-pill mb-3" onclick="performRegister()">Stwórz konto</button>
+                <div class="text-muted small">Masz konto? <a href="#" class="text-light" onclick="showAuthForm('login')">Zaloguj się</a></div>
             </div>
 
-            <div class="text-muted small">
-                © Mazren Spedition. Wszelkie prawa zastrzeżone.
-            </div>
+            <div class="text-muted small">© Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
         </div>
 
         <!-- PANEL GŁÓWNY -->
         <div id="dashboard-section" style="display:none;">
-            <!-- PASEK NAWIGACYJNY -->
             <nav class="navbar navbar-expand-lg border-bottom border-dark py-3" style="background-color: #141619;">
                 <div class="container">
-                    <a class="navbar-brand d-flex align-items-center me-4" href="#" onclick="switchTab('jobs')">
-                        <img src="/logo.png" alt="Mazren" style="max-height: 45px;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
+                    <a class="navbar-brand me-4" href="#" onclick="switchTab('jobs')">
+                        <img src="/logo.png" alt="Mazren" style="max-height: 45px;" onerror="this.style.display='none'">
                     </a>
-
                     <div class="d-flex align-items-center order-lg-last ms-auto me-3 me-lg-0">
                         <div class="badge bg-dark border border-secondary px-3 py-2 me-3 rounded-pill">
                             <i class="fa-solid fa-user me-1"></i> <span id="user-display"></span> <span id="admin-badge" class="badge bg-danger ms-1 d-none">SZEF</span>
@@ -162,8 +157,7 @@
                         </select>
                         <button class="btn btn-outline-danger btn-sm rounded-circle" onclick="performLogout()"><i class="fa-solid fa-power-off"></i></button>
                     </div>
-
-                    <div class="collapse navbar-collapse" id="navbarNav">
+                    <div class="collapse navbar-collapse">
                         <div class="navbar-nav ms-auto me-auto">
                             <a class="nav-link-custom active" href="#" onclick="switchTab('jobs')" data-i18n="navHome">Strona Główna</a>
                             <a class="nav-link-custom" href="#" onclick="switchTab('finances')" data-i18n="navFinances">Finanse</a>
@@ -177,33 +171,31 @@
             </nav>
 
             <div class="container py-4">
-                <!-- ZAKŁADKA STRONA GŁÓWNA -->
                 <div id="tab-jobs">
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
                             <div class="bg-card p-4 h-100">
-                                <h6 class="text-muted" data-i18n="companyBudgetTitle">Budżet firmy:</h6>
+                                <h6 class="text-muted">Budżet firmy:</h6>
                                 <h2 id="company-total-budget" class="fw-bold text-success display-6 mb-0">0 EURO</h2>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="bg-card p-4 h-100">
-                                <h6 class="text-muted" data-i18n="myStatsTitle">Twoje statystyki: (cel 6000km)</h6>
+                                <h6 class="text-muted">Twoje statystyki: (cel 6000km)</h6>
                                 <h3 id="my-km-status" class="fw-bold mb-0">0 / 6000 km</h3>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="bg-card p-4 h-100">
-                                <h6 class="text-muted" data-i18n="companyStatsTitle">Statystyki firmy:</h6>
+                                <h6 class="text-muted">Statystyki firmy:</h6>
                                 <h3 id="company-total-km" class="fw-bold text-info mb-0">0 km</h3>
                             </div>
                         </div>
                     </div>
-
                     <div class="row g-4">
                         <div class="col-md-7">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3" data-i18n="completedRoutes">Wykonane trasy:</h5>
+                                <h5 class="fw-bold mb-3">Wykonane trasy:</h5>
                                 <div class="table-responsive">
                                     <table class="table table-dark table-hover align-middle mb-0">
                                         <tbody id="jobs-table-body"></tbody>
@@ -213,14 +205,13 @@
                         </div>
                         <div class="col-md-5">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3" data-i18n="driversRanking">Ranking kierowców:</h5>
+                                <h5 class="fw-bold mb-3">Ranking kierowców:</h5>
                                 <ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA DYSPOZYTORNIA -->
                 <div id="tab-dispatcher" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4" id="dispatcher-admin-form" style="display:none;">
@@ -236,12 +227,12 @@
                                         <select id="dispatch_truck" class="form-select form-control-dark"></select>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label small text-muted">Skąd (PL)</label>
+                                        <label class="form-label small text-muted">Skąd</label>
                                         <input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label small text-muted">Dokąd (CZ)</label>
-                                        <input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Ostrava (CZ)">
+                                        <label class="form-label small text-muted">Dokąd</label>
+                                        <input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small text-muted">Uwagi</label>
@@ -251,7 +242,6 @@
                                 </form>
                             </div>
                         </div>
-
                         <div id="dispatcher-list-col" class="col-md-12">
                             <div class="bg-card p-4">
                                 <h5 class="fw-bold mb-4">! Nowe dostępne trasy:</h5>
@@ -261,7 +251,6 @@
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA FINANSE (PALIWO, SERWIS, MANDATY) -->
                 <div id="tab-finances" style="display:none;">
                     <div class="row g-4">
                         <div class="col-md-4">
@@ -282,13 +271,12 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label small text-muted">Opis / Miejsce</label>
-                                        <input type="text" id="expense_desc" class="form-control form-control-dark" placeholder="np. Przekroczenie prędkości">
+                                        <input type="text" id="expense_desc" class="form-control form-control-dark" placeholder="np. Tankowanie">
                                     </div>
                                     <button type="submit" class="btn btn-warning w-100 fw-bold">Dodaj wydatek</button>
                                 </form>
                             </div>
                         </div>
-
                         <div class="col-md-8">
                             <div class="bg-card p-4">
                                 <h5 class="fw-bold mb-3">Rejestr wydatków firmy</h5>
@@ -311,15 +299,12 @@
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA GARAŻ VTC (SIATKA I DETALE) -->
                 <div id="tab-garage" style="display:none;">
                     <div id="garage-main-view">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold mb-0">Ciężarówki</h4>
                             <button id="add-truck-btn" class="btn btn-outline-light btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> Dodaj do Garażu</button>
                         </div>
-
-                        <!-- FORMULARZ DODAWANIA DO GARAŻU -->
                         <div id="truck-add-form" class="bg-card p-4 mb-4 d-none">
                             <h5 class="fw-bold text-warning mb-3">Dodaj nowy zestaw do Floty</h5>
                             <form id="truck-form">
@@ -340,18 +325,14 @@
                                 <button type="submit" class="btn btn-warning w-100 fw-bold mt-3">Zapisz w Garażu</button>
                             </form>
                         </div>
-
                         <div id="garage-grid" class="row g-4"></div>
                     </div>
-
-                    <!-- PODGLĄD DETALI CIĘŻARÓWKI -->
                     <div id="garage-detail-view" style="display: none;">
-                        <button class="btn btn-outline-secondary btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> Powrót do ciężarówek</button>
+                        <button class="btn btn-outline-secondary btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> Powrót</button>
                         <div class="bg-card p-4" id="truck-detail-content"></div>
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA O NAS -->
                 <div id="tab-about" style="display:none;">
                     <div class="bg-card p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
                         <p class="fs-5 leading-relaxed text-light">
@@ -363,31 +344,20 @@
                             i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem 
                             razem z nami!
                         </p>
-                        
                         <div class="d-flex justify-content-center gap-3 mt-4">
-                            <a href="https://discord.gg/x9v8XKYwz6" target="_blank" class="btn btn-primary btn-lg px-4 rounded-pill">
-                                <i class="fa-brands fa-discord me-2"></i> Discord
-                            </a>
-                            <a href="https://tiktok.com" target="_blank" class="btn btn-danger btn-lg px-4 rounded-pill">
-                                <i class="fa-brands fa-tiktok me-2"></i> TikTok
-                            </a>
+                            <a href="https://discord.gg/x9v8XKYwz6" target="_blank" class="btn btn-primary btn-lg px-4 rounded-pill"><i class="fa-brands fa-discord me-2"></i> Discord</a>
+                            <a href="https://tiktok.com" target="_blank" class="btn btn-danger btn-lg px-4 rounded-pill"><i class="fa-brands fa-tiktok me-2"></i> TikTok</a>
                         </div>
                     </div>
                 </div>
 
-                <!-- ZAKŁADKA ZARZĄDZANIE KONTAMI -->
                 <div id="tab-management" style="display:none;">
                     <div class="bg-card p-4">
                         <h4 class="fw-bold mb-3 text-warning">Zarządzanie Kontami Kierowców</h4>
                         <div class="table-responsive">
                             <table class="table table-dark align-middle">
                                 <thead>
-                                    <tr>
-                                        <th>Kierowca</th>
-                                        <th>Rola</th>
-                                        <th>Status</th>
-                                        <th>Akcje</th>
-                                    </tr>
+                                    <tr><th>Kierowca</th><th>Rola</th><th>Status</th><th>Akcje</th></tr>
                                 </thead>
                                 <tbody id="management-users-list"></tbody>
                             </table>
@@ -396,7 +366,6 @@
                 </div>
             </div>
 
-            <!-- STOPKA -->
             <footer class="py-3 text-center text-muted small">
                 <div class="container d-flex justify-content-between align-items-center">
                     <div>© Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
@@ -408,36 +377,6 @@
                 </div>
             </footer>
         </div>
-
-        <!-- MODAL ROZLICZENIA ZLECENIA -->
-        <div class="modal fade" id="completeDispatchModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content bg-card border-secondary text-light">
-                    <div class="modal-header border-secondary">
-                        <h5 class="modal-title">🏁 Rozliczenie Zlecenia</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="complete-dispatch-form">
-                            <input type="hidden" id="complete-dispatch-id">
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Przewożony Towar</label>
-                                <input type="text" name="cargo" class="form-control form-control-dark" required placeholder="np. Mleko 22t">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Przejechany dystans (km)</label>
-                                <input type="number" name="distance" class="form-control form-control-dark" required placeholder="np. 362">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Zysk z trasy (€)</label>
-                                <input type="number" name="income" class="form-control form-control-dark" required placeholder="np. 6229">
-                            </div>
-                            <button type="submit" class="btn btn-success w-100 fw-bold">Wyślij do zatwierdzenia</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -445,31 +384,6 @@
         let currentUserId = null;
         let currentUserRole = '';
         let allTrucksData = [];
-
-        const i18n = {
-            pl: {
-                loginBtn: "Zaloguj się", registerBtn: "Zarejestruj się", welcomeBack: "Witaj ponownie!",
-                usernameLabel: "Nick z Discorda / Login", passwordLabel: "Hasło", createAccBtn: "Stwórz konto",
-                navHome: "Strona Główna", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż", navAbout: "O nas",
-                companyBudgetTitle: "Budżet firmy:", myStatsTitle: "Twoje statystyki: (cel 6000km)", companyStatsTitle: "Statystyki firmy:",
-                completedRoutes: "Wykonane trasy:", driversRanking: "Ranking kierowców:"
-            },
-            en: {
-                loginBtn: "Log in", registerBtn: "Register", welcomeBack: "Welcome back!",
-                usernameLabel: "Discord Nick / Login", passwordLabel: "Password", createAccBtn: "Create account",
-                navHome: "Home", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage", navAbout: "About us",
-                companyBudgetTitle: "Company Budget:", myStatsTitle: "Your stats: (goal 6000km)", companyStatsTitle: "Company stats:",
-                completedRoutes: "Completed routes:", driversRanking: "Drivers ranking:"
-            }
-        };
-
-        function setLanguage(lang) {
-            localStorage.setItem('vtc_lang', lang);
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (i18n[lang] && i18n[lang][key]) el.innerText = i18n[lang][key];
-            });
-        }
 
         function showAuthForm(type) {
             document.getElementById('auth-main-card').style.display = 'none';
@@ -506,7 +420,11 @@
                         document.getElementById('admin-badge').classList.remove('d-none');
                         document.getElementById('admin-tab-btn').classList.remove('d-none');
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
+                        document.getElementById('dispatcher-list-col').className = 'col-md-8';
                         document.getElementById('add-truck-btn').classList.remove('d-none');
+                    } else {
+                        document.getElementById('dispatcher-admin-form').style.display = 'none';
+                        document.getElementById('dispatcher-list-col').className = 'col-md-12';
                     }
 
                     loadCompanyStats();
@@ -518,34 +436,51 @@
         function showLogin() {
             document.getElementById('auth-section').style.display = 'flex';
             document.getElementById('dashboard-section').style.display = 'none';
+            document.getElementById('auth-main-card').style.display = 'block';
+            document.getElementById('auth-login-card').style.display = 'none';
+            document.getElementById('auth-register-card').style.display = 'none';
         }
 
         async function performLogin() {
             const u = document.getElementById('login-username').value.trim();
             const p = document.getElementById('login-password').value.trim();
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const data = await res.json();
-            if (res.ok && data.success) {
-                localStorage.setItem('vtc_logged_user', u);
-                checkUser();
-            } else alert(data.error || 'Błąd logowania');
+            if (!u || !p) { alert('Uzupełnij login i hasło!'); return; }
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('vtc_logged_user', u);
+                    checkUser();
+                } else {
+                    alert(data.error || 'Błąd logowania');
+                }
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
         }
 
         async function performRegister() {
             const u = document.getElementById('reg-username').value.trim();
             const p = document.getElementById('reg-password').value.trim();
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const data = await res.json();
-            alert(data.message || data.error);
-            if (res.ok) showAuthForm('login');
+            if (!u || !p) { alert('Uzupełnij login i hasło!'); return; }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (res.ok) showAuthForm('login');
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
         }
 
         async function performLogout() {
@@ -554,14 +489,12 @@
             showLogin();
         }
 
-        // --- GARAŻ VTC ---
         async function loadGarage() {
             const res = await fetch('/api/trucks');
             if (res.ok) {
                 allTrucksData = await res.json();
                 const grid = document.getElementById('garage-grid');
                 grid.innerHTML = '';
-
                 allTrucksData.forEach(t => {
                     grid.innerHTML += `
                         <div class="col-md-3">
@@ -579,7 +512,6 @@
         function openTruckDetail(id) {
             const t = allTrucksData.find(truck => truck.id === id);
             if (!t) return;
-
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
@@ -589,198 +521,10 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <h3 class="fw-bold text-light mb-3">${t.truck_model}</h3>
-                        <img src="${t.photo}" class="img-fluid rounded mb-3 shadow" style="width: 100%; max-height: 220px; object-fit: cover;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
-                        <img src="${t.photo_back || t.photo}" class="img-fluid rounded shadow" style="width: 100%; max-height: 220px; object-fit: cover;" onerror="this.src='https://raw.githubusercontent.com/Hibner01/vtc-ets2/main/public/uploads/wzor.jpg'">
+                        <img src="${t.photo}" class="img-fluid rounded mb-3 shadow" style="width: 100%; max-height: 220px; object-fit: cover;">
+                        <img src="${t.photo_back || t.photo}" class="img-fluid rounded shadow" style="width: 100%; max-height: 220px; object-fit: cover;">
                     </div>
                     <div class="col-md-6">
                         <ul class="list-unstyled lh-lg">
-                            <li><strong>Kabina:</strong> ${t.cabin || 'Globetrotter XL (dolne)'}</li>
-                            <li><strong>Podwozie:</strong> ${t.chassis || '4x2 (górne)'}</li>
-                            <li><strong>Silnik:</strong> ${t.engine || 'D13A500'}</li>
-                            <li><strong>Skrzynia biegów:</strong> ${t.gearbox || 'I-Shift ATO3512D R'}</li>
-                            <li><strong>Wnętrze:</strong> ${t.interior || 'Standard'}</li>
-                            <li><strong>Akcesoria wnętrza:</strong> ${t.accessories || 'Własne'}</li>
-                        </ul>
-                        <hr class="border-secondary">
-                        <h6 class="fw-bold mb-2">Kierowcy (1/4):</h6>
-                        <ul class="list-unstyled text-muted small">
-                            <li>${t.plates} - @${t.driver_name}</li>
-                            <li>WRA 6510S - Wolne</li>
-                            <li>WRA 6511S - Wolne</li>
-                            <li>WRA 6512S - Wolne</li>
-                        </ul>
-                        ${deleteBtn}
-                    </div>
-                </div>
-            `;
-        }
-
-        function closeTruckDetail() {
-            document.getElementById('garage-main-view').style.display = 'block';
-            document.getElementById('garage-detail-view').style.display = 'none';
-        }
-
-        function toggleTruckForm() {
-            const form = document.getElementById('truck-add-form');
-            form.classList.toggle('d-none');
-            if (!form.classList.contains('d-none')) {
-                fetch('/api/users').then(r => r.json()).then(users => {
-                    const sel = document.getElementById('truck_driver_select');
-                    sel.innerHTML = '<option value="Wolne">Wolne</option>';
-                    users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
-                });
-            }
-        }
-
-        document.getElementById('truck-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const res = await fetch('/api/trucks', { method: 'POST', body: new FormData(e.target) });
-            if (res.ok) { toggleTruckForm(); loadGarage(); }
-        });
-
-        async function deleteTruck(id) {
-            if (confirm('Usunąć pojazd z garażu?')) {
-                await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
-                closeTruckDetail();
-                loadGarage();
-            }
-        }
-
-        // --- FINANSE I USUWANIE ---
-        async function loadExpenses() {
-            const res = await fetch('/api/expenses');
-            if (res.ok) {
-                const expenses = await res.json();
-                const tbody = document.getElementById('expenses-table-body');
-                tbody.innerHTML = '';
-                expenses.forEach(exp => {
-                    let typeBadge = exp.type === 'fuel' ? '⛽ Paliwo' : (exp.type === 'fine' ? '🚨 Mandat' : '🔧 Serwis');
-                    let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteExpense(${exp.id})">Usuń</button>` : '';
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${exp.username}</td>
-                            <td>${typeBadge}</td>
-                            <td>${exp.description}</td>
-                            <td class="text-danger">-${exp.amount} €</td>
-                            <td>${delBtn}</td>
-                        </tr>
-                    `;
-                });
-            }
-        }
-
-        document.getElementById('expense-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const res = await fetch('/api/expenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: document.getElementById('expense_type').value,
-                    amount: document.getElementById('expense_amount').value,
-                    description: document.getElementById('expense_desc').value
-                })
-            });
-            if (res.ok) { document.getElementById('expense-form').reset(); loadExpenses(); loadCompanyStats(); }
-        });
-
-        async function deleteExpense(id) {
-            if (confirm('Usunąć ten wydatek?')) {
-                await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-                loadExpenses();
-                loadCompanyStats();
-            }
-        }
-
-        // --- DYSPOZYTOR ---
-        async function loadDispatches() {
-            const res = await fetch('/api/dispatches');
-            if (res.ok) {
-                const dispatches = await res.json();
-                const container = document.getElementById('dispatches-container');
-                container.innerHTML = '';
-
-                dispatches.forEach(d => {
-                    container.innerHTML += `
-                        <div class="col-md-6">
-                            <div class="bg-card p-4">
-                                <h5 class="fw-bold text-light">${d.start_city} - ${d.end_city}</h5>
-                                <hr class="border-secondary">
-                                <p class="mb-1"><strong>Zestaw:</strong> ${d.truck_name || 'Standard'}</p>
-                                <p class="mb-1"><strong>Uwagi:</strong> ${d.notes || 'Brak'}</p>
-                                <p class="mb-3"><strong>Nadał:</strong> -ShiM4u</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-secondary">${d.status}</span>
-                                    <button class="btn btn-light btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-        }
-
-        async function loadDispatcherOptions() {
-            const uRes = await fetch('/api/users');
-            if (uRes.ok) {
-                const users = await uRes.json();
-                const sel = document.getElementById('dispatch_assigned');
-                sel.innerHTML = '<option value="Wszyscy">Wszyscy (Wolny obieg)</option>';
-                users.forEach(u => sel.innerHTML += `<option value="${u.username}">${u.username}</option>`);
-            }
-            const tRes = await fetch('/api/trucks');
-            if (tRes.ok) {
-                const trucks = await tRes.json();
-                const tSel = document.getElementById('dispatch_truck');
-                tSel.innerHTML = '';
-                trucks.forEach(t => tSel.innerHTML += `<option value="${t.truck_model}">${t.truck_model}</option>`);
-            }
-        }
-
-        // --- STATYSTYKI ---
-        async function loadCompanyStats() {
-            const res = await fetch('/api/company-stats');
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('company-total-budget').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' EURO';
-                document.getElementById('company-total-km').textContent = data.totalCompanyKm + ' km';
-
-                const rankList = document.getElementById('drivers-ranking-list');
-                rankList.innerHTML = '';
-                data.driversRanking.forEach((d, idx) => {
-                    rankList.innerHTML += `<li class="list-group-item bg-transparent text-light border-secondary d-flex justify-content-between"><span>${d.username}</span><span>${idx+1} miejsce</span><span>${d.km}km</span></li>`;
-                });
-            }
-        }
-
-        async function loadJobs() {
-            const res = await fetch('/api/jobs');
-            if (res.ok) {
-                const jobs = await res.json();
-                const tbody = document.getElementById('jobs-table-body');
-                tbody.innerHTML = '';
-                jobs.forEach(j => {
-                    tbody.innerHTML += `<tr><td>${j.username}</td><td>${j.start_city} - ${j.end_city}</td><td>${j.distance}km</td><td>${j.income} Euro</td><td>${j.cargo}</td></tr>`;
-                });
-            }
-        }
-
-        async function loadManagementUsers() {
-            const res = await fetch('/api/users');
-            if (res.ok) {
-                const users = await res.json();
-                const tbody = document.getElementById('management-users-list');
-                tbody.innerHTML = '';
-                users.forEach(u => {
-                    let action = u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser(${u.id})">Zatwierdź</button>` : '<span class="badge bg-success">Aktywny</span>';
-                    tbody.innerHTML += `<tr><td>${u.username}</td><td>${u.role}</td><td>${action}</td><td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Usuń</button></td></tr>`;
-                });
-            }
-        }
-
-        async function approveUser(id) { await fetch(`/api/users/${id}/approve`, { method: 'PUT' }); loadManagementUsers(); }
-        async function deleteUser(id) { if (confirm('Usunąć konto?')) { await fetch(`/api/users/${id}`, { method: 'DELETE' }); loadManagementUsers(); } }
-
-        checkUser();
-    </script>
-</body>
-</html>
+                            <li><strong>Kabina:</strong> ${t.cabin}</li>
+                            <li><strong>Podwozie:</strong> ${t.chassis}</li>
