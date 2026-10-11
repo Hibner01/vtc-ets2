@@ -414,7 +414,6 @@
                 <main class="container-fluid p-4 flex-grow-1">
 
                     <div id="tab-dashboard">
-                        <!-- BANER W STYLU GRANATOWYM -->
                         <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 20px; padding: 28px 32px;">
                             <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> <span data-i18n="welcomeBackBanner">WITAJ Z POWROTEM</span></div>
                             <h2 class="fw-bold display-6 mb-1" id="banner-username">WladekKiero</h2>
@@ -570,6 +569,7 @@
                     </div>
 
                     <div id="tab-dispatcher" style="display:none;">
+                        <!-- Panel Szefa: dodawanie zlecenia z automatycznym filtrowaniem zestawów przypisanych do wybranego kierowcy -->
                         <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4 border-info">
@@ -577,23 +577,41 @@
                                     <form id="dispatch-form" onsubmit="submitDispatchForm(event)" class="row g-3">
                                         <div class="col-md-3">
                                             <label class="form-label text-white" data-i18n="assignDriver">Przypisz kierowcę</label>
-                                            <select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary"></select>
+                                            <select id="dispatch_assigned" class="form-select bg-dark text-white border-secondary" onchange="onAdminDriverSelectChange()"></select>
                                         </div>
                                         <div class="col-md-3">
-                                            <label class="form-label text-white" data-i18n="selectTruck">Zestaw z garażu</label>
+                                            <label class="form-label text-white" data-i18n="selectTruck">Zestaw kierowcy</label>
                                             <select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select>
                                         </div>
                                         <div class="col-md-3"><label class="form-label text-white" data-i18n="fromCity">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
                                         <div class="col-md-3"><label class="form-label text-white" data-i18n="toCity">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
-                                        <div class="col-md-12"><label class="form-label text-white" data-i18n="notes">Uwagi</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
+                                        <div class="col-md-12"><label class="form-label text-white" data-i18n="notes">Uwagi / Ładunek</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
                                         <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold" data-i18n="publishDispatch">Opublikuj zlecenie</button></div>
                                     </form>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Panel Kierowcy: Formularz wysłania raportu ukończonego zlecenia -->
+                        <div class="row g-4 mb-4" id="driver-report-section" style="display:none;">
+                            <div class="col-md-12">
+                                <div class="bg-card-bms p-4 border-success">
+                                    <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-paper-plane me-2"></i> Wyślij raport z ukończonego zlecenia</h5>
+                                    <form id="job-report-form" onsubmit="submitJobReport(event)" class="row g-3">
+                                        <input type="hidden" id="report_dispatch_id">
+                                        <div class="col-md-3"><label class="form-label text-white">Skąd</label><input type="text" id="report_start" class="form-control bg-dark text-white border-secondary" required readonly></div>
+                                        <div class="col-md-3"><label class="form-label text-white">Dokąd</label><input type="text" id="report_end" class="form-control bg-dark text-white border-secondary" required readonly></div>
+                                        <div class="col-md-3"><label class="form-label text-white">Dystans (km)</label><input type="number" id="report_distance" class="form-control bg-dark text-white border-secondary" required placeholder="np. 1250"></div>
+                                        <div class="col-md-3"><label class="form-label text-white">Zarobek (€)</label><input type="number" id="report_income" class="form-control bg-dark text-white border-secondary" required placeholder="np. 45000"></div>
+                                        <div class="col-md-6"><label class="form-label text-white">Ładunek / Uwagi</label><input type="text" id="report_cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Palety / Części samochodowe"></div>
+                                        <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-success fw-bold w-100">Zatwierdź i wyślij raport trasy</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="bg-card-bms p-4">
-                            <h4 class="fw-bold mb-4 text-white" data-i18n="availableJobs">Dostępne trasy w Dyspozytorni:</h4>
+                            <h4 class="fw-bold mb-4 text-white" data-i18n="availableJobs">Twoje zlecenia w Dyspozytorni:</h4>
                             <div id="dispatches-container" class="row g-3"></div>
                         </div>
                     </div>
@@ -745,7 +763,7 @@
                 navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
                 navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
                 welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 6 000 km",
-                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizowanych ładunków", companyBudget: "Budżet Firmy",
+                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizovaných ładunków", companyBudget: "Budżet Firmy",
                 availableFunds: "Dostępne środki", companyKm: "Kilometry Firmy", totalDistance: "Łączny dystans",
                 completedRoutes: "Wykonane Trasy", yourTruck: "Twój Zestaw", noTruckAssigned: "Brak przypisanego zestawu w garażu.",
                 moreInfo: "Więcej informacji", trucksHeader: "Ciężarówki", addTruck: "Dodaj do Garażu", backBtn: "Powrót",
@@ -754,7 +772,7 @@
                 totalCompanyDeliveries: "Łączna liczba dostaw", budgetStatus: "Stan Budżetu", allCompanyJobs: "Wszystkie Wykonane Trasy w Firmie",
                 driversRanking: "Ranking Kierowców", addExpense: "Zgłoś wydatek", expenseType: "Typ wydatku", submitExpense: "+ Dodaj Wydatek",
                 expensesLog: "Rejestr wydatków firmy", newDispatch: "Nowe Zlecenie w Dyspozytorni", assignDriver: "Przypisz kierowcę",
-                selectTruck: "Zestaw z garażu", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi", publishDispatch: "Opublikuj zlecenie", availableJobs: "Dostępne trasy w Dyspozytorni:"
+                selectTruck: "Zestaw z garażu", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi", publishDispatch: "Opublikuj zlecenie", availableJobs: "Twoje zlecenia w Dyspozytorni:"
             },
             en: {
                 loginBtn: "Sign In", registerBtn: "Register", exitBtn: "Exit", welcomeBack: "Welcome Back!",
@@ -774,7 +792,7 @@
                 totalCompanyDeliveries: "Total Deliveries", budgetStatus: "Budget Balance", allCompanyJobs: "All Completed Company Routes",
                 driversRanking: "Drivers Leaderboard", addExpense: "Report Expense", expenseType: "Expense Type", submitExpense: "+ Add Expense",
                 expensesLog: "Company Expense Log", newDispatch: "New Dispatch Order", assignDriver: "Assign Driver",
-                selectTruck: "Select Truck", fromCity: "From", toCity: "To", notes: "Notes", publishDispatch: "Publish Order", availableJobs: "Available Dispatch Routes:"
+                selectTruck: "Select Truck", fromCity: "From", toCity: "To", notes: "Notes", publishDispatch: "Publish Order", availableJobs: "Your Dispatch Orders:"
             }
         };
 
@@ -835,19 +853,37 @@
 
         function populateDispatcherDropdowns() {
             const driverSelect = document.getElementById('dispatch_assigned');
+            if (!driverSelect) return;
+
+            driverSelect.innerHTML = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+            onAdminDriverSelectChange();
+        }
+
+        // Automatyczne filtrowanie zestawów dla wybranego kierowcy w panelu szefa
+        function onAdminDriverSelectChange() {
+            const driverSelect = document.getElementById('dispatch_assigned');
             const truckSelect = document.getElementById('dispatch_truck');
             if (!driverSelect || !truckSelect) return;
 
-            driverSelect.innerHTML = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
-            
-            let truckOptions = '<option value="Dowolny zestaw">Dowolny zestaw</option>';
-            for (let model in staticTrucksSpecs) {
-                let plates = staticTrucksSpecs[model].defaultUnits || [];
-                plates.forEach(p => {
-                    truckOptions += `<option value="${model} (${p})">${model} - ${p}</option>`;
-                });
+            const selectedDriver = driverSelect.value;
+            let driverTrucks = [];
+
+            // Szukamy zestawów przypisanych do tego kierowcy w bazie garażu
+            for (let plate in assignedTrucksStorage) {
+                if (assignedTrucksStorage[plate] === selectedDriver) {
+                    for (let model in staticTrucksSpecs) {
+                        if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
+                            driverTrucks.push(`${model} (${plate})`);
+                        }
+                    }
+                }
             }
-            truckSelect.innerHTML = truckOptions;
+
+            if (driverTrucks.length === 0) {
+                truckSelect.innerHTML = `<option value="Brak przypisanego zestawu">Brak przypisanego zestawu w garażu</option>`;
+            } else {
+                truckSelect.innerHTML = driverTrucks.map(t => `<option value="${t}">${t}</option>`).join('');
+            }
         }
 
         async function checkUser() {
@@ -1064,14 +1100,37 @@
                 const dispatches = await res.json();
                 const container = document.getElementById('dispatches-container');
                 container.innerHTML = '';
-                dispatches.forEach(d => {
+                
+                // Kierowca widzi tylko zlecenia przypisane do niego, szef widzi wszystkie
+                let visibleDispatches = dispatches.filter(d => currentUserRole === 'admin' || d.assigned_to === currentUsername);
+
+                if (visibleDispatches.length === 0) {
+                    container.innerHTML = `<div class="text-white-50 col-12 text-center py-3">Brak dostępnych zleceń skierowanych do Ciebie.</div>`;
+                    return;
+                }
+
+                visibleDispatches.forEach(d => {
+                    let actionBtn = '';
+                    if (d.status === 'W wolnym obiegu') {
+                        if (currentUserRole !== 'admin' && d.assigned_to !== currentUsername) {
+                            actionBtn = `<span class="badge bg-secondary">Przypisane do innego kierowcy</span>`;
+                        } else {
+                            actionBtn = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                        }
+                    } else if (d.status === 'W trakcie' && d.accepted_by_username === currentUsername) {
+                        actionBtn = `<button class="btn btn-success btn-sm fw-bold" onclick="openJobReportForm(${d.id}, '${d.start_city}', '${d.end_city}')"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
+                    } else {
+                        actionBtn = `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username})</span>`;
+                    }
+
                     container.innerHTML += `
                         <div class="col-md-6">
                             <div class="bg-card-bms p-4">
                                 <h4 class="fw-bold text-white mb-2">${d.start_city} ➔ ${d.end_city}</h4>
-                                <p class="text-info mb-2">Przydział: ${d.assigned_to}</p>
+                                <p class="text-info mb-1">Przypisany kierowca: <strong>${d.assigned_to}</strong></p>
                                 <p class="text-light mb-2">Zestaw: ${d.truck_name || 'Standard'}</p>
-                                ${d.status === 'W wolnym obiegu' ? `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>` : `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username})</span>`}
+                                ${d.notes ? `<p class="text-white-50 small mb-3">Ładunek/Uwagi: ${d.notes}</p>` : ''}
+                                <div>${actionBtn}</div>
                             </div>
                         </div>
                     `;
@@ -1095,6 +1154,7 @@
             });
             if (res.ok) {
                 document.getElementById('dispatch-form').reset();
+                onAdminDriverSelectChange();
                 loadDispatches();
                 alert('Zlecenie zostało opublikowane pomyślnie!');
             } else {
@@ -1105,6 +1165,42 @@
         async function acceptDispatch(id) {
             const res = await fetch(`/api/dispatches/${id}/accept`, { method: 'PUT' });
             if (res.ok) loadDispatches();
+        }
+
+        function openJobReportForm(dispatchId, startCity, endCity) {
+            document.getElementById('driver-report-section').style.display = 'block';
+            document.getElementById('report_dispatch_id').value = dispatchId;
+            document.getElementById('report_start').value = startCity;
+            document.getElementById('report_end').value = endCity;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function submitJobReport(e) {
+            e.preventDefault();
+            const data = {
+                start_city: document.getElementById('report_start').value,
+                end_city: document.getElementById('report_end').value,
+                distance: document.getElementById('report_distance').value,
+                income: document.getElementById('report_income').value,
+                cargo: document.getElementById('report_cargo').value || 'Standard'
+            };
+
+            const res = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                document.getElementById('job-report-form').reset();
+                document.getElementById('driver-report-section').style.display = 'none';
+                alert('Raport trasy został pomyślnie wysłany i dodany do statystyk firmy!');
+                loadMyJobs();
+                loadDispatches();
+                loadCompanyStats();
+            } else {
+                alert('Błąd podczas wysyłania raportu trasy.');
+            }
         }
 
         async function loadGarage() {
