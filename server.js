@@ -244,7 +244,6 @@ app.delete('/api/users/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania' }); }
 });
 
-// DOKUMENTY
 app.get('/api/documents', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM documents ORDER BY id DESC');
@@ -483,7 +482,12 @@ app.delete('/api/trucks/:id', async (req, res) => {
 
 app.get('/api/jobs', async (req, res) => {
     try {
-        const result = await pool.query('SELECT jobs.*, users.username FROM jobs JOIN users ON jobs.user_id = users.id ORDER BY jobs.id DESC');
+        const result = await pool.query(`
+            SELECT jobs.*, users.username, TO_CHAR(jobs.created_at, 'DD.MM.YYYY HH24:MI') as formatted_date 
+            FROM jobs 
+            JOIN users ON jobs.user_id = users.id 
+            ORDER BY jobs.id DESC
+        `);
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania tras' }); }
 });
