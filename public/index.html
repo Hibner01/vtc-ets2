@@ -15,12 +15,12 @@
         }
 
         .auth-bg-main { 
-            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.jpg') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
         .auth-bg-side { 
-            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvo2.jpg') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvo2.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
@@ -1079,7 +1079,7 @@
                         units: []
                     };
 
-                    let photoHtml = group.photo ? `<img src="${group.photo}" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : (modelName === 'VOLVO FH2' ? `<img src="/volvo1.jpg" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : `<div style="height: 100px;"></div>`);
+                    let photoHtml = group.photo ? `<img src="${group.photo}" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : (modelName === 'VOLVO FH2' ? `<img src="/volvo1.png" class="img-fluid rounded mb-2" style="max-height: 110px; width: 100%; object-fit: cover;">` : `<div style="height: 100px;"></div>`);
 
                     grid.innerHTML += `
                         <div class="col-md-3">
@@ -1109,7 +1109,6 @@
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
-            // Domyślne wolne miejsca (bez przypisanego kierowcy)
             let defaultUnits = [
                 { plates: 'WRA 6509S', driver_name: '' },
                 { plates: 'WRA 6510S', driver_name: '' },
@@ -1130,10 +1129,10 @@
                     <div class="col-md-6">
                         <h2 class="fw-bold text-white mb-4">${group.model}</h2>
                         <div class="mb-3">
-                            <img src="${group.photo || '/volvo1.jpg'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                            <img src="${group.photo || '/volvo1.png'}" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
                         </div>
                         <div>
-                            <img src="/volvo2.jpg" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
+                            <img src="/volvo2.png" class="img-fluid rounded border border-secondary shadow" style="width: 100%; max-height: 240px; object-fit: cover;">
                         </div>
                     </div>
                     <div class="col-md-6 border-start border-secondary ps-md-4">
