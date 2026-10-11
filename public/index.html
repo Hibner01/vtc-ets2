@@ -183,8 +183,8 @@
                                     <input type="number" id="expense_liters" class="form-control" placeholder="np. 400">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Opis</label>
-                                    <input type="text" id="expense_desc" class="form-control" placeholder="np. Naprawa uszkodzeń">
+                                    <label class="form-label">Opis / Miejsce</label>
+                                    <input type="text" id="expense_desc" class="form-control" placeholder="np. Tankowanie w trasie">
                                 </div>
                                 <button type="submit" class="btn btn-warning w-100">Dodaj wydatek</button>
                             </form>
@@ -306,6 +306,16 @@
     <script>
         let currentUserId = null;
         let currentUserRole = '';
+
+        document.getElementById('expense_type').addEventListener('change', function() {
+            const litersGroup = document.getElementById('liters-group');
+            if (this.value === 'fuel') {
+                litersGroup.style.display = 'block';
+            } else {
+                litersGroup.style.display = 'none';
+                document.getElementById('expense_liters').value = '';
+            }
+        });
 
         function switchTab(tab) {
             ['jobs', 'dispatcher', 'finances', 'documents', 'garage', 'management'].forEach(t => {
@@ -556,17 +566,35 @@
 
         document.getElementById('expense-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const res = await fetch('/api/expenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: document.getElementById('expense_type').value,
-                    amount: document.getElementById('expense_amount').value,
-                    liters: document.getElementById('expense_liters').value,
-                    description: document.getElementById('expense_desc').value
-                })
-            });
-            if (res.ok) { document.getElementById('expense-form').reset(); loadExpenses(); loadCompanyStats(); }
+            const typeVal = document.getElementById('expense_type').value;
+            const amountVal = document.getElementById('expense_amount').value;
+            const litersVal = document.getElementById('expense_liters').value;
+            const descVal = document.getElementById('expense_desc').value;
+
+            try {
+                const res = await fetch('/api/expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: typeVal,
+                        amount: amountVal,
+                        liters: litersVal,
+                        description: descVal
+                    })
+                });
+
+                if (res.ok) {
+                    document.getElementById('expense-form').reset();
+                    loadExpenses();
+                    loadCompanyStats();
+                    alert('Wydatek został pomyślnie zarejestrowany!');
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Błąd dodawania wydatku.');
+                }
+            } catch (err) {
+                alert('Błąd połączenia z serwerem.');
+            }
         });
 
         // --- STATYSTYKI & TRASY ---
