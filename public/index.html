@@ -130,11 +130,20 @@
         }
 
         .notif-dropdown { 
-            width: 320px; 
+            width: 340px; 
             background-color: #1a1d21; 
             border: 1px solid #2d3238; 
-            max-height: 350px; 
+            max-height: 380px; 
             overflow-y: auto; 
+        }
+
+        .notif-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .notif-item:hover {
+            background-color: #262a30;
         }
     </style>
 </head>
@@ -146,38 +155,38 @@
             <div><img src="/logo.png" alt="Mazren Spedition" style="max-height: 100px;" onerror="this.style.display='none'"></div>
             
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
-                <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')"><i class="fa-solid fa-download me-2"></i> Zaloguj się</button>
-                <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')"><i class="fa-solid fa-user-plus me-2"></i> Zarejestruj się</button>
+                <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')"><i class="fa-solid fa-download me-2"></i> <span data-i18n="login_btn">Zaloguj się</span></button>
+                <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')"><i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="register_btn">Zarejestruj się</span></button>
             </div>
 
             <div id="auth-login-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 440px;">
-                <h3 class="fw-bold mb-1 text-white">Witaj ponownie!</h3>
-                <p class="text-light small mb-4">Zaloguj się do Mazren Control System</p>
+                <h3 class="fw-bold mb-1 text-white" data-i18n="login_title">Witaj ponownie!</h3>
+                <p class="text-light small mb-4" data-i18n="login_sub">Zaloguj się do Mazren Control System</p>
                 <div class="mb-3 text-start">
-                    <label class="form-label">Login / Nick</label>
+                    <label class="form-label" data-i18n="login_label">Login / Nick</label>
                     <input type="text" id="login-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
                 </div>
                 <div class="mb-4 text-start">
-                    <label class="form-label">Hasło</label>
+                    <label class="form-label" data-i18n="pass_label">Hasło</label>
                     <input type="password" id="login-password" class="form-control form-control-dark" placeholder="••••••••">
                 </div>
-                <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()">Zaloguj się</button>
-                <div class="text-light small">Nie masz jeszcze konta? <a href="#" class="text-white fw-bold" onclick="showAuthForm('register')">Zarejestruj się</a></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()" data-i18n="login_btn">Zaloguj się</button>
+                <div class="text-light small"><span data-i18n="no_acc">Nie masz jeszcze konta?</span> <a href="#" class="text-white fw-bold" onclick="showAuthForm('register')" data-i18n="register_btn">Zarejestruj się</a></div>
             </div>
 
             <div id="auth-register-card" class="bg-card p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 440px;">
-                <h3 class="fw-bold mb-1 text-white">Rejestracja konta</h3>
-                <p class="text-light small mb-4">Stwórz konto w Mazren Control System</p>
+                <h3 class="fw-bold mb-1 text-white" data-i18n="reg_title">Rejestracja konta</h3>
+                <p class="text-light small mb-4" data-i18n="reg_sub">Stwórz konto w Mazren Control System</p>
                 <div class="mb-3 text-start">
-                    <label class="form-label">Login / Nick</label>
+                    <label class="form-label" data-i18n="login_label">Login / Nick</label>
                     <input type="text" id="reg-username" class="form-control form-control-dark" placeholder="np. WladekKiero">
                 </div>
                 <div class="mb-3 text-start">
-                    <label class="form-label">Hasło</label>
+                    <label class="form-label" data-i18n="pass_label">Hasło</label>
                     <input type="password" id="reg-password" class="form-control form-control-dark" placeholder="••••••••">
                 </div>
-                <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()">Stwórz konto</button>
-                <div class="text-light small">Masz już konto? <a href="#" class="text-white fw-bold" onclick="showAuthForm('login')">Zaloguj się</a></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="performRegister()" data-i18n="create_acc">Stwórz konto</button>
+                <div class="text-light small"><span data-i18n="have_acc">Masz już konto?</span> <a href="#" class="text-white fw-bold" onclick="showAuthForm('login')" data-i18n="login_btn">Zaloguj się</a></div>
             </div>
 
             <div class="text-light small">© 2026 Mazren Spedition. Wszelkie prawa zastrzeżone.</div>
@@ -198,7 +207,7 @@
                                 <span id="notif-count" class="badge bg-danger notif-badge d-none">0</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end notif-dropdown p-2 shadow-lg" id="notif-list">
-                                <li class="text-center text-muted small py-2">Brak powiadomień</li>
+                                <li class="text-center text-muted small py-2" data-i18n="no_notifs">Brak powiadomień</li>
                             </ul>
                         </div>
 
@@ -216,12 +225,13 @@
                     </div>
 
                     <div class="navbar-nav ms-auto me-auto flex-row gap-2">
-                        <a id="nav-jobs" class="nav-link-custom active" onclick="switchTab('jobs')">Strona Główna</a>
-                        <a id="nav-finances" class="nav-link-custom" onclick="switchTab('finances')">Finanse</a>
-                        <a id="nav-dispatcher" class="nav-link-custom" onclick="switchTab('dispatcher')">Dyspozytornia</a>
-                        <a id="nav-garage" class="nav-link-custom" onclick="switchTab('garage')">Garaż</a>
-                        <a id="nav-about" class="nav-link-custom" onclick="switchTab('about')">O nas</a>
-                        <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" onclick="switchTab('management')">Zarządzanie</a>
+                        <a id="nav-jobs" class="nav-link-custom active" onclick="switchTab('jobs')" data-i18n="nav_home">Strona Główna</a>
+                        <a id="nav-finances" class="nav-link-custom" onclick="switchTab('finances')" data-i18n="nav_finances">Finanse</a>
+                        <a id="nav-dispatcher" class="nav-link-custom" onclick="switchTab('dispatcher')" data-i18n="nav_dispatcher">Dyspozytornia</a>
+                        <a id="nav-garage" class="nav-link-custom" onclick="switchTab('garage')" data-i18n="nav_garage">Garaż</a>
+                        <a id="nav-documents" class="nav-link-custom" onclick="switchTab('documents')" data-i18n="nav_docs">Dokumenty</a>
+                        <a id="nav-about" class="nav-link-custom" onclick="switchTab('about')" data-i18n="nav_about">O nas</a>
+                        <a id="admin-tab-btn" class="nav-link-custom text-warning d-none" onclick="switchTab('management')" data-i18n="nav_manage">Zarządzanie</a>
                     </div>
                 </div>
             </nav>
@@ -232,13 +242,13 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-12">
                             <div class="bg-card p-4">
-                                <h5 class="text-light mb-1">Budżet firmy:</h5>
+                                <h5 class="text-light mb-1" data-i18n="company_budget">Budżet firmy:</h5>
                                 <h1 id="company-total-budget" class="fw-bold text-white display-5 mb-0">12848 EURO</h1>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="bg-card p-4">
-                                <h5 class="text-light mb-2">Twoje statystyki: (cel 6000km)</h5>
+                                <h5 class="text-light mb-2" data-i18n="my_stats">Twoje statystyki: (cel 6000km)</h5>
                                 <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-white border border-secondary" id="my-km-status">
                                     0 / 6000 km
                                 </div>
@@ -246,7 +256,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="bg-card p-4">
-                                <h5 class="text-light mb-2">Statystyki firmy:</h5>
+                                <h5 class="text-light mb-2" data-i18n="company_stats">Statystyki firmy:</h5>
                                 <div class="bg-dark p-3 rounded-pill text-center fs-4 fw-bold text-white border border-secondary" id="company-total-km">
                                     0 km
                                 </div>
@@ -257,17 +267,17 @@
                     <div class="row g-4">
                         <div class="col-md-7">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white">Wykonane trasy:</h5>
+                                <h5 class="fw-bold mb-3 text-white" data-i18n="completed_jobs">Wykonane trasy:</h5>
                                 <div class="table-responsive">
                                     <table class="table table-dark align-middle mb-0">
                                         <thead>
                                             <tr class="text-light border-secondary">
-                                                <th>Kierowca</th>
-                                                <th>Trasa / Pliki</th>
-                                                <th>Dystans</th>
-                                                <th>Zarobek</th>
-                                                <th>Towar</th>
-                                                <th id="jobs-actions-header" class="d-none">Akcje Szefa</th>
+                                                <th data-i18n="th_driver">Kierowca</th>
+                                                <th data-i18n="th_route">Trasa / Pliki</th>
+                                                <th data-i18n="th_dist">Dystans</th>
+                                                <th data-i18n="th_income">Zarobek</th>
+                                                <th data-i18n="th_cargo">Towar</th>
+                                                <th id="jobs-actions-header" class="d-none" data-i18n="th_actions">Akcje Szefa</th>
                                             </tr>
                                         </thead>
                                         <tbody id="jobs-table-body"></tbody>
@@ -277,7 +287,7 @@
                         </div>
                         <div class="col-md-5">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white">Ranking kierowców:</h5>
+                                <h5 class="fw-bold mb-3 text-white" data-i18n="ranking">Ranking kierowców:</h5>
                                 <ul id="drivers-ranking-list" class="list-group list-group-flush bg-transparent"></ul>
                             </div>
                         </div>
@@ -289,21 +299,21 @@
                     <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
                         <div class="col-md-12">
                             <div class="bg-card p-4 border-info">
-                                <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> Nowe Zlecenie w Dyspozytorni</h5>
+                                <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-plus me-2"></i> <span data-i18n="new_dispatch">Nowe Zlecenie w Dyspozytorni</span></h5>
                                 <form id="dispatch-form" class="row g-3">
-                                    <div class="col-md-3"><label class="form-label">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-3"><label class="form-label">Zestaw z garażu</label><select id="dispatch_truck" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-3"><label class="form-label">Skąd</label><input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)"></div>
-                                    <div class="col-md-3"><label class="form-label">Dokąd</label><input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)"></div>
-                                    <div class="col-md-12"><label class="form-label">Uwagi</label><input type="text" id="dispatch_notes" class="form-control form-control-dark" placeholder="Dodatkowe informacje..."></div>
-                                    <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold">Opublikuj zlecenie</button></div>
+                                    <div class="col-md-3"><label class="form-label" data-i18n="assign_driver">Przypisz kierowcę</label><select id="dispatch_assigned" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-3"><label class="form-label" data-i18n="truck_set">Zestaw z garażu</label><select id="dispatch_truck" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-3"><label class="form-label" data-i18n="from_city">Skąd</label><input type="text" id="dispatch_start" class="form-control form-control-dark" required placeholder="np. Warszawa (PL)"></div>
+                                    <div class="col-md-3"><label class="form-label" data-i18n="to_city">Dokąd</label><input type="text" id="dispatch_end" class="form-control form-control-dark" required placeholder="np. Berlin (DE)"></div>
+                                    <div class="col-md-12"><label class="form-label" data-i18n="notes">Uwagi</label><input type="text" id="dispatch_notes" class="form-control form-control-dark" placeholder="Dodatkowe informacje..."></div>
+                                    <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold" data-i18n="pub_dispatch">Opublikuj zlecenie</button></div>
                                 </form>
                             </div>
                         </div>
                     </div>
 
                     <div class="bg-card p-4">
-                        <h4 class="fw-bold mb-4 text-white">! Dostępne trasy w Dyspozytorni:</h4>
+                        <h4 class="fw-bold mb-4 text-white" data-i18n="avail_dispatches">! Dostępne trasy w Dyspozytorni:</h4>
                         <div id="dispatches-container" class="row g-3"></div>
                     </div>
                 </div>
@@ -313,10 +323,10 @@
                     <div class="row g-4">
                         <div class="col-md-4">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white">Zgłoś wydatek</h5>
+                                <h5 class="fw-bold mb-3 text-white" data-i18n="add_expense">Zgłoś wydatek</h5>
                                 <form id="expense-form">
                                     <div class="mb-3">
-                                        <label class="form-label">Typ wydatku</label>
+                                        <label class="form-label" data-i18n="exp_type">Typ wydatku</label>
                                         <select id="expense_type" class="form-select form-control-dark" required>
                                             <option value="fuel">⛽ Paliwo</option>
                                             <option value="service">🔧 Serwis / Naprawa</option>
@@ -324,29 +334,29 @@
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Kwota (€)</label>
+                                        <label class="form-label" data-i18n="exp_amount">Kwota (€)</label>
                                         <input type="number" id="expense_amount" class="form-control form-control-dark" placeholder="np. 450" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Opis / Miejsce</label>
+                                        <label class="form-label" data-i18n="exp_desc">Opis / Miejsce</label>
                                         <input type="text" id="expense_desc" class="form-control form-control-dark" placeholder="np. Tankowanie">
                                     </div>
-                                    <button type="submit" class="btn btn-pill-white w-100 fw-bold">+ Dodaj Wydatek</button>
+                                    <button type="submit" class="btn btn-pill-white w-100 fw-bold" data-i18n="btn_add_exp">+ Dodaj Wydatek</button>
                                 </form>
                             </div>
                         </div>
                         <div class="col-md-8">
                             <div class="bg-card p-4">
-                                <h5 class="fw-bold mb-3 text-white">Rejestr wydatków firmy</h5>
+                                <h5 class="fw-bold mb-3 text-white" data-i18n="expense_log">Rejestr wydatków firmy</h5>
                                 <div class="table-responsive">
                                     <table class="table table-dark align-middle mb-0">
                                         <thead>
                                             <tr class="text-light border-secondary">
-                                                <th>Kierowca</th>
-                                                <th>Typ</th>
-                                                <th>Opis</th>
-                                                <th>Kwota</th>
-                                                <th>Akcje</th>
+                                                <th data-i18n="th_driver">Kierowca</th>
+                                                <th data-i18n="th_type">Typ</th>
+                                                <th data-i18n="th_desc">Opis</th>
+                                                <th data-i18n="th_amount">Kwota</th>
+                                                <th data-i18n="th_actions">Akcje</th>
                                             </tr>
                                         </thead>
                                         <tbody id="expenses-table-body"></tbody>
@@ -361,17 +371,17 @@
                 <div id="tab-garage" style="display:none;">
                     <div id="garage-main-view">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold mb-0 text-white">Ciężarówki</h3>
-                            <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> Dodaj do Garażu</button>
+                            <h3 class="fw-bold mb-0 text-white" data-i18n="garage_trucks">Ciężarówki</h3>
+                            <button id="add-truck-btn" class="btn btn-pill-white btn-sm d-none" onclick="toggleTruckForm()"><i class="fa-solid fa-plus me-1"></i> <span data-i18n="add_to_garage">Dodaj do Garażu</span></button>
                         </div>
 
                         <div id="truck-add-form" class="bg-card p-4 mb-4 d-none">
-                            <h5 class="fw-bold text-warning mb-3">Dodaj nowy zestaw do Floty</h5>
+                            <h5 class="fw-bold text-warning mb-3" data-i18n="add_truck_fleet">Dodaj nowy zestaw do Floty</h5>
                             <form id="truck-form">
                                 <div class="row g-3">
-                                    <div class="col-md-4"><label class="form-label">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
-                                    <div class="col-md-4"><label class="form-label">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
-                                    <div class="col-md-4"><label class="form-label">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
+                                    <div class="col-md-4"><label class="form-label" data-i18n="truck_model">Model Ciężarówki</label><input type="text" name="truck_model" class="form-control form-control-dark" required placeholder="np. VOLVO FH2"></div>
+                                    <div class="col-md-4"><label class="form-label" data-i18n="th_driver">Kierowca</label><select id="truck_driver_select" name="driver_name" class="form-select form-control-dark"></select></div>
+                                    <div class="col-md-4"><label class="form-label" data-i18n="plates">Rejestracja</label><input type="text" name="plates" class="form-control form-control-dark" required placeholder="np. WRA 6509S"></div>
                                     <div class="col-md-4"><label class="form-label">Kabina</label><input type="text" name="cabin" class="form-control form-control-dark" placeholder="np. Globetrotter XL"></div>
                                     <div class="col-md-4"><label class="form-label">Podwozie</label><input type="text" name="chassis" class="form-control form-control-dark" placeholder="np. 4x2"></div>
                                     <div class="col-md-4"><label class="form-label">Silnik</label><input type="text" name="engine" class="form-control form-control-dark" placeholder="np. D13A500"></div>
@@ -379,7 +389,7 @@
                                     <div class="col-md-4"><label class="form-label">Wnętrze</label><input type="text" name="interior" class="form-control form-control-dark" placeholder="np. Standard"></div>
                                     <div class="col-md-4"><label class="form-label">Akcesoria</label><input type="text" name="accessories" class="form-control form-control-dark" placeholder="np. Własne"></div>
                                 </div>
-                                <button type="submit" class="btn btn-pill-white fw-bold mt-3">Zapisz w Garażu</button>
+                                <button type="submit" class="btn btn-pill-white fw-bold mt-3" data-i18n="save_garage">Zapisz w Garażu</button>
                             </form>
                         </div>
 
@@ -387,8 +397,35 @@
                     </div>
 
                     <div id="garage-detail-view" style="display: none;">
-                        <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> Powrót</button>
+                        <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> <span data-i18n="back">Powrót</span></button>
                         <div class="bg-card p-4 p-md-5" id="truck-detail-content"></div>
+                    </div>
+                </div>
+
+                <!-- DOKUMENTY (REGULAMIN / PAKIETY) -->
+                <div id="tab-documents" style="display:none;">
+                    <div id="add-doc-admin-form" class="bg-card p-4 mb-4 d-none border-warning">
+                        <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-file-circle-plus me-2"></i> <span data-i18n="add_new_doc">Dodaj Nowy Dokument / Pakiet</span></h5>
+                        <form id="doc-form">
+                            <div class="row g-3">
+                                <div class="col-md-6"><label class="form-label" data-i18n="doc_title">Tytuł Dokumentu</label><input type="text" id="doc_title" class="form-control form-control-dark" required placeholder="np. Regulamin VTC 2026"></div>
+                                <div class="col-md-6"><label class="form-label" data-i18n="doc_cat">Kategoria</label>
+                                    <select id="doc_category" class="form-select form-control-dark">
+                                        <option value="Regulamin">Regulamin</option>
+                                        <option value="Pakiety">Pakiety Modyfikacji</option>
+                                        <option value="Instrukcje">Instrukcje</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12"><label class="form-label" data-i18n="doc_content">Treść</label><textarea id="doc_content" class="form-control form-control-dark" rows="3" placeholder="Wpisz treść..."></textarea></div>
+                                <div class="col-md-12"><label class="form-label" data-i18n="doc_file">Plik / Załącznik (opcjonalnie)</label><input type="file" id="doc_file" class="form-control form-control-dark"></div>
+                            </div>
+                            <button type="submit" class="btn btn-pill-white fw-bold mt-3" data-i18n="pub_doc">Opublikuj Dokument</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-card p-4">
+                        <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="company_docs">Dokumenty i Regulaminy Firmowe</span></h4>
+                        <div id="documents-container" class="row g-4"></div>
                     </div>
                 </div>
 
@@ -404,15 +441,15 @@
                 <!-- ZARZĄDZANIE KONTAMI -->
                 <div id="tab-management" style="display:none;">
                     <div class="bg-card p-4">
-                        <h4 class="fw-bold mb-3 text-warning">Zarządzanie Kontami Kierowców</h4>
+                        <h4 class="fw-bold mb-3 text-warning" data-i18n="manage_users">Zarządzanie Kontami Kierowców</h4>
                         <div class="table-responsive">
                             <table class="table table-dark align-middle">
                                 <thead>
                                     <tr class="text-light">
-                                        <th>Kierowca</th>
-                                        <th>Rola</th>
-                                        <th>Status</th>
-                                        <th>Akcje</th>
+                                        <th data-i18n="th_driver">Kierowca</th>
+                                        <th data-i18n="th_role">Rola</th>
+                                        <th data-i18n="th_status">Status</th>
+                                        <th data-i18n="th_actions">Akcje</th>
                                     </tr>
                                 </thead>
                                 <tbody id="management-users-list"></tbody>
@@ -435,9 +472,9 @@
                                 <input type="hidden" id="modal_dispatch_id" name="dispatch_id">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <div class="mb-3"><label class="form-label">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
-                                        <div class="mb-3"><label class="form-label">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
-                                        <div class="mb-3"><label class="form-label">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
+                                        <div class="mb-3"><label class="form-label" data-i18n="th_cargo">Towar / Ładunek</label><input type="text" id="modal_cargo" name="cargo" class="form-control form-control-dark" placeholder="np. Części samochodowe"></div>
+                                        <div class="mb-3"><label class="form-label" data-i18n="th_dist">Dystans (km)</label><input type="number" id="modal_distance" name="distance" class="form-control form-control-dark" placeholder="np. 1250" required></div>
+                                        <div class="mb-3"><label class="form-label" data-i18n="th_income">Zarobek (€)</label><input type="number" id="modal_income" name="income" class="form-control form-control-dark" placeholder="np. 48000" required></div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
@@ -452,10 +489,45 @@
                                 </div>
                             </div>
                             <div class="modal-footer border-secondary">
-                                <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal">Anuluj</button>
-                                <button type="submit" class="btn btn-pill-white btn-sm fw-bold px-4">Prześlij trasę</button>
+                                <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
+                                <button type="submit" class="btn btn-pill-white btn-sm fw-bold px-4" data-i18n="send_route">Prześlij trasę</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL EDYCJI WYDATKU -->
+            <div class="modal fade" id="editExpenseModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content bg-card border-secondary text-light">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-pen-to-square me-2"></i> Edycja Wydatku</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <input type="hidden" id="edit_expense_id">
+                            <div class="mb-3">
+                                <label class="form-label" data-i18n="exp_type">Typ wydatku</label>
+                                <select id="edit_expense_type" class="form-select form-control-dark" required>
+                                    <option value="fuel">⛽ Paliwo</option>
+                                    <option value="service">🔧 Serwis / Naprawa</option>
+                                    <option value="fine">🚨 Mandat</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" data-i18n="exp_amount">Kwota (€)</label>
+                                <input type="number" id="edit_expense_amount" class="form-control form-control-dark" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" data-i18n="exp_desc">Opis / Miejsce</label>
+                                <input type="text" id="edit_expense_desc" class="form-control form-control-dark">
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
+                            <button type="button" class="btn btn-pill-white btn-sm fw-bold px-4" onclick="submitEditExpense()" data-i18n="save_changes">Zapisz Zmiany</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -476,7 +548,7 @@
                             </div>
                         </div>
                         <div class="modal-footer border-secondary">
-                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal">Anuluj</button>
+                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
                             <button type="button" class="btn btn-danger btn-sm fw-bold px-4" onclick="confirmRejectJob()">Odrzuć i wyślij powiadomienie</button>
                         </div>
                     </div>
@@ -493,15 +565,15 @@
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="edit_dispatch_id">
-                            <div class="mb-3"><label class="form-label">Przypisz kierowcę</label><select id="edit_dispatch_assigned" class="form-select form-control-dark"></select></div>
-                            <div class="mb-3"><label class="form-label">Zestaw z garażu</label><select id="edit_dispatch_truck" class="form-select form-control-dark"></select></div>
-                            <div class="mb-3"><label class="form-label">Skąd</label><input type="text" id="edit_dispatch_start" class="form-control form-control-dark" required></div>
-                            <div class="mb-3"><label class="form-label">Dokąd</label><input type="text" id="edit_dispatch_end" class="form-control form-control-dark" required></div>
-                            <div class="mb-3"><label class="form-label">Uwagi</label><textarea id="edit_dispatch_notes" class="form-control form-control-dark" rows="2"></textarea></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="assign_driver">Przypisz kierowcę</label><select id="edit_dispatch_assigned" class="form-select form-control-dark"></select></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="truck_set">Zestaw z garażu</label><select id="edit_dispatch_truck" class="form-select form-control-dark"></select></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="from_city">Skąd</label><input type="text" id="edit_dispatch_start" class="form-control form-control-dark" required></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="to_city">Dokąd</label><input type="text" id="edit_dispatch_end" class="form-control form-control-dark" required></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="notes">Uwagi</label><textarea id="edit_dispatch_notes" class="form-control form-control-dark" rows="2"></textarea></div>
                         </div>
                         <div class="modal-footer border-secondary">
-                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal">Anuluj</button>
-                            <button type="button" class="btn btn-pill-white btn-sm fw-bold px-4" onclick="submitEditDispatch()">Zapisz Zmiany</button>
+                            <button type="button" class="btn btn-pill-dark btn-sm" data-bs-dismiss="modal" data-i18n="cancel">Anuluj</button>
+                            <button type="button" class="btn btn-pill-white btn-sm fw-bold px-4" onclick="submitEditDispatch()" data-i18n="save_changes">Zapisz Zmiany</button>
                         </div>
                     </div>
                 </div>
@@ -521,8 +593,65 @@
         let currentUserId = null;
         let currentUserRole = '';
         let currentUsername = '';
+        let currentLang = 'pl';
         let groupedTrucksData = {};
         let allDispatchesCache = [];
+        let allExpensesCache = [];
+
+        const i18n = {
+            pl: {
+                login_btn: "Zaloguj się", register_btn: "Zarejestruj się", login_title: "Witaj ponownie!",
+                login_sub: "Zaloguj się do Mazren Control System", login_label: "Login / Nick", pass_label: "Hasło",
+                no_acc: "Nie masz jeszcze konta?", reg_title: "Rejestracja konta", reg_sub: "Stwórz konto w Mazren Control System",
+                create_acc: "Stwórz konto", have_acc: "Masz już konto?", no_notifs: "Brak powiadomień",
+                nav_home: "Strona Główna", nav_finances: "Finanse", nav_dispatcher: "Dyspozytornia", nav_garage: "Garaż",
+                nav_docs: "Dokumenty", nav_about: "O nas", nav_manage: "Zarządzanie", company_budget: "Budżet firmy:",
+                my_stats: "Twoje statystyki: (cel 6000km)", company_stats: "Statystyki firmy:", completed_jobs: "Wykonane trasy:",
+                th_driver: "Kierowca", th_route: "Trasa / Pliki", th_dist: "Dystans", th_income: "Zarobek", th_cargo: "Towar",
+                th_actions: "Akcje", ranking: "Ranking kierowców:", new_dispatch: "Nowe Zlecenie w Dyspozytorni",
+                assign_driver: "Przypisz kierowcę", truck_set: "Zestaw z garażu", from_city: "Skąd", to_city: "Dokąd",
+                notes: "Uwagi", pub_dispatch: "Opublikuj zlecenie", avail_dispatches: "! Dostępne trasy w Dyspozytorni:",
+                add_expense: "Zgłoś wydatek", exp_type: "Typ wydatku", exp_amount: "Kwota (€)", exp_desc: "Opis / Miejsce",
+                btn_add_exp: "+ Dodaj Wydatek", expense_log: "Rejestr wydatków firmy", th_type: "Typ", th_desc: "Opis",
+                th_amount: "Kwota", garage_trucks: "Ciężarówki", add_to_garage: "Dodaj do Garażu", add_truck_fleet: "Dodaj nowy zestaw do Floty",
+                truck_model: "Model Ciężarówki", plates: "Rejestracja", save_garage: "Zapisz w Garażu", back: "Powrót",
+                add_new_doc: "Dodaj Nowy Dokument / Pakiet", doc_title: "Tytuł Dokumentu", doc_cat: "Kategoria", doc_content: "Treść",
+                doc_file: "Plik / Załącznik (opcjonalnie)", pub_doc: "Opublikuj Dokument", company_docs: "Dokumenty i Regulaminy Firmowe",
+                manage_users: "Zarządzanie Kontami Kierowców", th_role: "Rola", th_status: "Status", cancel: "Anuluj",
+                send_route: "Prześlij trasę", save_changes: "Zapisz Zmiany"
+            },
+            en: {
+                login_btn: "Log in", register_btn: "Register", login_title: "Welcome back!",
+                login_sub: "Log in to Mazren Control System", login_label: "Username / Nick", pass_label: "Password",
+                no_acc: "Don't have an account?", reg_title: "Register account", reg_sub: "Create account in Mazren Control System",
+                create_acc: "Create account", have_acc: "Already have an account?", no_notifs: "No notifications",
+                nav_home: "Dashboard", nav_finances: "Finances", nav_dispatcher: "Dispatcher", nav_garage: "Garage",
+                nav_docs: "Documents", nav_about: "About Us", nav_manage: "Management", company_budget: "Company budget:",
+                my_stats: "Your statistics: (target 6000km)", company_stats: "Company statistics:", completed_jobs: "Completed routes:",
+                th_driver: "Driver", th_route: "Route / Files", th_dist: "Distance", th_income: "Income", th_cargo: "Cargo",
+                th_actions: "Actions", ranking: "Drivers ranking:", new_dispatch: "New Dispatch Job",
+                assign_driver: "Assign driver", truck_set: "Truck set", from_city: "From", to_city: "To",
+                notes: "Notes", pub_dispatch: "Publish Job", avail_dispatches: "! Available routes in Dispatcher:",
+                add_expense: "Add expense", exp_type: "Expense type", exp_amount: "Amount (€)", exp_desc: "Description / Location",
+                btn_add_exp: "+ Add Expense", expense_log: "Company Expense Log", th_type: "Type", th_desc: "Description",
+                th_amount: "Amount", garage_trucks: "Trucks", add_to_garage: "Add to Garage", add_truck_fleet: "Add new truck to Fleet",
+                truck_model: "Truck Model", plates: "License Plate", save_garage: "Save in Garage", back: "Back",
+                add_new_doc: "Add New Document / Package", doc_title: "Document Title", doc_cat: "Category", doc_content: "Content",
+                doc_file: "File / Attachment (optional)", pub_doc: "Publish Document", company_docs: "Company Documents & Rules",
+                manage_users: "Driver Accounts Management", th_role: "Role", th_status: "Status", cancel: "Cancel",
+                send_route: "Submit route", save_changes: "Save Changes"
+            }
+        };
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang] && i18n[lang][key]) {
+                    el.innerText = i18n[lang][key];
+                }
+            });
+        }
 
         function showAuthForm(type) {
             document.getElementById('auth-main-card').style.display = 'none';
@@ -535,11 +664,12 @@
             document.getElementById('admin-tab-btn').classList.add('d-none');
             document.getElementById('dispatcher-admin-form').style.display = 'none';
             document.getElementById('add-truck-btn').classList.add('d-none');
+            document.getElementById('add-doc-admin-form').classList.add('d-none');
             document.getElementById('jobs-actions-header').classList.add('d-none');
         }
 
         function switchTab(tab) {
-            ['jobs', 'dispatcher', 'finances', 'garage', 'about', 'management'].forEach(t => {
+            ['jobs', 'dispatcher', 'finances', 'garage', 'documents', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById('nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
@@ -551,6 +681,7 @@
             if (tab === 'dispatcher') { loadDispatches(); if (currentUserRole === 'admin') loadDispatcherOptions(); }
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'garage') loadGarage();
+            else if (tab === 'documents') loadDocuments();
             else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
         }
 
@@ -579,6 +710,7 @@
                         document.getElementById('admin-tab-btn').classList.remove('d-none');
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
                         document.getElementById('add-truck-btn').classList.remove('d-none');
+                        document.getElementById('add-doc-admin-form').classList.remove('d-none');
                         document.getElementById('jobs-actions-header').classList.remove('d-none');
                     }
 
@@ -744,6 +876,7 @@
         }
 
         function toggleTruckForm() {
+            if (currentUserRole !== 'admin') return;
             const form = document.getElementById('truck-add-form');
             form.classList.toggle('d-none');
             if (!form.classList.contains('d-none')) {
@@ -757,6 +890,7 @@
 
         document.getElementById('truck-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (currentUserRole !== 'admin') return;
             const formData = new FormData(e.target);
             const res = await fetch('/api/trucks', {
                 method: 'POST',
@@ -771,6 +905,67 @@
                 await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
                 closeTruckDetail();
                 loadGarage();
+            }
+        }
+
+        // DOKUMENTY
+        async function loadDocuments() {
+            const res = await fetch('/api/documents');
+            if (res.ok) {
+                const docs = await res.json();
+                const container = document.getElementById('documents-container');
+                container.innerHTML = '';
+
+                if (docs.length === 0) {
+                    container.innerHTML = '<div class="text-light p-3">Brak opublikowanych dokumentów.</div>';
+                    return;
+                }
+
+                docs.forEach(doc => {
+                    let fileBtn = doc.file_url ? `<a href="${doc.file_url}" target="_blank" class="btn btn-pill-white btn-sm mt-3"><i class="fa-solid fa-download me-1"></i> Pobierz Plik</a>` : '';
+                    let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-outline-danger btn-sm float-end" onclick="deleteDocument(${doc.id})"><i class="fa-solid fa-trash"></i></button>` : '';
+
+                    container.innerHTML += `
+                        <div class="col-md-6">
+                            <div class="bg-card p-4">
+                                ${delBtn}
+                                <span class="badge bg-warning text-dark mb-2">${doc.category}</span>
+                                <h4 class="fw-bold text-white mb-2">${doc.title}</h4>
+                                <p class="text-light mb-3" style="white-space: pre-line;">${doc.content}</p>
+                                ${fileBtn}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        document.getElementById('doc-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('title', document.getElementById('doc_title').value);
+            formData.append('category', document.getElementById('doc_category').value);
+            formData.append('content', document.getElementById('doc_content').value);
+            if (document.getElementById('doc_file').files[0]) {
+                formData.append('doc_file', document.getElementById('doc_file').files[0]);
+            }
+
+            const res = await fetch('/api/documents', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                document.getElementById('doc-form').reset();
+                loadDocuments();
+                alert('Dokument dodany!');
+            }
+        });
+
+        async function deleteDocument(id) {
+            if (confirm('Usunąć ten dokument?')) {
+                await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+                loadDocuments();
             }
         }
 
@@ -957,16 +1152,25 @@
             }
         });
 
+        // WYDATKI
         async function loadExpenses() {
             const res = await fetch('/api/expenses');
             if (res.ok) {
-                const expenses = await res.json();
+                allExpensesCache = await res.json();
                 const tbody = document.getElementById('expenses-table-body');
                 tbody.innerHTML = '';
-                expenses.forEach(exp => {
+                allExpensesCache.forEach(exp => {
                     let typeBadge = exp.type === 'fuel' ? '⛽ Paliwo' : (exp.type === 'fine' ? '🚨 Mandat' : '🔧 Serwis');
-                    let delBtn = currentUserRole === 'admin' ? `<button class="btn btn-danger btn-sm py-0 px-2" onclick="deleteExpense(${exp.id})">Usuń</button>` : '';
-                    tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${typeBadge}</td><td class="text-white">${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>${delBtn}</td></tr>`;
+                    
+                    let actionsCell = '';
+                    if (currentUserRole === 'admin' || exp.user_id === currentUserId) {
+                        actionsCell = `
+                            <button class="btn btn-outline-warning btn-sm py-0 px-2 fw-bold me-1" onclick="openEditExpenseModal(${exp.id})"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="deleteExpense(${exp.id})"><i class="fa-solid fa-trash"></i></button>
+                        `;
+                    }
+
+                    tbody.innerHTML += `<tr><td class="text-white">${exp.username}</td><td class="text-white">${typeBadge}</td><td class="text-white">${exp.description}</td><td class="text-danger">-${exp.amount} €</td><td>${actionsCell}</td></tr>`;
                 });
             }
         }
@@ -985,8 +1189,49 @@
             if (res.ok) { document.getElementById('expense-form').reset(); loadExpenses(); loadCompanyStats(); }
         });
 
+        function openEditExpenseModal(id) {
+            const exp = allExpensesCache.find(e => e.id === id);
+            if (!exp) return;
+
+            document.getElementById('edit_expense_id').value = exp.id;
+            document.getElementById('edit_expense_type').value = exp.type;
+            document.getElementById('edit_expense_amount').value = exp.amount;
+            document.getElementById('edit_expense_desc').value = exp.description;
+
+            const modal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
+            modal.show();
+        }
+
+        async function submitEditExpense() {
+            const id = document.getElementById('edit_expense_id').value;
+            const res = await fetch(`/api/expenses/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: document.getElementById('edit_expense_type').value,
+                    amount: document.getElementById('edit_expense_amount').value,
+                    description: document.getElementById('edit_expense_desc').value
+                })
+            });
+
+            if (res.ok) {
+                const modalEl = document.getElementById('editExpenseModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                loadExpenses();
+                loadCompanyStats();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Błąd edycji wydatku');
+            }
+        }
+
         async function deleteExpense(id) {
-            if (confirm('Usunąć wydatek?')) { await fetch(`/api/expenses/${id}`, { method: 'DELETE' }); loadExpenses(); loadCompanyStats(); }
+            if (confirm('Czy na pewno chcesz usunąć ten wydatek?')) { 
+                await fetch(`/api/expenses/${id}`, { method: 'DELETE' }); 
+                loadExpenses(); 
+                loadCompanyStats(); 
+            }
         }
 
         async function loadCompanyStats() {
@@ -1108,14 +1353,19 @@
                     if (unread > 0) { badge.innerText = unread; badge.classList.remove('d-none'); }
                     else { badge.classList.add('d-none'); }
 
-                    list.innerHTML = notifs.length === 0 ? '<li class="text-center text-muted small py-2">Brak powiadomień</li>' : notifs.map(n => `
-                        <li class="p-2 border-bottom border-secondary">
+                    list.innerHTML = notifs.length === 0 ? `<li class="text-center text-muted small py-2" data-i18n="no_notifs">${i18n[currentLang].no_notifs}</li>` : notifs.map(n => `
+                        <li class="p-2 border-bottom border-secondary notif-item" onclick="onNotificationClick('${n.action_tab || 'jobs'}')">
                             <div class="fw-bold text-white small">${n.title}</div>
                             <div class="text-light small">${n.message}</div>
                         </li>
                     `).join('');
                 }
             } catch (e) { console.error('Błąd powiadomień:', e); }
+        }
+
+        async function onNotificationClick(targetTab) {
+            await markNotifsAsRead();
+            switchTab(targetTab);
         }
 
         async function markNotifsAsRead() {
