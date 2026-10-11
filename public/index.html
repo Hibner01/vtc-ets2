@@ -7,7 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { 
-            background-color: #111316; 
+            background-color: #0b0f19; 
             color: #ffffff; 
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             min-height: 100vh; 
@@ -15,26 +15,26 @@
         }
 
         .auth-bg-main { 
-            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('/volvo1.png') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(11, 15, 25, 0.6), rgba(11, 15, 25, 0.6)), url('/volvo1.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
         .auth-bg-side { 
-            background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('/volvo2.png') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(11, 15, 25, 0.7), rgba(11, 15, 25, 0.7)), url('/volvo2.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
         .bg-card-bms { 
-            background-color: rgba(26, 29, 33, 0.92); 
-            border: 1px solid #323842; 
+            background-color: rgba(17, 24, 39, 0.92); 
+            border: 1px solid #1e293b; 
             border-radius: 20px; 
             backdrop-filter: blur(8px);
         }
 
         .sidebar {
             width: 250px;
-            background-color: #121418;
-            border-right: 1px solid #1f2329;
+            background-color: #0f172a;
+            border-right: 1px solid #1e293b;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -49,16 +49,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-bottom: 1px solid #1f2329;
+            border-bottom: 1px solid #1e293b;
             cursor: pointer;
         }
 
         .sidebar-user {
             padding: 14px 18px;
-            background-color: #181b20;
+            background-color: #1e293b;
             margin: 12px 16px;
             border-radius: 12px;
-            border: 1px solid #252a32;
+            border: 1px solid #334155;
         }
 
         .nav-sidebar {
@@ -70,7 +70,7 @@
         }
 
         .nav-item-bms {
-            color: #d1d5db;
+            color: #94a3b8;
             text-decoration: none;
             padding: 12px 16px;
             border-radius: 10px;
@@ -85,7 +85,7 @@
 
         .nav-item-bms:hover, .nav-item-bms.active {
             color: #ffffff;
-            background-color: #21252d;
+            background-color: #1e3a8a;
         }
 
         .main-wrapper {
@@ -96,8 +96,8 @@
         }
 
         .topbar {
-            background-color: #121418;
-            border-bottom: 1px solid #1f2329;
+            background-color: #0f172a;
+            border-bottom: 1px solid #1e293b;
             padding: 14px 28px;
             display: flex;
             align-items: center;
@@ -105,12 +105,12 @@
         }
 
         .topbar-clock {
-            background-color: #181b20;
-            border: 1px solid #252a32;
+            background-color: #1e293b;
+            border: 1px solid #334155;
             padding: 6px 16px;
             border-radius: 20px;
             font-size: 0.9rem;
-            color: #28a745;
+            color: #38bdf8;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -118,8 +118,8 @@
         }
 
         .truck-card { 
-            background-color: #1a1d21; 
-            border: 1px solid #2d3238; 
+            background-color: #111827; 
+            border: 1px solid #1f2937; 
             border-radius: 20px; 
             padding: 20px;
             transition: transform 0.2s, border-color 0.2s; 
@@ -133,7 +133,7 @@
 
         .truck-card:hover { 
             transform: translateY(-4px); 
-            border-color: #ffffff; 
+            border-color: #3b82f6; 
         }
 
         .truck-img-preview {
@@ -141,7 +141,7 @@
             height: 320px;
             object-fit: cover;
             border-radius: 16px;
-            border: 1px solid #383e47;
+            border: 1px solid #334155;
             box-shadow: 0 4px 14px rgba(0,0,0,0.6);
         }
 
@@ -150,7 +150,7 @@
             height: 130px;
             object-fit: cover;
             border-radius: 12px;
-            border: 1px solid #2d3238;
+            border: 1px solid #1f2937;
         }
 
         .input-group-custom {
@@ -162,14 +162,14 @@
         .input-group-custom i {
             position: absolute;
             left: 18px;
-            color: #9ca3af;
+            color: #94a3b8;
             font-size: 1.1rem;
             z-index: 10;
         }
 
         .form-control, .form-select {
-            background-color: #22262c !important;
-            border: 1px solid #3c424c !important;
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
             color: #ffffff !important;
             border-radius: 12px;
         }
@@ -181,13 +181,13 @@
         }
 
         ::placeholder {
-            color: #9ca3af !important;
+            color: #94a3b8 !important;
             opacity: 1 !important;
         }
 
         .btn-pill-white { 
             background-color: #ffffff;
-            color: #121417;
+            color: #0f172a;
             font-weight: 700;
             border-radius: 30px; 
             border: none;
@@ -196,23 +196,27 @@
         }
 
         .btn-pill-white:hover {
-            background-color: #e0e0e0;
+            background-color: #cbd5e1;
         }
 
         .btn-pill-dark {
-            background-color: #22262c;
+            background-color: #1e293b;
             color: #ffffff;
             font-weight: 600;
             border-radius: 30px;
-            border: 1px solid #3c424c;
+            border: 1px solid #334155;
             padding: 12px 24px;
             transition: all 0.2s ease;
         }
 
+        .btn-pill-dark:hover {
+            background-color: #334155;
+        }
+
         .pill-row {
-            border: 1px solid #2d3238;
+            border: 1px solid #1e293b;
             border-radius: 40px;
-            background-color: #181b20;
+            background-color: #111827;
             margin-bottom: 10px;
             padding: 12px 20px;
             display: flex;
@@ -232,8 +236,8 @@
 
         .notif-dropdown { 
             width: 340px; 
-            background-color: #181b20; 
-            border: 1px solid #252a32; 
+            background-color: #111827; 
+            border: 1px solid #1e293b; 
             max-height: 380px; 
             overflow-y: auto; 
         }
@@ -245,7 +249,7 @@
 
         <!-- EKRAN AUTORYZACJI -->
         <div id="auth-section" class="auth-bg-main flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
-            <div style="cursor: pointer;" onclick="exitApp()"><img src="/logo.png" alt="Mazren Spedition" style="max-height: 120px;" onerror="this.style.display='none'"></div>
+            <div style="cursor: pointer;" onclick="exitApp()"><img src="/logo.png" alt="Mazren Spedition" style="max-height: 120px;" loading="eager" onerror="this.style.display='none'"></div>
             
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
                 <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')">
@@ -332,7 +336,7 @@
             
             <aside class="sidebar">
                 <div class="sidebar-brand" onclick="switchTab('dashboard')" title="Strona Główna">
-                    <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" onerror="this.style.display='none'">
+                    <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" loading="eager" onerror="this.style.display='none'">
                 </div>
 
                 <div class="sidebar-user">
@@ -410,7 +414,8 @@
                 <main class="container-fluid p-4 flex-grow-1">
 
                     <div id="tab-dashboard">
-                        <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #6b21a8 0%, #9333ea 100%); border-radius: 20px; padding: 28px 32px;">
+                        <!-- BANER W STYLU GRANATOWYM -->
+                        <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 20px; padding: 28px 32px;">
                             <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> <span data-i18n="welcomeBackBanner">WITAJ Z POWROTEM</span></div>
                             <h2 class="fw-bold display-6 mb-1" id="banner-username">WladekKiero</h2>
                             <span class="badge bg-white text-dark fw-bold px-3 py-2 rounded-pill" id="banner-role">Kierowca</span>
@@ -609,7 +614,6 @@
                         </div>
                     </div>
 
-                    <!-- DOKUMENTY (POPRAWIONE ŚCIEŻKI DO PLIKÓW /uploads/) -->
                     <div id="tab-documents" style="display:none;">
                         <div class="bg-card-bms p-4">
                             <h4 class="fw-bold mb-4 text-white"><i class="fa-solid fa-folder-open me-2"></i> <span data-i18n="documentsHeader">Dokumenty i Regulaminy Firmowe</span></h4>
@@ -620,7 +624,7 @@
                                         <div>
                                             <span class="badge bg-success mb-2">DO POBRANIA</span>
                                             <h5 class="fw-bold text-white mb-3">Wzór CMR</h5>
-                                            <img src="/uploads/wzor.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <img src="/uploads/wzor.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
                                             <p class="text-white-50 small">Czysty wzór listu przewozowego Mazren Spedition.</p>
                                         </div>
                                         <a href="/uploads/wzor.jpg" target="_blank" download class="btn btn-pill-white w-100 fw-bold mt-3">
@@ -634,7 +638,7 @@
                                         <div>
                                             <span class="badge bg-danger mb-2">OFICJALNA</span>
                                             <h5 class="fw-bold text-white mb-3">Pieczątka Firmowa</h5>
-                                            <img src="/uploads/pieczatka.jpg" class="img-fluid rounded border border-secondary mb-3 bg-white p-2" style="max-height: 160px; object-fit: contain;" onerror="this.src='/logo.png'">
+                                            <img src="/uploads/pieczatka.jpg" class="img-fluid rounded border border-secondary mb-3 bg-white p-2" style="max-height: 160px; object-fit: contain;" loading="lazy" onerror="this.src='/logo.png'">
                                             <p class="text-white-50 small">Firmowa pieczęć Mazren Spedition Sp. z o.o.</p>
                                         </div>
                                         <a href="/uploads/pieczatka.jpg" target="_blank" download class="btn btn-pill-dark w-100 fw-bold mt-3">
@@ -648,7 +652,7 @@
                                         <div>
                                             <span class="badge bg-info mb-2">PRZYKŁAD</span>
                                             <h5 class="fw-bold text-white mb-3">Wypełniony CMR</h5>
-                                            <img src="/uploads/cmr_przyklad.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <img src="/uploads/cmr_przyklad.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
                                             <p class="text-white-50 small">Instrukcja poprawnego wypełniania listu przewozowego.</p>
                                         </div>
                                         <a href="/uploads/cmr_przyklad.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
@@ -662,7 +666,7 @@
                                         <div>
                                             <span class="badge bg-warning text-dark mb-2">RAPORT</span>
                                             <h5 class="fw-bold text-white mb-3">Podsumowanie Trasy</h5>
-                                            <img src="/uploads/przyklad-summary.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" onerror="this.src='/logo.png'">
+                                            <img src="/uploads/przyklad-summary.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
                                             <p class="text-white-50 small">Przykładowy zrzut ekranu z gry ETS2.</p>
                                         </div>
                                         <a href="/uploads/przyklad-summary.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
@@ -741,7 +745,7 @@
                 navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
                 navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
                 welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 6 000 km",
-                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizovaných ładunków", companyBudget: "Budżet Firmy",
+                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizowanych ładunków", companyBudget: "Budżet Firmy",
                 availableFunds: "Dostępne środki", companyKm: "Kilometry Firmy", totalDistance: "Łączny dystans",
                 completedRoutes: "Wykonane Trasy", yourTruck: "Twój Zestaw", noTruckAssigned: "Brak przypisanego zestawu w garażu.",
                 moreInfo: "Więcej informacji", trucksHeader: "Ciężarówki", addTruck: "Dodaj do Garażu", backBtn: "Powrót",
@@ -874,12 +878,76 @@
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
                     }
 
+                    renderAssignedTruckOnDashboard();
+                    loadNotifications();
+
                     await fetchDriversList();
                     switchTab('dashboard');
                     loadCompanyStats();
                     loadMyJobs();
                 } else { showLogin(); }
             } catch (e) { showLogin(); }
+        }
+
+        function renderAssignedTruckOnDashboard() {
+            const container = document.getElementById('my-assigned-truck-box');
+            let foundModel = null;
+            let foundPlate = null;
+
+            for (let plate in assignedTrucksStorage) {
+                if (assignedTrucksStorage[plate] === currentUsername) {
+                    foundPlate = plate;
+                    for (let model in staticTrucksSpecs) {
+                        if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
+                            foundModel = model;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            if (!foundModel || !foundPlate) {
+                container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
+                return;
+            }
+
+            const spec = staticTrucksSpecs[foundModel];
+            container.innerHTML = `
+                <div class="text-center">
+                    <h6 class="fw-bold text-info mb-2">${foundModel}</h6>
+                    <span class="badge bg-dark border border-secondary mb-3 px-3 py-1 fs-6">${foundPlate}</span>
+                    <img src="${spec.photo}" class="img-fluid rounded border border-secondary mb-3" style="max-height: 150px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+                    <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
+                        <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
+                    </button>
+                </div>
+            `;
+        }
+
+        function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-count');
+            
+            let notifs = [
+                { text: "Witaj w Mazren Control System!", time: "Dzisiaj" },
+                { text: "Sprawdź zakładkę Dokumenty po wzór CMR.", time: "Ważne" }
+            ];
+
+            if (notifs.length > 0) {
+                badge.classList.remove('d-none');
+                badge.innerText = notifs.length;
+                list.innerHTML = notifs.map(n => `
+                    <li class="p-2 border-bottom border-secondary text-white small">
+                        <div>${n.text}</div>
+                        <div class="text-muted" style="font-size: 10px;">${n.time}</div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        function markNotifsAsRead() {
+            document.getElementById('notif-count').classList.add('d-none');
         }
 
         function showLogin() {
@@ -1048,7 +1116,7 @@
                     <div class="col-md-3">
                         <div class="truck-card" onclick="openTruckGroupDetail('${modelName}')">
                             <h5 class="fw-bold text-white mb-2">${modelName}</h5>
-                            <img src="${spec.photo}" class="truck-card-grid-img mb-2" onerror="this.src='/logo.png'">
+                            <img src="${spec.photo}" class="truck-card-grid-img mb-2" loading="lazy" onerror="this.src='/logo.png'">
                             <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto">Więcej informacji</a>
                         </div>
                     </div>
@@ -1089,8 +1157,8 @@
                 <div class="row g-4">
                     <div class="col-md-7">
                         <h2 class="fw-bold text-white mb-3">${modelName}</h2>
-                        <div class="mb-3"><img src="${spec.photo}" class="truck-img-preview" onerror="this.src='/logo.png'"></div>
-                        <div><img src="${spec.photoBack}" class="truck-img-preview" onerror="this.src='/logo.png'"></div>
+                        <div class="mb-3"><img src="${spec.photo}" class="truck-img-preview" loading="lazy" onerror="this.src='/logo.png'"></div>
+                        <div><img src="${spec.photoBack}" class="truck-img-preview" loading="lazy" onerror="this.src='/logo.png'"></div>
                     </div>
                     <div class="col-md-5 border-start border-secondary ps-md-4">
                         ${bossAssignPanelHtml}
