@@ -1135,12 +1135,12 @@
                 container.innerHTML = myJobs.length === 0 ? '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>' : '';
                 
                 myJobs.forEach(j => {
-                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : j.cmr_file) : '';
-                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : j.summary_photo) : '';
+                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
+                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
 
                     let filesHtml = '';
-                    if (cmrLink) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
-                    if (summaryLink) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
+                    if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
+                    if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
@@ -1178,12 +1178,12 @@
                 container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
                 
                 jobs.forEach(j => {
-                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : j.cmr_file) : '';
-                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : j.summary_photo) : '';
+                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
+                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
 
                     let filesHtml = '';
-                    if (cmrLink) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
-                    if (summaryLink) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
+                    if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
+                    if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
@@ -1212,6 +1212,7 @@
                 console.error("Błąd ładowania wszystkich tras:", err);
             }
         }
+        
         async function loadDispatches() {
             const res = await fetch('/api/dispatches');
             if (res.ok) {
