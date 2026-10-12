@@ -238,11 +238,13 @@ app.get('/api/notifications', async (req, res) => {
 app.put('/api/notifications/read', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        await pool.query('UPDATE notifications SET is_read = true WHERE user_id = $1', [req.session.userId]);
+        await pool.query('UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false', [req.session.userId]);
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Błąd aktualizacji' }); }
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json({ error: 'Błąd aktualizacji' }); 
+    }
 });
-
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
