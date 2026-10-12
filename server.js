@@ -245,6 +245,16 @@ app.put('/api/notifications/read', async (req, res) => {
         res.status(500).json({ error: 'Błąd aktualizacji' }); 
     }
 });
+app.delete('/api/notifications/:id', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    try {
+        await pool.query('DELETE FROM notifications WHERE id = $1 AND user_id = $2', [req.params.id, req.session.userId]);
+        res.json({ success: true });
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json({ error: 'Błąd usuwania powiadomienia' }); 
+    }
+});
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
