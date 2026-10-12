@@ -1027,33 +1027,65 @@
                 </div>
             `;
         }
+async function loadNotifications() {
+    const list = document.getElementById('notif-list');
+    const badge = document.getElementById('notif-count');
+    if (!list || !badge) return;
 
-        function loadNotifications() {
-            const list = document.getElementById('notif-list');
-            const badge = document.getElementById('notif-count');
+    try {
+        const res = await fetch('/api/notifications');
+        if (!res.ok) return;
+        const notifs = await res.json();
+
+        if (notifs.length > 0) {
+            badge.classList.remove('d-none');
+            badge.innerText = notifs.length;
             
-            let notifs = [
-                { text: "Witaj w Mazren Control System!", time: "Dzisiaj" },
-                { text: "Sprawdź zakładkę Dokumenty po wzór CMR.", time: "Ważne" }
-            ];
-
-            if (notifs.length > 0) {
-                badge.classList.remove('d-none');
-                badge.innerText = notifs.length;
-                list.innerHTML = notifs.map(n => `
-                    <li class="p-2 border-bottom border-secondary text-white small">
-                        <div>${n.text}</div>
-                        <div class="text-muted" style="font-size: 10px;">${n.time}</div>
-                    </li>
-                `).join('');
-            }
+            list.innerHTML = notifs.map(n => `
+                <li class="p-2 border-bottom border-secondary text-white small notification-item" style="cursor: pointer; transition: background 0.2s;" onclick="handleNotificationClick(${n.id}, ${n.job_id || 'null'})">
+                    <div class="d-flex align-items-start">
+                        <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
+                            <div>${n.message || n.text}</div>
+                            <div class="text-muted" style="font-size: 10px;">${n.created_at ? new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Dzisiaj'}</div>
+                        </div>
+                    </div>
+                </li>
+            `).join('');
+        } else {
+            badge.classList.add('d-none');
+            list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
         }
+    } catch (err) {
+        console.error("Błąd ładowania powiadomień:", err);
+    }
+}
 
-        function markNotifsAsRead() {
-            document.getElementById('notif-count').classList.add('d-none');
+// Funkcja obsługująca kliknięcie w powiadomienie z przekierowaniem do zlecenia
+async function handleNotificationClick(notifId, jobId) {
+    try {
+        // Oznacz jako przeczytane na serwerze
+        await fetch(`/api/notifications/${notifId}/read`, { method: 'POST' });
+    } catch (e) {
+        console.error(e);
+    }
+
+    // Wywołanie funkcji czyszczącej licznik
+    if (typeof markNotifsAsRead === 'function') {
+        markNotifsAsRead();
+    }
+
+    // Jeśli powiadomienie dotyczy zlecenia, przełączamy widok na dyspozytornię
+    if (jobId && jobId !== 'null') {
+        if (typeof switchTab === 'function') {
+            switchTab('dispatch'); // Przenosi użytkownika do nowej dyspozytorni / zleceń
         }
+    }
 
-        function showLogin() {
+    // Odśwież listę
+    loadNotifications();
+}        function showLogin() {
             document.getElementById('auth-section').style.display = 'flex';
             document.getElementById('dashboard-section').style.display = 'none';
         }
