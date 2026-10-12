@@ -137,12 +137,16 @@ app.use(session({
     saveUninitialized: false
 }));
 
-async function addNotification(userId, title, message, actionTab = 'jobs') {
+async function addNotification(userId, title, message, jobId = null, actionTab = 'jobs') {
     try {
-        await pool.query('INSERT INTO notifications (user_id, title, message, action_tab) VALUES ($1, $2, $3, $4)', [userId, title, message, actionTab]);
-    } catch (e) { console.error('Błąd powiadomień:', e); }
+        await pool.query(
+            'INSERT INTO notifications (user_id, title, message, job_id, action_tab) VALUES ($1, $2, $3, $4, $5)', 
+            [userId, title, message, jobId, actionTab]
+        );
+    } catch (e) { 
+        console.error('Błąd powiadomień:', e); 
+    }
 }
-
 app.post('/api/register', async (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
     if (!username || !email || !password) return res.status(400).json({ error: 'Uzupełnij wszystkie pola.' });
@@ -331,19 +335,34 @@ app.post('/api/dispatches', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     const { assigned_to, start_city, end_city, truck_name, notes } = req.body;
     try {
-        await pool.query(
-            'INSERT INTO dispatches (assigned_to, start_city, end_city, truck_name, notes, status) VALUES ($1, $2, $3, $4, $5, $6)',
+        // 1. Tworzymy zlecenie i pobieramy jego ID dzięki RETURNING id
+        const newDispatch = await pool.query(
+            'INSERT INTO dispatches (assigned_to, start_city, end_city, truck_name, notes, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
             [assigned_to || 'Wszyscy', start_city, end_city, truck_name || 'Standardowy Zestaw', notes || '', 'W wolnym obiegu']
         );
+        
+        const newDispatchId = newDispatch.rows[0].id;
 
+        // 2. Jeśli zlecenie jest przypisane do konkretnego kierowcy, wysyłamy powiadomienie z tym ID
         if (assigned_to && assigned_to !== 'Wszyscy') {
             const targetUser = await pool.query('SELECT id FROM users WHERE username = $1', [assigned_to]);
             if (targetUser.rows.length > 0) {
-                await addNotification(targetUser.rows[0].id, 'Nowe Zlecenie', `Szef przydzielił Ci nową trasę: ${start_city} ➔ ${end_city}`, 'dispatcher');
+                await addNotification(
+                    targetUser.rows[0].id, 
+                    'Nowe Zlecenie', 
+                    `Szef przydzielił Ci nową trasę: ${start_city} ➔ ${end_city}`, 
+                    newDispatchId, 
+                    'dispatch'
+                );
             }
         }
 
-        res.json({ success: true });
+        res.json({ success: true, id: newDispatchId });
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json({ error: 'Błąd tworzenia zlecenia' }); 
+    }
+});        res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd dodawania zlecenia' }); }
 });
 
