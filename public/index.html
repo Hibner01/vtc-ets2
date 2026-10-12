@@ -241,49 +241,50 @@
             max-height: 380px; 
             overflow-y: auto; 
         }
+
         /* Styl wzorowany na polskiej tablicy rejestracyjnej */
-.polish-license-plate {
-    display: inline-flex;
-    align-items: stretch;
-    background-color: #ffffff;
-    color: #000000;
-    border: 2px solid #1e293b;
-    border-radius: 6px;
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: 800;
-    font-size: 1.05rem;
-    letter-spacing: 2px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
+        .polish-license-plate {
+            display: inline-flex;
+            align-items: stretch;
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #1e293b;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 800;
+            font-size: 1.05rem;
+            letter-spacing: 2px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
 
-.polish-plate-eu {
-    background-color: #003399;
-    color: #ffffff;
-    width: 26px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding-top: 3px;
-    font-size: 9px;
-    font-weight: bold;
-}
+        .polish-plate-eu {
+            background-color: #003399;
+            color: #ffffff;
+            width: 26px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 3px;
+            font-size: 9px;
+            font-weight: bold;
+        }
 
-.polish-plate-eu .eu-stars {
-    font-size: 7px;
-    line-height: 5px;
-    color: #ffcc00;
-    margin-bottom: 2px;
-}
+        .polish-plate-eu .eu-stars {
+            font-size: 7px;
+            line-height: 5px;
+            color: #ffcc00;
+            margin-bottom: 2px;
+        }
 
-.polish-plate-text {
-    padding: 4px 12px;
-    display: flex;
-    align-items: center;
-    background-color: #ffffff;
-    color: #111827;
-}
+        .polish-plate-text {
+            padding: 4px 12px;
+            display: flex;
+            align-items: center;
+            background-color: #ffffff;
+            color: #111827;
+        }
     </style>
 </head>
 <body>
@@ -562,95 +563,87 @@
                             </div>
                         </div>
                     </div>
-    <div id="tab-finances" style="display:none;">
-    <div class="row g-4">
-        <!-- Formularz dodawania wydatku -->
-        <div class="col-md-12">
-            <div class="bg-card-bms p-4">
-                <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>Zgłoś wydatek / koszt</h5>
-                <form id="expense-form" onsubmit="submitExpenseForm(event)">
-                    <div class="row g-3">
-                        <!-- Typ wydatku -->
-                        <div class="col-md-6">
-                            <label class="form-label text-white fw-semibold">Typ wydatku</label>
-                            <select id="expense_type" class="form-select text-white bg-dark border-secondary" onchange="toggleFuelFields()" required>
-                                <option value="fuel">⛽ Fuel / Paliwo</option>
-                                <option value="ferry">🚢 Prom / Ferry</option>
-                                <option value="tolls">🛣️ Opłaty drogowe / Tolls</option>
-                                <option value="service">🔧 Service / Serwis</option>
-                                <option value="fine">🚨 Fine / Mandat</option>
-                            </select>
-                        </div>
 
-                        <!-- Data wydatku (wspólna dla wszystkich) -->
-                        <div class="col-md-6">
-                            <label class="form-label text-white fw-semibold">Data wydatku</label>
-                            <input type="date" id="expense_date" class="form-control text-white bg-dark border-secondary" required>
+                    <div id="tab-finances" style="display:none;">
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>Zgłoś wydatek / koszt</h5>
+                                    <form id="expense-form" onsubmit="submitExpenseForm(event)">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label text-white fw-semibold">Typ wydatku</label>
+                                                <select id="expense_type" class="form-select text-white bg-dark border-secondary" onchange="toggleFuelFields()" required>
+                                                    <option value="fuel">⛽ Fuel / Paliwo</option>
+                                                    <option value="ferry">🚢 Prom / Ferry</option>
+                                                    <option value="tolls">🛣️ Opłaty drogowe / Tolls</option>
+                                                    <option value="service">🔧 Service / Serwis</option>
+                                                    <option value="fine">🚨 Fine / Mandat</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label text-white fw-semibold">Data wydatku</label>
+                                                <input type="date" id="expense_date" class="form-control text-white bg-dark border-secondary" required>
+                                            </div>
+                                        </div>
+
+                                        <div id="fuel-fields" class="row g-3 mt-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label text-white fw-semibold">Litry (L)</label>
+                                                <input type="number" id="expense_liters" class="form-control text-white bg-dark border-secondary" placeholder="np. 400" step="0.1">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-white fw-semibold">Koszt (€)</label>
+                                                <input type="number" id="expense_fuel_cost" class="form-control text-white bg-dark border-secondary" placeholder="np. 600">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-white fw-semibold">Km od ostatniego tankowania</label>
+                                                <input type="number" id="expense_km" class="form-control text-white bg-dark border-secondary" placeholder="np. 1200">
+                                            </div>
+                                        </div>
+
+                                        <div id="standard-fields" style="display:none;" class="row g-3 mt-2">
+                                            <div class="col-md-6">
+                                                <label class="form-label text-white fw-semibold" id="expense-desc-label">Trasa / Relacja promu (Skąd ➔ Dokąd)</label>
+                                                <input type="text" id="expense_description" class="form-control text-white bg-dark border-secondary" placeholder="np. Dover ➔ Calais">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label text-white fw-semibold">Koszt (€)</label>
+                                                <input type="number" id="expense_amount" class="form-control text-white bg-dark border-secondary" placeholder="np. 150">
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <button type="submit" class="btn btn-primary fw-bold px-4">+ Dodaj Wydatek</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-list me-2 text-primary"></i>Historia Wydatków Firmowych</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-dark table-hover align-middle mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>Kategoria</th>
+                                                    <th>Opis / Szczegóły</th>
+                                                    <th>Kwota</th>
+                                                    <th>Zgłosił</th>
+                                                    <th class="text-end">Akcje</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="expenses-table-body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Pola dedykowane dla Paliwa -->
-                    <div id="fuel-fields" class="row g-3 mt-2">
-                        <div class="col-md-4">
-                            <label class="form-label text-white fw-semibold">Litry (L)</label>
-                            <input type="number" id="expense_liters" class="form-control text-white bg-dark border-secondary" placeholder="np. 400" step="0.1">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-white fw-semibold">Koszt (€)</label>
-                            <input type="number" id="expense_fuel_cost" class="form-control text-white bg-dark border-secondary" placeholder="np. 600">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-white fw-semibold">Km od ostatniego tankowania</label>
-                            <input type="number" id="expense_km" class="form-control text-white bg-dark border-secondary" placeholder="np. 1200">
-                        </div>
-                    </div>
-
-                    <!-- Pola dla pozostałych wydatków (Prom, Opłaty, Serwis, Mandat) z dynamicznym opisem -->
-                    <div id="standard-fields" style="display:none;" class="row g-3 mt-2">
-                        <div class="col-md-6">
-                            <label class="form-label text-white fw-semibold" id="expense-desc-label">Trasa / Relacja promu (Skąd ➔ Dokąd)</label>
-                            <input type="text" id="expense_description" class="form-control text-white bg-dark border-secondary" placeholder="np. Dover ➔ Calais">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-white fw-semibold">Koszt (€)</label>
-                            <input type="number" id="expense_amount" class="form-control text-white bg-dark border-secondary" placeholder="np. 150">
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary fw-bold px-4">+ Dodaj Wydatek</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Tabela Historii Wydatków (żeby szef widział co usuwać) -->
-        <div class="col-md-12">
-            <div class="bg-card-bms p-4">
-                <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-list me-2 text-primary"></i>Historia Wydatków Firmowych</h5>
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Kategoria</th>
-                                <th>Opis / Szczegóły</th>
-                                <th>Kwota</th>
-                                <th>Zgłosił</th>
-                                <th class="text-end">Akcje</th>
-                            </tr>
-                        </thead>
-                        <tbody id="expenses-table-body">
-                            <!-- Tutaj skrypt ładuje listę -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
                     <div id="tab-dispatcher" style="display:none;">
-                        <!-- Panel Szefa: dodawanie zlecenia z automatycznym filtrowaniem zestawów przypisanych do wybranego kierowcy -->
                         <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4 border-info">
@@ -673,49 +666,47 @@
                             </div>
                         </div>
 
-                        <!-- Panel Kierowcy: Formularz wysłania raportu ukończonego zlecenia -->
                         <div class="row g-4 mb-4" id="driver-report-section" style="display:none;">
                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4 border-success">
                                     <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-paper-plane me-2"></i> Wyślij raport z ukończonego zlecenia</h5>
-                                   <form id="job-report-form" onsubmit="submitJobReport(event)" class="row g-3">
-                        <input type="hidden" id="report_dispatch_id">
-                        
-                        <div class="col-md-3">
-                            <label class="form-label text-white">Skąd</label>
-                            <input type="text" id="report_start" class="form-control bg-dark text-white border-secondary" required readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white">Dokąd</label>
-                            <input type="text" id="report_end" class="form-control bg-dark text-white border-secondary" required readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white">Dystans (km)</label>
-                            <input type="number" id="report_distance" class="form-control bg-dark text-white border-secondary" required placeholder="np. 1250">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white">Zarobek (€)</label>
-                            <input type="number" id="report_income" class="form-control bg-dark text-white border-secondary" required placeholder="np. 45000">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-white">Ładunek / Uwagi</label>
-                            <input type="text" id="report_cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Palety / Części samochodowe">
-                        </div>
+                                    <form id="job-report-form" onsubmit="submitJobReport(event)" class="row g-3">
+                                        <input type="hidden" id="report_dispatch_id">
+                                        
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Skąd</label>
+                                            <input type="text" id="report_start" class="form-control bg-dark text-white border-secondary" required readonly>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Dokąd</label>
+                                            <input type="text" id="report_end" class="form-control bg-dark text-white border-secondary" required readonly>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Dystans (km)</label>
+                                            <input type="number" id="report_distance" class="form-control bg-dark text-white border-secondary" required placeholder="np. 1250">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Zarobek (€)</label>
+                                            <input type="number" id="report_income" class="form-control bg-dark text-white border-secondary" required placeholder="np. 45000">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-white">Ładunek / Uwagi</label>
+                                            <input type="text" id="report_cargo" class="form-control bg-dark text-white border-secondary" placeholder="np. Palety / Części samochodowe">
+                                        </div>
 
-                        <!-- Dodane okienka na pliki: CMR oraz Podsumowanie -->
-                        <div class="col-md-6">
-                            <label class="form-label text-info fw-semibold"><i class="fa-solid fa-file-invoice me-1"></i> Zdjęcie / Skan CMR</label>
-                            <input type="file" id="report_cmr" class="form-control bg-dark text-white border-secondary" accept="image/*">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-info fw-semibold"><i class="fa-solid fa-image me-1"></i> Zdjęcie Podsumowania Trasy</label>
-                            <input type="file" id="report_summary" class="form-control bg-dark text-white border-secondary" accept="image/*">
-                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-info fw-semibold"><i class="fa-solid fa-file-invoice me-1"></i> Zdjęcie / Skan CMR</label>
+                                            <input type="file" id="report_cmr" class="form-control bg-dark text-white border-secondary" accept="image/*">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-info fw-semibold"><i class="fa-solid fa-image me-1"></i> Zdjęcie Podsumowania Trasy</label>
+                                            <input type="file" id="report_summary" class="form-control bg-dark text-white border-secondary" accept="image/*">
+                                        </div>
 
-                        <div class="col-md-6 d-flex align-items-end">
-                            <button type="submit" class="btn btn-success fw-bold w-100">Zatwierdź i wyślij raport trasy</button>
-                        </div>
-                    </form>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-success fw-bold w-100">Zatwierdź i wyślij raport trasy</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -803,7 +794,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -873,7 +863,7 @@
                 navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
                 navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
                 welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 6 000 km",
-                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizovaných ładunków", companyBudget: "Budżet Firmy",
+                deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizowanych ładunków", companyBudget: "Budżet Firmy",
                 availableFunds: "Dostępne środki", companyKm: "Kilometry Firmy", totalDistance: "Łączny dystans",
                 completedRoutes: "Wykonane Trasy", yourTruck: "Twój Zestaw", noTruckAssigned: "Brak przypisanego zestawu w garażu.",
                 moreInfo: "Więcej informacji", trucksHeader: "Ciężarówki", addTruck: "Dodaj do Garażu", backBtn: "Powrót",
@@ -969,7 +959,6 @@
             onAdminDriverSelectChange();
         }
 
-        // Automatyczne filtrowanie zestawów dla wybranego kierowcy w panelu szefa
         function onAdminDriverSelectChange() {
             const driverSelect = document.getElementById('dispatch_assigned');
             const truckSelect = document.getElementById('dispatch_truck');
@@ -978,7 +967,6 @@
             const selectedDriver = driverSelect.value;
             let driverTrucks = [];
 
-            // Szukamy zestawów przypisanych do tego kierowcy w bazie garażu
             for (let plate in assignedTrucksStorage) {
                 if (assignedTrucksStorage[plate] === selectedDriver) {
                     for (let model in staticTrucksSpecs) {
@@ -1036,151 +1024,145 @@
         }
 
         function renderAssignedTruckOnDashboard() {
-    const container = document.getElementById('my-assigned-truck-box');
-    let foundModel = null;
-    let foundPlate = null;
+            const container = document.getElementById('my-assigned-truck-box');
+            let foundModel = null;
+            let foundPlate = null;
 
-    for (let plate in assignedTrucksStorage) {
-        if (assignedTrucksStorage[plate] === currentUsername) {
-            foundPlate = plate;
-            for (let model in staticTrucksSpecs) {
-                if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
-                    foundModel = model;
+            for (let plate in assignedTrucksStorage) {
+                if (assignedTrucksStorage[plate] === currentUsername) {
+                    foundPlate = plate;
+                    for (let model in staticTrucksSpecs) {
+                        if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
+                            foundModel = model;
+                            break;
+                        }
+                    }
                     break;
                 }
             }
-            break;
-        }
-    }
 
-    if (!foundModel || !foundPlate) {
-        container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
-        return;
-    }
+            if (!foundModel || !foundPlate) {
+                container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
+                return;
+            }
 
-    const spec = staticTrucksSpecs[foundModel];
-    container.innerHTML = `
-        <div class="text-center">
-            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                <h6 class="fw-bold text-info mb-0">${foundModel}</h6>
-                <!-- Polska tablica rejestracyjna -->
-                <div class="polish-license-plate">
-                    <div class="polish-plate-eu">
-                        <div class="eu-stars">★★★★★<br>★★★★★</div>
-                        <span>PL</span>
-                    </div>
-                    <div class="polish-plate-text">${foundPlate}</div>
-                </div>
-            </div>
-            <!-- Powiększone zdjęcie zestawu -->
-            <div class="mb-3">
-                <img src="${spec.photo}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
-            </div>
-            <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
-                <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
-            </button>
-        </div>
-    `;
-}
-async function loadNotifications() {
-    const list = document.getElementById('notif-list');
-    const badge = document.getElementById('notif-count');
-    if (!list || !badge) return;
-
-    try {
-        const res = await fetch('/api/notifications');
-        if (!res.ok) return;
-        const notifs = await res.json();
-
-        if (notifs.length > 0) {
-            badge.classList.remove('d-none');
-            badge.innerText = notifs.length;
-            
-            list.innerHTML = notifs.map(n => {
-                let formattedDate = '';
-                if (n.created_at) {
-                    const dateObj = new Date(n.created_at);
-                    formattedDate = dateObj.toLocaleDateString('pl-PL', { 
-                        day: '2-digit', 
-                        month: '2-digit', 
-                        year: 'numeric' 
-                    }) + ' o ' + dateObj.toLocaleTimeString('pl-PL', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    });
-                } else {
-                    formattedDate = 'Dzisiaj';
-                }
-
-                return `
-                    <li class="p-2 border-bottom border-secondary text-white small notification-item bg-dark d-flex align-items-center justify-content-between">
-                        <div class="flex-grow-1" style="cursor: pointer;" onclick="handleNotificationClick(${n.job_id || 'null'})">
-                            <div class="d-flex align-items-start">
-                                <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
-                                <div>
-                                    <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
-                                    <div class="text-light">${n.message || n.text}</div>
-                                    <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${formattedDate}</div>
-                                </div>
+            const spec = staticTrucksSpecs[foundModel];
+            container.innerHTML = `
+                <div class="text-center">
+                    <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                        <h6 class="fw-bold text-info mb-0">${foundModel}</h6>
+                        <div class="polish-license-plate">
+                            <div class="polish-plate-eu">
+                                <div class="eu-stars">★★★★★<br>★★★★★</div>
+                                <span>PL</span>
                             </div>
+                            <div class="polish-plate-text">${foundPlate}</div>
                         </div>
-                        <button class="btn btn-outline-danger btn-sm ms-2 border-0" type="button" onclick="deleteSingleNotification(event, ${n.id})" title="Usuń powiadomienie">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </li>
-                `;
-            }).join('');
-        } else {
-            badge.classList.add('d-none');
-            list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
+                    </div>
+                    <div class="mb-3">
+                        <img src="${spec.photo}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+                    </div>
+                    <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
+                        <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
+                    </button>
+                </div>
+            `;
         }
-    } catch (err) {
-        console.error("Błąd ładowania powiadomień:", err);
-    }
-}
 
-// Kliknięcie w treść powiadomienia – wyłącznie przenosi do zlecenia (bez kasowania listy)
-function handleNotificationClick(jobId) {
-    if (jobId && jobId !== 'null') {
-        if (typeof switchTab === 'function') {
-            switchTab('dispatcher');
-        }
-    }
-}
+        async function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-count');
+            if (!list || !badge) return;
 
-// Usunięcie pojedynczego powiadomienia za pomocą ikony kosza
-async function deleteSingleNotification(event, notifId) {
-    event.stopPropagation(); // Zatrzymuje zdarzenie, żeby kliknięcie w koszyk nie otwierało zlecenia
-    try {
-        const res = await fetch(`/api/notifications/${notifId}`, { method: 'DELETE' });
-        if (res.ok) {
-            loadNotifications(); // Odświeża listę powiadomień
+            try {
+                const res = await fetch('/api/notifications');
+                if (!res.ok) return;
+                const notifs = await res.json();
+
+                if (notifs.length > 0) {
+                    badge.classList.remove('d-none');
+                    badge.innerText = notifs.length;
+                    
+                    list.innerHTML = notifs.map(n => {
+                        let formattedDate = '';
+                        if (n.created_at) {
+                            const dateObj = new Date(n.created_at);
+                            formattedDate = dateObj.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' o ' + dateObj.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+                        } else {
+                            formattedDate = 'Dzisiaj';
+                        }
+
+                        return `
+                            <li class="p-2 border-bottom border-secondary text-white small notification-item bg-dark d-flex align-items-center justify-content-between">
+                                <div class="flex-grow-1" style="cursor: pointer;" onclick="handleNotificationClick(${n.job_id || 'null'})">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
+                                        <div>
+                                            <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
+                                            <div class="text-light">${n.message || n.text}</div>
+                                            <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${formattedDate}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm ms-2 border-0" type="button" onclick="deleteSingleNotification(event, ${n.id})" title="Usuń powiadomienie">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </li>
+                        `;
+                    }).join('');
+                } else {
+                    badge.classList.add('d-none');
+                    list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
+                }
+            } catch (err) {
+                console.error("Błąd ładowania powiadomień:", err);
+            }
         }
-    } catch (err) {
-        console.error("Błąd usuwania powiadomienia:", err);
-    }
-}function showLogin() {
-    document.getElementById('auth-section').style.display = 'flex';
-    document.getElementById('dashboard-section').style.display = 'none';
-}
+
+        function handleNotificationClick(jobId) {
+            if (jobId && jobId !== 'null') {
+                if (typeof switchTab === 'function') {
+                    switchTab('dispatcher');
+                }
+            }
+        }
+
+        async function deleteSingleNotification(event, notifId) {
+            event.stopPropagation();
+            try {
+                const res = await fetch(`/api/notifications/${notifId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadNotifications();
+                }
+            } catch (err) {
+                console.error("Błąd usuwania powiadomienia:", err);
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('auth-section').style.display = 'flex';
+            document.getElementById('dashboard-section').style.display = 'none';
+        }
+
         async function performLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const p = document.getElementById('login-password').value.trim();
-    if (!email || !p) { alert('Uzupełnij login/e-mail i hasło!'); return; }
+            const email = document.getElementById('login-email').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            if (!email || !p) { alert('Uzupełnij login/e-mail i hasło!'); return; }
 
-    try {
-        const res = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password: p })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-            localStorage.setItem('vtc_logged_user', email);
-            checkUser();
-        } else { alert(data.error || 'Błąd logowania'); }
-    } catch (err) { alert('Błąd połączenia z serwerem.'); }
-}
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password: p })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('vtc_logged_user', email);
+                    checkUser();
+                } else { alert(data.error || 'Błąd logowania'); }
+            } catch (err) { alert('Błąd połączenia z serwerem.'); }
+        }
+
         async function performRegister() {
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
@@ -1284,179 +1266,176 @@ async function deleteSingleNotification(event, notifId) {
             }
         }
 
-       async function loadAllJobs() {
-    try {
-        const res = await fetch('/api/jobs');
-        if (!res.ok) return;
-        const jobs = await res.json();
-        const container = document.getElementById('all-jobs-container');
+        async function loadAllJobs() {
+            try {
+                const res = await fetch('/api/jobs');
+                if (!res.ok) return;
+                const jobs = await res.json();
+                const container = document.getElementById('all-jobs-container');
 
-        if (!container) return;
-        container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
+                if (!container) return;
+                container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
 
-        jobs.forEach(j => {
-            let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
-            let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
+                jobs.forEach(j => {
+                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
+                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
 
-            let filesHtml = '';
-            if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
-            if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
-            
-            // POPRAWKA: Używamy currentUserRole === 'admin' tak jak w reszcie Twojego kodu
-            let adminActionsHtml = '';
-            if (currentUserRole === 'admin') {
-                if (j.status === 'pending') {
-                    adminActionsHtml += `<button onclick="approveJob(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fas fa-check"></i> Zatwierdź</button>`;
-                }
-                adminActionsHtml += `<button onclick="deleteJob(${j.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Usuń</button>`;
+                    let filesHtml = '';
+                    if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
+                    if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
+                    
+                    let adminActionsHtml = '';
+                    if (currentUserRole === 'admin') {
+                        if (j.status === 'pending') {
+                            adminActionsHtml += `<button onclick="approveJob(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fas fa-check"></i> Zatwierdź</button>`;
+                        }
+                        adminActionsHtml += `<button onclick="deleteJob(${j.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Usuń</button>`;
+                    }
+
+                    let statusBadge = j.status === 'pending' 
+                        ? `<span class="badge bg-warning text-dark mb-1">Oczekuje na akceptację</span>` 
+                        : `<span class="badge bg-success mb-1">Zatwierdzona</span>`;
+
+                    container.innerHTML += `
+                        <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${j.username}</span>
+                                    ${statusBadge}
+                                    <h5 class="fw-bold text-white mb-0">
+                                        ${j.start_city} <i class="fas fa-arrow-right text-info mx-2"></i> ${j.end_city}
+                                    </h5>
+                                </div>
+                                <div class="text-end">
+                                    <span class="fw-bold text-success fs-5">${j.income || 0} €</span>
+                                    <span class="text-info ms-3 fw-semibold"><i class="fas fa-road me-1"></i> ${j.distance || 0} km</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary">${j.cargo || 'Standard'}</span>
+                                    <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> ${j.formatted_date || ''}</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2">${filesHtml}</div>
+                                    <div>${adminActionsHtml}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error('Błąd ładowania tras:', err);
             }
-
-            let statusBadge = j.status === 'pending' 
-                ? `<span class="badge bg-warning text-dark mb-1">Oczekuje na akceptację</span>` 
-                : `<span class="badge bg-success mb-1">Zatwierdzona</span>`;
-
-            container.innerHTML += `
-                <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${j.username}</span>
-                            ${statusBadge}
-                            <h5 class="fw-bold text-white mb-0">
-                                ${j.start_city} <i class="fas fa-arrow-right text-info mx-2"></i> ${j.end_city}
-                            </h5>
-                        </div>
-                        <div class="text-end">
-                            <span class="fw-bold text-success fs-5">${j.income || 0} €</span>
-                            <span class="text-info ms-3 fw-semibold"><i class="fas fa-road me-1"></i> ${j.distance || 0} km</span>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary">${j.cargo || 'Standard'}</span>
-                            <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> ${j.formatted_date || ''}</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <div class="me-2">${filesHtml}</div>
-                            <div>${adminActionsHtml}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    } catch (err) {
-        console.error('Błąd ładowania tras:', err);
-    }
-}
-
-// Funkcja zatwierdzania trasy przez Szefa
-async function approveJob(jobId) {
-    try {
-        const res = await fetch(`/api/jobs/${jobId}/approve`, { method: 'PUT' });
-        const data = await res.json();
-        if (data.success) {
-            loadAllJobs();
-        } else {
-            alert(data.error || 'Nie udało się zatwierdzić trasy.');
-        }
-    } catch (err) {
-        console.error('Błąd akceptacji trasy:', err);
-    }
-}
-
-// Funkcja odpowiedzialna za wysłanie żądania usunięcia trasy do serwera
-async function deleteJob(jobId) {
-    if (!confirm('Czy na pewno chcesz usunąć tę trasę?')) return;
-    try {
-        const res = await fetch(`/api/jobs/${jobId}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason: 'Usunięte przez Szefa' })
-        });
-        const data = await res.json();
-        if (data.success) {
-            // Odświeżamy zarówno listę firmową, jak i osobiste trasy na pulpicie oraz statystyki
-            if (typeof loadAllJobs === 'function') loadAllJobs();
-            if (typeof loadMyJobs === 'function') loadMyJobs();
-            if (typeof loadCompanyStats === 'function') loadCompanyStats();
-            if (typeof loadCompanyStatsFull === 'function') loadCompanyStatsFull();
-        } else {
-            alert(data.error || 'Nie udało się usunąć trasy.');
-        }
-    } catch (err) {
-        console.error('Błąd usuwania trasy:', err);
-    }
-}
-        async function loadDispatches() {
-    try {
-        const res = await fetch('/api/dispatches');
-        if (!res.ok) return;
-        const dispatches = await res.json();
-        const container = document.getElementById('dispatches-container');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        let visibleDispatches = dispatches.filter(d => currentUserRole === 'admin' || d.assigned_to === currentUsername || d.assigned_to === 'Wszyscy');
-
-        if (visibleDispatches.length === 0) {
-            container.innerHTML = `<div class="text-white-50 col-12 text-center py-3">Brak dostępnych zleceń w dyspozytorni.</div>`;
-            return;
         }
 
-        visibleDispatches.forEach(d => {
-            let actionBtn = '';
-            if (d.status === 'W wolnym obiegu') {
-                if (currentUserRole !== 'admin' && d.assigned_to !== currentUsername && d.assigned_to !== 'Wszyscy') {
-                    actionBtn = `<span class="badge bg-secondary">Przypisane do innego kierowcy</span>`;
+        async function approveJob(jobId) {
+            try {
+                const res = await fetch(`/api/jobs/${jobId}/approve`, { method: 'PUT' });
+                const data = await res.json();
+                if (data.success) {
+                    loadAllJobs();
                 } else {
-                    actionBtn = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                    alert(data.error || 'Nie udało się zatwierdzić trasy.');
                 }
-            } else if (d.status === 'W trakcie' && (d.accepted_by_username === currentUsername || currentUserRole === 'admin')) {
-                actionBtn = `<button class="btn btn-success btn-sm fw-bold" onclick="openJobReportForm(${d.id}, '${d.start_city}', '${d.end_city}')"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
-            } else {
-                actionBtn = `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username || 'Kierowca'})</span>`;
+            } catch (err) {
+                console.error('Błąd akceptacji trasy:', err);
             }
-
-            // Przycisk usuwania zlecenia dla szefa
-            let deleteDispatchBtn = currentUserRole === 'admin' 
-                ? `<button class="btn btn-outline-danger btn-sm" onclick="deleteDispatch(${d.id})" title="Usuń zlecenie"><i class="fa-solid fa-trash"></i></button>` 
-                : '';
-
-            container.innerHTML += `
-                <div class="col-md-6">
-                    <div class="bg-card-bms p-4 position-relative">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h4 class="fw-bold text-white mb-0">${d.start_city} <i class="fa-solid fa-arrow-right text-info mx-1"></i> ${d.end_city}</h4>
-                            <div>${deleteDispatchBtn}</div>
-                        </div>
-                        <p class="text-info mb-1 small">Przypisany kierowca: <strong>${d.assigned_to}</strong></p>
-                        <p class="text-light mb-2 small">Zestaw: ${d.truck_name || 'Standard'}</p>
-                        ${d.notes ? `<p class="text-white-50 small mb-3">Ładunek/Uwagi: ${d.notes}</p>` : ''}
-                        <div class="mt-3">${actionBtn}</div>
-                    </div>
-                </div>
-            `;
-        });
-    } catch (e) {
-        console.error("Błąd ładowania dyspozytorni:", e);
-    }
-}
-
-async function deleteDispatch(id) {
-    if (!confirm('Czy na pewno chcesz usunąć to zlecenie z dyspozytorni?')) return;
-    try {
-        const res = await fetch(`/api/dispatches/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-            loadDispatches();
-            alert('Zlecenie zostało usunięte.');
-        } else {
-            alert('Nie udało się usunąć zlecenia.');
         }
-    } catch (err) {
-        console.error(err);
-        alert('Błąd połączenia z serwerem.');
-    }
-}
+
+        async function deleteJob(jobId) {
+            if (!confirm('Czy na pewno chcesz usunąć tę trasę?')) return;
+            try {
+                const res = await fetch(`/api/jobs/${jobId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: 'Usunięte przez Szefa' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (typeof loadAllJobs === 'function') loadAllJobs();
+                    if (typeof loadMyJobs === 'function') loadMyJobs();
+                    if (typeof loadCompanyStats === 'function') loadCompanyStats();
+                    if (typeof loadCompanyStatsFull === 'function') loadCompanyStatsFull();
+                } else {
+                    alert(data.error || 'Nie udało się usunąć trasy.');
+                }
+            } catch (err) {
+                console.error('Błąd usuwania trasy:', err);
+            }
+        }
+
+        async function loadDispatches() {
+            try {
+                const res = await fetch('/api/dispatches');
+                if (!res.ok) return;
+                const dispatches = await res.json();
+                const container = document.getElementById('dispatches-container');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                let visibleDispatches = dispatches.filter(d => currentUserRole === 'admin' || d.assigned_to === currentUsername || d.assigned_to === 'Wszyscy');
+
+                if (visibleDispatches.length === 0) {
+                    container.innerHTML = `<div class="text-white-50 col-12 text-center py-3">Brak dostępnych zleceń w dyspozytorni.</div>`;
+                    return;
+                }
+
+                visibleDispatches.forEach(d => {
+                    let actionBtn = '';
+                    if (d.status === 'W wolnym obiegu') {
+                        if (currentUserRole !== 'admin' && d.assigned_to !== currentUsername && d.assigned_to !== 'Wszyscy') {
+                            actionBtn = `<span class="badge bg-secondary">Przypisane do innego kierowcy</span>`;
+                        } else {
+                            actionBtn = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                        }
+                    } else if (d.status === 'W trakcie' && (d.accepted_by_username === currentUsername || currentUserRole === 'admin')) {
+                        actionBtn = `<button class="btn btn-success btn-sm fw-bold" onclick="openJobReportForm(${d.id}, '${d.start_city}', '${d.end_city}')"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
+                    } else {
+                        actionBtn = `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username || 'Kierowca'})</span>`;
+                    }
+
+                    let deleteDispatchBtn = currentUserRole === 'admin' 
+                        ? `<button class="btn btn-outline-danger btn-sm" onclick="deleteDispatch(${d.id})" title="Usuń zlecenie"><i class="fa-solid fa-trash"></i></button>` 
+                        : '';
+
+                    container.innerHTML += `
+                        <div class="col-md-6">
+                            <div class="bg-card-bms p-4 position-relative">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h4 class="fw-bold text-white mb-0">${d.start_city} <i class="fa-solid fa-arrow-right text-info mx-1"></i> ${d.end_city}</h4>
+                                    <div>${deleteDispatchBtn}</div>
+                                </div>
+                                <p class="text-info mb-1 small">Przypisany kierowca: <strong>${d.assigned_to}</strong></p>
+                                <p class="text-light mb-2 small">Zestaw: ${d.truck_name || 'Standard'}</p>
+                                ${d.notes ? `<p class="text-white-50 small mb-3">Ładunek/Uwagi: ${d.notes}</p>` : ''}
+                                <div class="mt-3">${actionBtn}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error("Błąd ładowania dyspozytorni:", e);
+            }
+        }
+
+        async function deleteDispatch(id) {
+            if (!confirm('Czy na pewno chcesz usunąć to zlecenie z dyspozytorni?')) return;
+            try {
+                const res = await fetch(`/api/dispatches/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadDispatches();
+                    alert('Zlecenie zostało usunięte.');
+                } else {
+                    alert('Nie udało się usunąć zlecenia.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Błąd połączenia z serwerem.');
+            }
+        }
+
         async function submitDispatchForm(e) {
             e.preventDefault();
             const data = {
@@ -1494,12 +1473,10 @@ async function deleteDispatch(id) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-       async function submitJobReport(e) {
+        async function submitJobReport(e) {
             e.preventDefault();
             
             const dispatchId = document.getElementById('report_dispatch_id').value;
-            const startCity = document.getElementById('report_start').value;
-            const endCity = document.getElementById('report_end').value;
             const distance = document.getElementById('report_distance').value;
             const income = document.getElementById('report_income').value;
             const cargo = document.getElementById('report_cargo').value || 'Standard';
@@ -1512,7 +1489,6 @@ async function deleteDispatch(id) {
             formData.append('income', income);
             formData.append('cargo', cargo);
 
-            // Nazwy muszą pasować do multer.fields w server.js: 'cmr_file' oraz 'summary_photo'
             if (cmrFile) formData.append('cmr_file', cmrFile);
             if (summaryFile) formData.append('summary_photo', summaryFile);
 
@@ -1538,6 +1514,7 @@ async function deleteDispatch(id) {
                 alert('Wystąpił błąd połączenia z serwerem.');
             }
         }
+
         async function loadGarage() {
             const grid = document.getElementById('garage-grid');
             grid.innerHTML = '';
@@ -1555,53 +1532,50 @@ async function deleteDispatch(id) {
             }
         }
 
-        function renderAssignedTruckOnDashboard() {
-    const container = document.getElementById('my-assigned-truck-box');
-    let foundModel = null;
-    let foundPlate = null;
+        // NAPRAWIONE: Dodana brakująca funkcja openTruckGroupDetail z polskimi tablicami rejestracyjnymi w garażu
+        function openTruckGroupDetail(modelName) {
+            const spec = staticTrucksSpecs[modelName] || {};
+            document.getElementById('garage-main-view').style.display = 'none';
+            document.getElementById('garage-detail-view').style.display = 'block';
 
-    for (let plate in assignedTrucksStorage) {
-        if (assignedTrucksStorage[plate] === currentUsername) {
-            foundPlate = plate;
-            for (let model in staticTrucksSpecs) {
-                if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
-                    foundModel = model;
-                    break;
-                }
-            }
-            break;
-        }
-    }
+            let platesList = spec.defaultUnits || [];
+            let activeCount = 0;
+            
+            let unitsHtml = platesList.map(plate => {
+                let assignedUser = assignedTrucksStorage[plate] || '';
+                if(assignedUser) activeCount++;
+                return `
+                    <div class="d-flex align-items-center justify-content-between mb-3 text-white fs-6 p-2 rounded bg-dark border border-secondary">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="polish-license-plate" style="font-size: 0.9rem;">
+                                <div class="polish-plate-eu" style="width: 22px; font-size: 8px;">
+                                    <div class="eu-stars" style="font-size: 6px;">★★★★★<br>★★★★★</div>
+                                    <span>PL</span>
+                                </div>
+                                <div class="polish-plate-text" style="padding: 3px 10px;">${plate}</div>
+                            </div>
+                        </div>
+                        <div>${assignedUser ? `<span class="text-warning fw-semibold">@${assignedUser}</span>` : '<span class="text-muted">- Wolny</span>'}</div>
+                    </div>`;
+            }).join('');
 
-    if (!foundModel || !foundPlate) {
-        container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
-        return;
-    }
-
-    const spec = staticTrucksSpecs[foundModel];
-    container.innerHTML = `
-        <div class="text-center">
-            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                <h6 class="fw-bold text-info mb-0">${foundModel}</h6>
-                <!-- Polska tablica rejestracyjna -->
-                <div class="polish-license-plate">
-                    <div class="polish-plate-eu">
-                        <div class="eu-stars">★★★★★<br>★★★★★</div>
-                        <span>PL</span>
+            let bossAssignPanelHtml = '';
+            if (currentUserRole === 'admin') {
+                let optionsPlates = platesList.map(p => `<option value="${p}">${p}</option>`).join('');
+                let optionsDrivers = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+                bossAssignPanelHtml = `
+                    <div class="bg-card-bms p-3 mb-4 border border-warning rounded-3">
+                        <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-user-gear me-2"></i> Przypisz Zestaw (Panel Szefa)</h6>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5"><select id="assign_select_plate" class="form-select form-select-sm bg-dark text-white border-secondary">${optionsPlates}</select></div>
+                            <div class="col-md-5"><select id="assign_select_driver" class="form-select form-select-sm bg-dark text-white border-secondary"><option value="">-- Zwolnij --</option>${optionsDrivers}</select></div>
+                            <div class="col-md-2"><button class="btn btn-pill-white btn-sm w-100 fw-bold" onclick="saveDriverAssignment('${modelName}')">Zapisz</button></div>
+                        </div>
                     </div>
-                    <div class="polish-plate-text">${foundPlate}</div>
-                </div>
-            </div>
-            <!-- Powiększone zdjęcie zestawu -->
-            <div class="mb-3">
-                <img src="${spec.photo}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
-            </div>
-            <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
-                <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
-            </button>
-        </div>
-    `;
-}            document.getElementById('truck-detail-content').innerHTML = `
+                `;
+            }
+
+            document.getElementById('truck-detail-content').innerHTML = `
                 <div class="row g-4">
                     <div class="col-md-7">
                         <h2 class="fw-bold text-white mb-3">${modelName}</h2>
@@ -1641,143 +1615,146 @@ async function deleteDispatch(id) {
         }
 
         async function loadExpenses() {
-    try {
-        const res = await fetch('/api/expenses');
-        if (!res.ok) return;
-        const expenses = await res.json();
-        
-        const tbody = document.getElementById('expenses-table-body');
-        if (!tbody) return;
-        tbody.innerHTML = '';
+            try {
+                const res = await fetch('/api/expenses');
+                if (!res.ok) return;
+                const expenses = await res.json();
+                
+                const tbody = document.getElementById('expenses-table-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
 
-        expenses.forEach(e => {
-            let typeName = e.type;
-            if (e.type === 'fuel') typeName = '⛽ Paliwo';
-            else if (e.type === 'ferry') typeName = '🚢 Prom';
-            else if (e.type === 'tolls') typeName = '🛣️ Opłaty drogowe';
-            else if (e.type === 'service') typeName = '🔧 Serwis';
-            else if (e.type === 'fine') typeName = '🚨 Mandat';
+                expenses.forEach(e => {
+                    let typeName = e.type;
+                    if (e.type === 'fuel') typeName = '⛽ Paliwo';
+                    else if (e.type === 'ferry') typeName = '🚢 Prom';
+                    else if (e.type === 'tolls') typeName = '🛣️ Opłaty drogowe';
+                    else if (e.type === 'service') typeName = '🔧 Serwis';
+                    else if (e.type === 'fine') typeName = '🚨 Mandat';
 
-            // Przycisk usuwania dla każdego wpisu (szef usunie każdy, kierowca tylko swój na backendzie)
-            let deleteBtn = `<button class="btn btn-outline-danger btn-sm" onclick="deleteExpense(${e.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`;
+                    let deleteBtn = `<button class="btn btn-outline-danger btn-sm" onclick="deleteExpense(${e.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`;
+                    let formattedDate = e.expense_date ? new Date(e.expense_date).toLocaleDateString('pl-PL') : '-';
 
-            let formattedDate = e.expense_date ? new Date(e.expense_date).toLocaleDateString('pl-PL') : '-';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${formattedDate}</td>
-                    <td><span class="badge bg-secondary">${typeName}</span></td>
-                    <td>${e.description || '-'}</td>
-                    <td class="fw-bold text-warning">${e.amount} €</td>
-                    <td>${e.username || 'Kierowca'}</td>
-                    <td class="text-end">${deleteBtn}</td>
-                </tr>
-            `;
-        });
-    } catch (err) {
-        console.error("Błąd ładowania wydatków:", err);
-    }
-}
-
-async function deleteExpense(id) {
-    if (!confirm('Czy na pewno chcesz usunąć ten wydatek?')) return;
-    try {
-        const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-            loadExpenses();
-            alert('Wydatek został usunięty.');
-        } else {
-            const errData = await res.json();
-            alert('Błąd usuwania: ' + (errData.error || 'Brak uprawnień'));
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Błąd połączenia z serwerem.');
-    }
-}function toggleFuelFields() {
-    const type = document.getElementById('expense_type').value;
-    const fuelFields = document.getElementById('fuel-fields');
-    const standardFields = document.getElementById('standard-fields');
-    const descInput = document.getElementById('expense_description');
-    const descLabel = document.getElementById('expense-desc-label');
-
-    if (!fuelFields || !standardFields) return;
-
-    if (type === 'fuel') {
-        fuelFields.style.display = 'block';
-        standardFields.style.display = 'none';
-    } else {
-        fuelFields.style.display = 'none';
-        standardFields.style.display = 'block';
-
-        if (descLabel && descInput) {
-            if (type === 'ferry') {
-                descLabel.innerText = "Trasa / Relacja promu (Skąd ➔ Dokąd)";
-                descInput.placeholder = "np. Dover ➔ Calais";
-            } else if (type === 'tolls') {
-                descLabel.innerText = "Kraj / System opłat drogowych";
-                descInput.placeholder = "np. Niemcy (Toll Collect) / Austria (GoBox)";
-            } else if (type === 'fine') {
-                descLabel.innerText = "Powód / Za podany mandat";
-                descInput.placeholder = "np. Przekroczenie prędkości / Czas pracy";
-            } else if (type === 'service') {
-                descLabel.innerText = "Zakres naprawy / Serwis";
-                descInput.placeholder = "np. Wymiana klocków hamulcowych";
-            } else {
-                descLabel.innerText = "Opis / Szczegóły";
-                descInput.placeholder = "np. Dodatkowe informacje";
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${formattedDate}</td>
+                            <td><span class="badge bg-secondary">${typeName}</span></td>
+                            <td>${e.description || '-'}</td>
+                            <td class="fw-bold text-warning">${e.amount} €</td>
+                            <td>${e.username || 'Kierowca'}</td>
+                            <td class="text-end">${deleteBtn}</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Błąd ładowania wydatków:", err);
             }
         }
-    }
-}
-async function submitExpenseForm(e) {
-    e.preventDefault();
-    const type = document.getElementById('expense_type').value;
-    let amount = 0;
-    let description = '';
 
-    if (type === 'fuel') {
-        const date = document.getElementById('expense_date').value || new Date().toISOString().split('T')[0];
-        const liters = document.getElementById('expense_liters').value || '0';
-        const cost = document.getElementById('expense_fuel_cost').value || '0';
-        const km = document.getElementById('expense_km').value || '0';
+        async function deleteExpense(id) {
+            if (!confirm('Czy na pewno chcesz usunąć ten wydatek?')) return;
+            try {
+                const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadExpenses();
+                    alert('Wydatek został usunięty.');
+                } else {
+                    const errData = await res.json();
+                    alert('Błąd usuwania: ' + (errData.error || 'Brak uprawnień'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Błąd połączenia z serwerem.');
+            }
+        }
 
-        amount = cost;
-        description = `Data: ${date} | Litry: ${liters}L | Trasa od tankowania: ${km} km`;
-    } else {
-        amount = document.getElementById('expense_amount').value;
-        description = document.getElementById('expense_description').value; // Poprawione z expense_desc na expense_description
-    }
+        function toggleFuelFields() {
+            const type = document.getElementById('expense_type').value;
+            const fuelFields = document.getElementById('fuel-fields');
+            const standardFields = document.getElementById('standard-fields');
+            const descInput = document.getElementById('expense_description');
+            const descLabel = document.getElementById('expense-desc-label');
 
-    const data = {
-        type: type,
-        amount: amount,
-        description: description,
-        expense_date: document.getElementById('expense_date').value
-    };
+            if (!fuelFields || !standardFields) return;
 
-    const res = await fetch('/api/expenses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
+            if (type === 'fuel') {
+                fuelFields.style.display = 'block';
+                standardFields.style.display = 'none';
+            } else {
+                fuelFields.style.display = 'none';
+                standardFields.style.display = 'block';
 
-    if (res.ok) {
-        document.getElementById('expense-form').reset();
-        toggleFuelFields();
-        loadExpenses();
-        loadCompanyStats();
-        alert('Wydatek został pomyślnie dodany!');
-    } else {
-        alert('Błąd podczas dodawania wydatku.');
-    }
-}
-document.addEventListener('DOMContentLoaded', () => {
-    const dateInput = document.getElementById('expense_date');
-    if (dateInput) {
-        dateInput.valueAsDate = new Date();
-    }
-});
+                if (descLabel && descInput) {
+                    if (type === 'ferry') {
+                        descLabel.innerText = "Trasa / Relacja promu (Skąd ➔ Dokąd)";
+                        descInput.placeholder = "np. Dover ➔ Calais";
+                    } else if (type === 'tolls') {
+                        descLabel.innerText = "Kraj / System opłat drogowych";
+                        descInput.placeholder = "np. Niemcy (Toll Collect) / Austria (GoBox)";
+                    } else if (type === 'fine') {
+                        descLabel.innerText = "Powód / Za podany mandat";
+                        descInput.placeholder = "np. Przekroczenie prędkości / Czas pracy";
+                    } else if (type === 'service') {
+                        descLabel.innerText = "Zakres naprawy / Serwis";
+                        descInput.placeholder = "np. Wymiana klocków hamulcowych";
+                    } else {
+                        descLabel.innerText = "Opis / Szczegóły";
+                        descInput.placeholder = "np. Dodatkowe informacje";
+                    }
+                }
+            }
+        }
+
+        async function submitExpenseForm(e) {
+            e.preventDefault();
+            const type = document.getElementById('expense_type').value;
+            let amount = 0;
+            let description = '';
+
+            if (type === 'fuel') {
+                const date = document.getElementById('expense_date').value || new Date().toISOString().split('T')[0];
+                const liters = document.getElementById('expense_liters').value || '0';
+                const cost = document.getElementById('expense_fuel_cost').value || '0';
+                const km = document.getElementById('expense_km').value || '0';
+
+                amount = cost;
+                description = `Data: ${date} | Litry: ${liters}L | Trasa od tankowania: ${km} km`;
+            } else {
+                amount = document.getElementById('expense_amount').value;
+                description = document.getElementById('expense_description').value;
+            }
+
+            const data = {
+                type: type,
+                amount: amount,
+                description: description,
+                expense_date: document.getElementById('expense_date').value
+            };
+
+            const res = await fetch('/api/expenses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                document.getElementById('expense-form').reset();
+                toggleFuelFields();
+                loadExpenses();
+                loadCompanyStats();
+                alert('Wydatek został pomyślnie dodany!');
+            } else {
+                alert('Błąd podczas dodawania wydatku.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('expense_date');
+            if (dateInput) {
+                dateInput.valueAsDate = new Date();
+            }
+        });
+
         checkUser();
     </script>
 </body>
