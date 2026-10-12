@@ -1320,7 +1320,11 @@ async function deleteJob(jobId) {
         });
         const data = await res.json();
         if (data.success) {
-            loadAllJobs(); // Odświeża listę tras po usunięciu
+            // Odświeżamy zarówno listę firmową, jak i osobiste trasy na pulpicie oraz statystyki
+            if (typeof loadAllJobs === 'function') loadAllJobs();
+            if (typeof loadMyJobs === 'function') loadMyJobs();
+            if (typeof loadCompanyStats === 'function') loadCompanyStats();
+            if (typeof loadCompanyStatsFull === 'function') loadCompanyStatsFull();
         } else {
             alert(data.error || 'Nie udało się usunąć trasy.');
         }
