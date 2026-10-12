@@ -1164,24 +1164,23 @@ async function deleteSingleNotification(event, notifId) {
     document.getElementById('dashboard-section').style.display = 'none';
 }
         async function performLogin() {
-            const email = document.getElementById('login-email').value.trim();
-            const p = document.getElementById('login-password').value.trim();
-            if (!email || !p) { alert('Uzupełnij login/e-mail i hasło!'); return; }
+    const email = document.getElementById('login-email').value.trim();
+    const p = document.getElementById('login-password').value.trim();
+    if (!email || !p) { alert('Uzupełnij login/e-mail i hasło!'); return; }
 
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password: p })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    localStorage.setItem('vtc_logged_user', email);
-                    checkUser();
-                } else { alert(data.error || 'Błąd logowania'); }
-            } catch (err) { alert('Błąd połączenia z serwerem.'); }
-        }
-
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: p })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            localStorage.setItem('vtc_logged_user', email);
+            checkUser();
+        } else { alert(data.error || 'Błąd logowania'); }
+    } catch (err) { alert('Błąd połączenia z serwerem.'); }
+}
         async function performRegister() {
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
