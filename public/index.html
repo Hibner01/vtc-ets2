@@ -1063,9 +1063,16 @@
         <div class="text-center">
             <div class="d-flex justify-content-between align-items-center mb-2 px-1">
                 <h6 class="fw-bold text-info mb-0">${foundModel}</h6>
-                <span class="badge bg-dark border border-secondary px-3 py-1 fs-6">${foundPlate}</span>
+                <!-- Polska tablica rejestracyjna -->
+                <div class="polish-license-plate">
+                    <div class="polish-plate-eu">
+                        <div class="eu-stars">★★★★★<br>★★★★★</div>
+                        <span>PL</span>
+                    </div>
+                    <div class="polish-plate-text">${foundPlate}</div>
+                </div>
             </div>
-            <!-- Powiększone zdjęcie zestawu (pełna szerokość karty i większa wysokość) -->
+            <!-- Powiększone zdjęcie zestawu -->
             <div class="mb-3">
                 <img src="${spec.photo}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
             </div>
@@ -1549,36 +1556,53 @@ async function deleteDispatch(id) {
             }
         }
 
-        function openTruckGroupDetail(modelName) {
-            const spec = staticTrucksSpecs[modelName] || {};
-            document.getElementById('garage-main-view').style.display = 'none';
-            document.getElementById('garage-detail-view').style.display = 'block';
+        function renderAssignedTruckOnDashboard() {
+    const container = document.getElementById('my-assigned-truck-box');
+    let foundModel = null;
+    let foundPlate = null;
 
-            let platesList = spec.defaultUnits || [];
-            let activeCount = 0;
-            let unitsHtml = platesList.map(plate => {
-                let assignedUser = assignedTrucksStorage[plate] || '';
-                if(assignedUser) activeCount++;
-                return `<div class="d-flex align-items-center justify-content-between mb-2 text-white fs-6 p-2 rounded bg-dark border border-secondary"><div><strong>${plate}</strong> ${assignedUser ? `- <span class="text-warning">@${assignedUser}</span>` : '<span class="text-muted">- Wolny</span>'}</div></div>`;
-            }).join('');
-
-            let bossAssignPanelHtml = '';
-            if (currentUserRole === 'admin') {
-                let optionsPlates = platesList.map(p => `<option value="${p}">${p}</option>`).join('');
-                let optionsDrivers = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
-                bossAssignPanelHtml = `
-                    <div class="bg-card-bms p-3 mb-4 border border-warning rounded-3">
-                        <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-user-gear me-2"></i> Przypisz Zestaw (Panel Szefa)</h6>
-                        <div class="row g-2 align-items-center">
-                            <div class="col-md-5"><select id="assign_select_plate" class="form-select form-select-sm bg-dark text-white border-secondary">${optionsPlates}</select></div>
-                            <div class="col-md-5"><select id="assign_select_driver" class="form-select form-select-sm bg-dark text-white border-secondary"><option value="">-- Zwolnij --</option>${optionsDrivers}</select></div>
-                            <div class="col-md-2"><button class="btn btn-pill-white btn-sm w-100 fw-bold" onclick="saveDriverAssignment('${modelName}')">Zapisz</button></div>
-                        </div>
-                    </div>
-                `;
+    for (let plate in assignedTrucksStorage) {
+        if (assignedTrucksStorage[plate] === currentUsername) {
+            foundPlate = plate;
+            for (let model in staticTrucksSpecs) {
+                if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
+                    foundModel = model;
+                    break;
+                }
             }
+            break;
+        }
+    }
 
-            document.getElementById('truck-detail-content').innerHTML = `
+    if (!foundModel || !foundPlate) {
+        container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
+        return;
+    }
+
+    const spec = staticTrucksSpecs[foundModel];
+    container.innerHTML = `
+        <div class="text-center">
+            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                <h6 class="fw-bold text-info mb-0">${foundModel}</h6>
+                <!-- Polska tablica rejestracyjna -->
+                <div class="polish-license-plate">
+                    <div class="polish-plate-eu">
+                        <div class="eu-stars">★★★★★<br>★★★★★</div>
+                        <span>PL</span>
+                    </div>
+                    <div class="polish-plate-text">${foundPlate}</div>
+                </div>
+            </div>
+            <!-- Powiększone zdjęcie zestawu -->
+            <div class="mb-3">
+                <img src="${spec.photo}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+            </div>
+            <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
+                <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
+            </button>
+        </div>
+    `;
+}            document.getElementById('truck-detail-content').innerHTML = `
                 <div class="row g-4">
                     <div class="col-md-7">
                         <h2 class="fw-bold text-white mb-3">${modelName}</h2>
