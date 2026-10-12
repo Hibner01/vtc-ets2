@@ -241,6 +241,49 @@
             max-height: 380px; 
             overflow-y: auto; 
         }
+        /* Styl wzorowany na polskiej tablicy rejestracyjnej */
+.polish-license-plate {
+    display: inline-flex;
+    align-items: stretch;
+    background-color: #ffffff;
+    color: #000000;
+    border: 2px solid #1e293b;
+    border-radius: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 2px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.polish-plate-eu {
+    background-color: #003399;
+    color: #ffffff;
+    width: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 3px;
+    font-size: 9px;
+    font-weight: bold;
+}
+
+.polish-plate-eu .eu-stars {
+    font-size: 7px;
+    line-height: 5px;
+    color: #ffcc00;
+    margin-bottom: 2px;
+}
+
+.polish-plate-text {
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    color: #111827;
+}
     </style>
 </head>
 <body>
