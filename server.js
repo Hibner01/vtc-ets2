@@ -108,6 +108,7 @@ async function initDB() {
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                 title VARCHAR(255) NOT NULL,
                 message TEXT NOT NULL,
+                job_id INTEGER DEFAULT NULL,
                 action_tab VARCHAR(50) DEFAULT 'jobs',
                 is_read BOOLEAN DEFAULT false,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -116,6 +117,7 @@ async function initDB() {
 
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
+        await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS job_id INTEGER DEFAULT NULL;`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
         await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS expense_date DATE DEFAULT CURRENT_DATE;`);
 
@@ -147,6 +149,7 @@ async function addNotification(userId, title, message, jobId = null, actionTab =
         console.error('Błąd powiadomień:', e); 
     }
 }
+
 app.post('/api/register', async (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
     if (!username || !email || !password) return res.status(400).json({ error: 'Uzupełnij wszystkie pola.' });
@@ -165,7 +168,7 @@ app.post('/api/register', async (req, res) => {
         if (status === 'pending') {
             const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
             for (let adm of admins.rows) {
-                await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} (${email}) zarejestrował się i oczekuje na zatwierdzenie konta.`, 'management');
+                await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} (${email}) zarejestrował się i oczekuje na zatwierdzenie konta.`, null, 'management');
             }
         }
 
@@ -208,7 +211,6 @@ app.get('/api/user', async (req, res) => {
         
         const user = userRes.rows[0];
 
-        // Zliczanie kilometrów z bieżącego miesiąca ze wszystkich tras użytkownika
         const kmRes = await pool.query(`
             SELECT SUM(distance) as total, COUNT(*) as deliveries 
             FROM jobs 
@@ -222,7 +224,7 @@ app.get('/api/user', async (req, res) => {
             id: user.id,
             username: user.username,
             email: user.email,
-            role: user.role, // 'admin' lub 'driver'
+            role: user.role,
             monthlyKm: parseInt(kmRes.rows[0].total || 0),
             monthlyDeliveries: parseInt(kmRes.rows[0].deliveries || 0),
             limitKm: 6000,
@@ -230,15 +232,17 @@ app.get('/api/user', async (req, res) => {
         });
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania danych' }); }
 });
+
 app.post('/api/logout', (req, res) => { req.session.destroy(() => res.json({ success: true })); });
+
 app.get('/api/notifications', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        // Pobieramy tylko te powiadomienia, które nie zostały jeszcze przeczytane
         const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 AND is_read = false ORDER BY id DESC LIMIT 15', [req.session.userId]);
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: 'Błąd powiadomień' }); }
 });
+
 app.put('/api/notifications/read', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
@@ -249,6 +253,7 @@ app.put('/api/notifications/read', async (req, res) => {
         res.status(500).json({ error: 'Błąd aktualizacji' }); 
     }
 });
+
 app.delete('/api/notifications/:id', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
@@ -259,6 +264,7 @@ app.delete('/api/notifications/:id', async (req, res) => {
         res.status(500).json({ error: 'Błąd usuwania powiadomienia' }); 
     }
 });
+
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
@@ -271,7 +277,7 @@ app.put('/api/users/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
-        await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!', 'jobs');
+        await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!', null, 'jobs');
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd zatwierdzania' }); }
 });
@@ -361,20 +367,6 @@ app.post('/api/dispatches', async (req, res) => {
         res.status(500).json({ error: 'Błąd tworzenia zlecenia' }); 
     }
 });
-        res.json({ success: true, id: newDispatchId });
-    } catch (err) { 
-        console.error(err);
-        res.status(500).json({ error: 'Błąd tworzenia zlecenia' }); 
-    }
-});
-        res.json({ success: true, id: newDispatchId });
-    } catch (err) { 
-        console.error(err);
-        res.status(500).json({ error: 'Błąd tworzenia zlecenia' }); 
-    }
-});        res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Błąd dodawania zlecenia' }); }
-});
 
 app.put('/api/dispatches/:id', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
@@ -448,7 +440,7 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
 
         const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
         for (let adm of admins.rows) {
-            await addNotification(adm.id, 'Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`, 'jobs');
+            await addNotification(adm.id, 'Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`, null, 'jobs');
         }
 
         res.json({ success: true });
@@ -506,18 +498,15 @@ app.put('/api/expenses/:id', async (req, res) => {
 app.delete('/api/expenses/:id', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        // Sprawdź rolę bezpośrednio w tabeli users dla aktualnego użytkownika
         const userRes = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const userRole = userRes.rows.length > 0 ? userRes.rows[0].role : null;
 
-        // Sprawdź czy wydatek w ogóle istnieje
         const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
         if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
 
         const isOwner = expCheck.rows[0].user_id === req.session.userId;
         const isAdmin = userRole === 'admin';
 
-        // Jeśli nie jest adminem i nie jest właścicielem -> blokujemy
         if (!isAdmin && !isOwner) {
             return res.status(403).json({ error: 'Możesz usuwać tylko własne wydatki lub musisz być szefem!' });
         }
@@ -581,7 +570,7 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
         const job = jobRes.rows[0];
         await pool.query("UPDATE jobs SET status = 'approved' WHERE id = $1", [req.params.id]);
         
-        await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`, 'jobs');
+        await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`, null, 'jobs');
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
 });
@@ -594,7 +583,7 @@ app.delete('/api/jobs/:id', async (req, res) => {
         if (jobRes.rows.length > 0) {
             const job = jobRes.rows[0];
             const msg = reason ? `Szef odrzucił Twoją trasę (${job.start_city} ➔ ${job.end_city}). Powód: ${reason}` : `Szef odrzucił Twoją trasę (${job.start_city} ➔ ${job.end_city}).`;
-            await addNotification(job.user_id, 'Trasa Odrzucona', msg, 'jobs');
+            await addNotification(job.user_id, 'Trasa Odrzucona', msg, null, 'jobs');
         }
 
         await pool.query('DELETE FROM jobs WHERE id = $1', [req.params.id]);
