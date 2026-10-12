@@ -1041,18 +1041,35 @@ async function loadNotifications() {
             badge.classList.remove('d-none');
             badge.innerText = notifs.length;
             
-            list.innerHTML = notifs.map(n => `
-                <li class="p-2 border-bottom border-secondary text-white small notification-item" style="cursor: pointer; transition: background 0.2s;" onclick="handleNotificationClick(${n.id}, ${n.job_id || 'null'})">
-                    <div class="d-flex align-items-start">
-                        <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
-                        <div class="flex-grow-1">
-                            <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
-                            <div>${n.message || n.text}</div>
-                            <div class="text-muted" style="font-size: 10px;">${n.created_at ? new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Dzisiaj'}</div>
+            list.innerHTML = notifs.map(n => {
+                let formattedDate = '';
+                if (n.created_at) {
+                    const dateObj = new Date(n.created_at);
+                    formattedDate = dateObj.toLocaleDateString('pl-PL', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric' 
+                    }) + ' o ' + dateObj.toLocaleTimeString('pl-PL', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                } else {
+                    formattedDate = 'Dzisiaj';
+                }
+
+                return `
+                    <li class="p-2 border-bottom border-secondary text-white small notification-item bg-dark" style="cursor: pointer; transition: background 0.2s;" onclick="handleNotificationClick(${n.job_id || 'null'})">
+                        <div class="d-flex align-items-start">
+                            <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
+                                <div class="text-light">${n.message || n.text}</div>
+                                <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${formattedDate}</div>
+                            </div>
                         </div>
-                    </div>
-                </li>
-            `).join('');
+                    </li>
+                `;
+            }).join('');
         } else {
             badge.classList.add('d-none');
             list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
@@ -1062,34 +1079,31 @@ async function loadNotifications() {
     }
 }
 
-// Funkcja obsługująca kliknięcie w powiadomienie z przekierowaniem do zlecenia
-async function handleNotificationClick(notifId, jobId) {
+// Jedyna, prawidłowa funkcja obsługująca kliknięcie w powiadomienie
+async function handleNotificationClick(jobId) {
     try {
-        // Oznacz jako przeczytane na serwerze
-        await fetch(`/api/notifications/${notifId}/read`, { method: 'POST' });
+        await fetch('/api/notifications/read', { method: 'PUT' });
     } catch (e) {
         console.error(e);
     }
 
-    // Wywołanie funkcji czyszczącej licznik
-    if (typeof markNotifsAsRead === 'function') {
-        markNotifsAsRead();
-    }
+    const badge = document.getElementById('notif-count');
+    if (badge) badge.classList.add('d-none');
+    
+    const list = document.getElementById('notif-list');
+    if (list) list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
 
-    // Jeśli powiadomienie dotyczy zlecenia, przełączamy widok na dyspozytornię
     if (jobId && jobId !== 'null') {
         if (typeof switchTab === 'function') {
-            switchTab('dispatch'); // Przenosi użytkownika do nowej dyspozytorni / zleceń
+            switchTab('dispatch');
         }
     }
+}
 
-    // Odśwież listę
-    loadNotifications();
-}        function showLogin() {
-            document.getElementById('auth-section').style.display = 'flex';
-            document.getElementById('dashboard-section').style.display = 'none';
-        }
-
+function showLogin() {
+    document.getElementById('auth-section').style.display = 'flex';
+    document.getElementById('dashboard-section').style.display = 'none';
+}
         async function performLogin() {
             const email = document.getElementById('login-email').value.trim();
             const p = document.getElementById('login-password').value.trim();
