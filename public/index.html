@@ -1231,51 +1231,78 @@ async function deleteSingleNotification(event, notifId) {
         }
 
         async function loadAllJobs() {
-            try {
-                const res = await fetch('/api/jobs');
-                if (!res.ok) return;
-                const jobs = await res.json();
-                const container = document.getElementById('all-jobs-container');
-                
-                if (!container) return;
-                container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
-                
-                jobs.forEach(j => {
-                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
-                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
+    try {
+        const res = await fetch('/api/jobs');
+        if (!res.ok) return;
+        const jobs = await res.json();
+        const container = document.getElementById('all-jobs-container');
 
-                    let filesHtml = '';
-                    if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
-                    if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
+        if (!container) return;
+        container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
 
-                    container.innerHTML += `
-                        <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div>
-                                    <span class="text-warning small fw-bold d-block mb-1"><i class="fa-solid fa-user me-1"></i> ${j.username}</span>
-                                    <h5 class="fw-bold text-white mb-0">
-                                        ${j.start_city} <i class="fa-solid fa-arrow-right text-info mx-2"></i> ${j.end_city}
-                                    </h5>
-                                </div>
-                                <div class="text-end">
-                                    <span class="fw-bold text-success fs-5">${j.income || 0} €</span>
-                                    <span class="text-info ms-3 fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-secondary text-light">${j.cargo || 'Standard'}</span>
-                                    <span class="text-light small"><i class="fa-regular fa-calendar-days me-1 text-warning"></i> ${j.formatted_date || 'Dzisiaj'}</span>
-                                </div>
-                                <div class="d-flex gap-2">${filesHtml}</div>
-                            </div>
-                        </div>`;
-                });
-            } catch (err) {
-                console.error("Błąd ładowania wszystkich tras:", err);
+        jobs.forEach(j => {
+            let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
+            let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
+
+            let filesHtml = '';
+            if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
+            if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
+            
+            // Przycisk usuwania trasy widoczny TYLKO dla Szefa (admina)
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+                filesHtml += `<button onclick="deleteJob(${j.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Usuń</button>`;
             }
+
+            container.innerHTML += `
+                <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${j.username}</span>
+                            <h5 class="fw-bold text-white mb-0">
+                                ${j.start_city} <i class="fas fa-arrow-right text-info mx-2"></i> ${j.end_city}
+                            </h5>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold text-success fs-5">${j.income || 0} €</span>
+                            <span class="text-info ms-3 fw-semibold"><i class="fas fa-road me-1"></i> ${j.distance || 0} km</span>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary">${j.cargo || 'Standard'}</span>
+                            <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> ${j.formatted_date || ''}</small>
+                        </div>
+                        <div>
+                            ${filesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (err) {
+        console.error('Błąd ładowania tras:', err);
+    }
+}
+
+// Funkcja odpowiedzialna za wysłanie żądania usunięcia trasy do serwera
+async function deleteJob(jobId) {
+    if (!confirm('Czy na pewno chcesz usunąć tę trasę?')) return;
+    try {
+        const res = await fetch(`/api/jobs/${jobId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: 'Usunięte przez Szefa' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            loadAllJobs(); // Odświeża listę tras po usunięciu
+        } else {
+            alert(data.error || 'Nie udało się usunąć trasy.');
         }
-        
+    } catch (err) {
+        console.error('Błąd usuwania trasy:', err);
+    }
+}
         async function loadDispatches() {
     try {
         const res = await fetch('/api/dispatches');
