@@ -426,17 +426,20 @@ app.get('/api/expenses', async (req, res) => {
 
 app.post('/api/expenses', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
-    const { type, amount, description } = req.body;
+    const { type, amount, description, expense_date, liters } = req.body;
     const parsedAmount = parseInt(amount) || 0;
     if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
 
     try {
         await pool.query(
-            'INSERT INTO expenses (user_id, type, amount, description) VALUES ($1, $2, $3, $4)',
-            [req.session.userId, type || 'fuel', parsedAmount, description || 'Wydatek']
+            'INSERT INTO expenses (user_id, type, amount, description, expense_date, liters) VALUES ($1, $2, $3, $4, $5, $6)',
+            [req.session.userId, type || 'other', parsedAmount, description || 'Wydatek', expense_date || new Date(), parseInt(liters) || 0]
         );
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Błąd zapisu wydatku' }); }
+    } catch (err) { 
+        console.error("Błąd zapisu wydatku:", err);
+        res.status(500).json({ error: 'Błąd zapisu wydatku' }); 
+    }
 });
 
 app.put('/api/expenses/:id', async (req, res) => {
