@@ -1058,15 +1058,20 @@ async function loadNotifications() {
                 }
 
                 return `
-                    <li class="p-2 border-bottom border-secondary text-white small notification-item bg-dark" style="cursor: pointer; transition: background 0.2s;" onclick="handleNotificationClick(${n.job_id || 'null'})">
-                        <div class="d-flex align-items-start">
-                            <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
-                            <div class="flex-grow-1">
-                                <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
-                                <div class="text-light">${n.message || n.text}</div>
-                                <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${formattedDate}</div>
+                    <li class="p-2 border-bottom border-secondary text-white small notification-item bg-dark d-flex align-items-center justify-content-between">
+                        <div class="flex-grow-1" style="cursor: pointer;" onclick="handleNotificationClick(${n.job_id || 'null'})">
+                            <div class="d-flex align-items-start">
+                                <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
+                                <div>
+                                    <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
+                                    <div class="text-light">${n.message || n.text}</div>
+                                    <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${formattedDate}</div>
+                                </div>
                             </div>
                         </div>
+                        <button class="btn btn-outline-danger btn-sm ms-2 border-0" type="button" onclick="deleteSingleNotification(event, ${n.id})" title="Usuń powiadomienie">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
                     </li>
                 `;
             }).join('');
@@ -1079,20 +1084,8 @@ async function loadNotifications() {
     }
 }
 
-// Jedyna, prawidłowa funkcja obsługująca kliknięcie w powiadomienie
-async function handleNotificationClick(jobId) {
-    try {
-        await fetch('/api/notifications/read', { method: 'PUT' });
-    } catch (e) {
-        console.error(e);
-    }
-
-    const badge = document.getElementById('notif-count');
-    if (badge) badge.classList.add('d-none');
-    
-    const list = document.getElementById('notif-list');
-    if (list) list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
-
+// Kliknięcie w treść powiadomienia – wyłącznie przenosi do zlecenia (bez kasowania listy)
+function handleNotificationClick(jobId) {
     if (jobId && jobId !== 'null') {
         if (typeof switchTab === 'function') {
             switchTab('dispatch');
@@ -1100,7 +1093,18 @@ async function handleNotificationClick(jobId) {
     }
 }
 
-function showLogin() {
+// Usunięcie pojedynczego powiadomienia za pomocą ikony kosza
+async function deleteSingleNotification(event, notifId) {
+    event.stopPropagation(); // Zatrzymuje zdarzenie, żeby kliknięcie w koszyk nie otwierało zlecenia
+    try {
+        const res = await fetch(`/api/notifications/${notifId}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadNotifications(); // Odświeża listę powiadomień
+        }
+    } catch (err) {
+        console.error("Błąd usuwania powiadomienia:", err);
+    }
+}function showLogin() {
     document.getElementById('auth-section').style.display = 'flex';
     document.getElementById('dashboard-section').style.display = 'none';
 }
