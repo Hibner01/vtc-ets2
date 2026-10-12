@@ -520,29 +520,23 @@
                         </div>
                     </div>
 
-                    <div id="tab-finances" style="display:none;">
-                        <div class="row g-4">
-                            <div class="col-md-4">
-                                <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold mb-3 text-white" data-i18n="addExpense">Zgłoś wydatek</h5>
-                                    <form id="expense-form" onsubmit="submitExpenseForm(event)">
-                                        <div class="mb-3">
-                                            <label class="form-label text-white fw-semibold" data-i18n="expenseType">Typ wydatku</label>
-                                            <select id="expense_type" class="form-select form-control-icon text-white" onchange="toggleFuelFields()" required>
-    <option value="fuel">⛽ Fuel / Paliwo</option>
-    <option value="ferry">🚢 Prom / Ferry</option>
-    <option value="tolls">🛣️ Opłaty drogowe / Tolls</option>
-    <option value="service">🔧 Service / Serwis</option>
-    <option value="fine">🚨 Fine / Mandat</option>
-</select>
-                                        </div>
+                    <<div class="mb-3">
+    <label class="form-label text-white-50 fw-semibold">Typ wydatku</label>
+    <select id="expense_type" class="form-select form-control-icon text-white" onchange="toggleFuelFields()" required>
+        <option value="fuel">⛽ Fuel / Paliwo</option>
+        <option value="ferry">🚢 Prom / Ferry</option>
+        <option value="tolls">🛣️ Opłaty drogowe / Tolls</option>
+        <option value="service">🔧 Service / Serwis</option>
+        <option value="fine">🚨 Fine / Mandat</option>
+    </select>
+</div>
+                        <div class="mb-3">
+    <label class="form-label text-white-50 fw-semibold">Data wydatku</label>
+    <input type="date" id="expense_date" class="form-control text-white border-secondary" required>
+</div>
 
                                         <!-- Pola dedykowane dla Paliwa -->
                                         <div id="fuel-fields">
-                                            <div class="mb-3">
-                                                <label class="form-label text-white fw-semibold">Data tankowania</label>
-                                                <input type="date" id="expense_date" class="form-control text-white">
-                                            </div>
                                             <div class="mb-3">
                                                 <label class="form-label text-white fw-semibold">Litry (L)</label>
                                                 <input type="number" id="expense_liters" class="form-control form-control-icon text-white" placeholder="np. 400" step="0.1">
@@ -1530,7 +1524,12 @@ async function submitExpenseForm(e) {
         alert('Błąd podczas dodawania wydatku.');
     }
 }        
-
+document.addEventListener('DOMContentLoaded', () => {
+    const dateInput = document.getElementById('expense_date');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
+});
         checkUser();
     </script>
 </body>
