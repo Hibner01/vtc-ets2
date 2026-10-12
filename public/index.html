@@ -521,9 +521,10 @@
                     </div>
     <div id="tab-finances" style="display:none;">
     <div class="row g-4">
+        <!-- Formularz dodawania wydatku -->
         <div class="col-md-12">
             <div class="bg-card-bms p-4">
-                <h5 class="fw-bold mb-3 text-white">Zgłoś wydatek / koszt</h5>
+                <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>Zgłoś wydatek / koszt</h5>
                 <form id="expense-form" onsubmit="submitExpenseForm(event)">
                     <div class="row g-3">
                         <!-- Typ wydatku -->
@@ -561,11 +562,11 @@
                         </div>
                     </div>
 
-                    <!-- Pola dla pozostałych wydatków (Prom, Opłaty, Serwis, Mandat) -->
+                    <!-- Pola dla pozostałych wydatków (Prom, Opłaty, Serwis, Mandat) z dynamicznym opisem -->
                     <div id="standard-fields" style="display:none;" class="row g-3 mt-2">
                         <div class="col-md-6">
-                            <label class="form-label text-white fw-semibold" id="expense-desc-label">Opis / Szczegóły</label>
-                            <input type="text" id="expense_description" class="form-control text-white bg-dark border-secondary" placeholder="np. Dover - Calais">
+                            <label class="form-label text-white fw-semibold" id="expense-desc-label">Trasa / Relacja promu (Skąd ➔ Dokąd)</label>
+                            <input type="text" id="expense_description" class="form-control text-white bg-dark border-secondary" placeholder="np. Dover ➔ Calais">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white fw-semibold">Koszt (€)</label>
@@ -579,9 +580,32 @@
                 </form>
             </div>
         </div>
+
+        <!-- Tabela Historii Wydatków (żeby szef widział co usuwać) -->
+        <div class="col-md-12">
+            <div class="bg-card-bms p-4">
+                <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-list me-2 text-primary"></i>Historia Wydatków Firmowych</h5>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Kategoria</th>
+                                <th>Opis / Szczegóły</th>
+                                <th>Kwota</th>
+                                <th>Zgłosił</th>
+                                <th class="text-end">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body">
+                            <!-- Tutaj skrypt ładuje listę -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
                     <div id="tab-dispatcher" style="display:none;">
                         <!-- Panel Szefa: dodawanie zlecenia z automatycznym filtrowaniem zestawów przypisanych do wybranego kierowcy -->
                         <div class="row g-4 mb-4" id="dispatcher-admin-form" style="display:none;">
@@ -1440,32 +1464,67 @@ async function deleteDispatch(id) {
         }
 
         async function loadExpenses() {
-            const res = await fetch('/api/expenses');
-            if (res.ok) {
-                const expenses = await res.json();
-                const tbody = document.getElementById('expenses-table-body');
-                tbody.innerHTML = '';
-                expenses.forEach(exp => {
-                    let deleteBtn = currentUserRole === 'admin' 
-                        ? `<button class="btn btn-danger btn-sm rounded-pill" onclick="deleteExpense(${exp.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`
-                        : `-`;
+    try {
+        const res = await fetch('/api/expenses');
+        if (!res.ok) return;
+        const expenses = await res.json();
+        
+        const tbody = document.getElementById('expenses-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="text-white">${exp.username}</td>
-                            <td class="text-white">${exp.type}</td>
-                            <td class="text-white">${exp.description}</td>
-                            <td class="text-danger fw-bold">-${exp.amount} €</td>
-                            <td>${deleteBtn}</td>
-                        </tr>`;
-                });
-            }
+        expenses.forEach(e => {
+            let typeName = e.type;
+            if (e.type === 'fuel') typeName = '⛽ Paliwo';
+            else if (e.type === 'ferry') typeName = '🚢 Prom';
+            else if (e.type === 'tolls') typeName = '🛣️ Opłaty drogowe';
+            else if (e.type === 'service') typeName = '🔧 Serwis';
+            else if (e.type === 'fine') typeName = '🚨 Mandat';
+
+            // Przycisk usuwania dla każdego wpisu (szef usunie każdy, kierowca tylko swój na backendzie)
+            let deleteBtn = `<button class="btn btn-outline-danger btn-sm" onclick="deleteExpense(${e.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`;
+
+            let formattedDate = e.expense_date ? new Date(e.expense_date).toLocaleDateString('pl-PL') : '-';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${formattedDate}</td>
+                    <td><span class="badge bg-secondary">${typeName}</span></td>
+                    <td>${e.description || '-'}</td>
+                    <td class="fw-bold text-warning">${e.amount} €</td>
+                    <td>${e.username || 'Kierowca'}</td>
+                    <td class="text-end">${deleteBtn}</td>
+                </tr>
+            `;
+        });
+    } catch (err) {
+        console.error("Błąd ładowania wydatków:", err);
+    }
+}
+
+async function deleteExpense(id) {
+    if (!confirm('Czy na pewno chcesz usunąć ten wydatek?')) return;
+    try {
+        const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadExpenses();
+            alert('Wydatek został usunięty.');
+        } else {
+            const errData = await res.json();
+            alert('Błąd usuwania: ' + (errData.error || 'Brak uprawnień'));
         }
-
-        function toggleFuelFields() {
+    } catch (err) {
+        console.error(err);
+        alert('Błąd połączenia z serwerem.');
+    }
+}function toggleFuelFields() {
     const type = document.getElementById('expense_type').value;
     const fuelFields = document.getElementById('fuel-fields');
     const standardFields = document.getElementById('standard-fields');
+    const descInput = document.getElementById('expense_description');
+    const descLabel = document.getElementById('expense-desc-label');
+
+    if (!fuelFields || !standardFields) return;
 
     if (type === 'fuel') {
         fuelFields.style.display = 'block';
@@ -1473,9 +1532,27 @@ async function deleteDispatch(id) {
     } else {
         fuelFields.style.display = 'none';
         standardFields.style.display = 'block';
+
+        if (descLabel && descInput) {
+            if (type === 'ferry') {
+                descLabel.innerText = "Trasa / Relacja promu (Skąd ➔ Dokąd)";
+                descInput.placeholder = "np. Dover ➔ Calais";
+            } else if (type === 'tolls') {
+                descLabel.innerText = "Kraj / System opłat drogowych";
+                descInput.placeholder = "np. Niemcy (Toll Collect) / Austria (GoBox)";
+            } else if (type === 'fine') {
+                descLabel.innerText = "Powód / Za podany mandat";
+                descInput.placeholder = "np. Przekroczenie prędkości / Czas pracy";
+            } else if (type === 'service') {
+                descLabel.innerText = "Zakres naprawy / Serwis";
+                descInput.placeholder = "np. Wymiana klocków hamulcowych";
+            } else {
+                descLabel.innerText = "Opis / Szczegóły";
+                descInput.placeholder = "np. Dodatkowe informacje";
+            }
+        }
     }
 }
-
 async function submitExpenseForm(e) {
     e.preventDefault();
     const type = document.getElementById('expense_type').value;
