@@ -1088,7 +1088,7 @@ async function loadNotifications() {
 function handleNotificationClick(jobId) {
     if (jobId && jobId !== 'null') {
         if (typeof switchTab === 'function') {
-            switchTab('dispatch');
+            switchTab('dispatcher');
         }
     }
 }
