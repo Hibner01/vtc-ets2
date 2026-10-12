@@ -62,6 +62,7 @@ async function initDB() {
                 amount INTEGER NOT NULL,
                 description TEXT NOT NULL,
                 liters INTEGER DEFAULT 0,
+                expense_date DATE DEFAULT CURRENT_DATE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -116,6 +117,7 @@ async function initDB() {
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
+        await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS expense_date DATE DEFAULT CURRENT_DATE;`);
 
         console.log('Baza danych zainicjalizowana pomyślnie.');
     } catch (err) {
@@ -202,22 +204,21 @@ app.get('/api/user', async (req, res) => {
         
         const user = userRes.rows[0];
 
-        // Zliczanie kilometrów TYLKO z bieżącego miesiąca (automatyczny reset co miesiąc)
+        // Zliczanie kilometrów z bieżącego miesiąca ze wszystkich tras użytkownika
         const kmRes = await pool.query(`
             SELECT SUM(distance) as total, COUNT(*) as deliveries 
             FROM jobs 
-            WHERE user_id = $1 AND status = 'approved' 
+            WHERE user_id = $1 
             AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_TIMESTAMP)
         `, [user.id]);
 
-        // Pobranie przypisanego zestawu z Garażu
         const truckRes = await pool.query('SELECT * FROM trucks WHERE LOWER(driver_name) = LOWER($1) LIMIT 1', [user.username]);
 
         res.json({
             id: user.id,
             username: user.username,
             email: user.email,
-            role: user.role,
+            role: user.role, // 'admin' lub 'driver'
             monthlyKm: parseInt(kmRes.rows[0].total || 0),
             monthlyDeliveries: parseInt(kmRes.rows[0].deliveries || 0),
             limitKm: 6000,
