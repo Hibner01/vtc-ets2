@@ -467,16 +467,28 @@ app.put('/api/expenses/:id', async (req, res) => {
 app.delete('/api/expenses/:id', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
+        // Sprawdź rolę bezpośrednio w tabeli users dla aktualnego użytkownika
+        const userRes = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
+        const userRole = userRes.rows.length > 0 ? userRes.rows[0].role : null;
+
+        // Sprawdź czy wydatek w ogóle istnieje
         const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
         if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
 
-        if (req.session.role !== 'admin' && expCheck.rows[0].user_id !== req.session.userId) {
-            return res.status(403).json({ error: 'Możesz usuwać tylko własne wydatki!' });
+        const isOwner = expCheck.rows[0].user_id === req.session.userId;
+        const isAdmin = userRole === 'admin';
+
+        // Jeśli nie jest adminem i nie jest właścicielem -> blokujemy
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({ error: 'Możesz usuwać tylko własne wydatki lub musisz być szefem!' });
         }
 
         await pool.query('DELETE FROM expenses WHERE id = $1', [req.params.id]);
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Błąd usuwania wydatku' }); }
+    } catch (err) { 
+        console.error("Błąd usuwania wydatku:", err);
+        res.status(500).json({ error: 'Błąd serwera' }); 
+    }
 });
 
 app.get('/api/trucks', async (req, res) => {
