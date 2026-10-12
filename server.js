@@ -226,17 +226,15 @@ app.get('/api/user', async (req, res) => {
         });
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania danych' }); }
 });
-
 app.post('/api/logout', (req, res) => { req.session.destroy(() => res.json({ success: true })); });
-
 app.get('/api/notifications', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY id DESC LIMIT 15', [req.session.userId]);
+        // Pobieramy tylko te powiadomienia, które nie zostały jeszcze przeczytane
+        const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 AND is_read = false ORDER BY id DESC LIMIT 15', [req.session.userId]);
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: 'Błąd powiadomień' }); }
 });
-
 app.put('/api/notifications/read', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
