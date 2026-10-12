@@ -1671,13 +1671,14 @@ async function submitExpenseForm(e) {
         description = `Data: ${date} | Litry: ${liters}L | Trasa od tankowania: ${km} km`;
     } else {
         amount = document.getElementById('expense_amount').value;
-        description = document.getElementById('expense_desc').value;
+        description = document.getElementById('expense_description').value; // Poprawione z expense_desc na expense_description
     }
 
     const data = {
         type: type,
         amount: amount,
-        description: description
+        description: description,
+        expense_date: document.getElementById('expense_date').value
     };
 
     const res = await fetch('/api/expenses', {
@@ -1695,7 +1696,7 @@ async function submitExpenseForm(e) {
     } else {
         alert('Błąd podczas dodawania wydatku.');
     }
-}        
+}
 document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('expense_date');
     if (dateInput) {
