@@ -1230,7 +1230,7 @@ async function deleteSingleNotification(event, notifId) {
             }
         }
 
-        async function loadAllJobs() {
+       async function loadAllJobs() {
     try {
         const res = await fetch('/api/jobs');
         if (!res.ok) return;
@@ -1248,16 +1248,25 @@ async function deleteSingleNotification(event, notifId) {
             if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
             if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
             
-            // Przycisk usuwania trasy widoczny TYLKO dla Szefa (admina)
-            if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
-                filesHtml += `<button onclick="deleteJob(${j.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Usuń</button>`;
+            // POPRAWKA: Używamy currentUserRole === 'admin' tak jak w reszcie Twojego kodu
+            let adminActionsHtml = '';
+            if (currentUserRole === 'admin') {
+                if (j.status === 'pending') {
+                    adminActionsHtml += `<button onclick="approveJob(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fas fa-check"></i> Zatwierdź</button>`;
+                }
+                adminActionsHtml += `<button onclick="deleteJob(${j.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Usuń</button>`;
             }
+
+            let statusBadge = j.status === 'pending' 
+                ? `<span class="badge bg-warning text-dark mb-1">Oczekuje na akceptację</span>` 
+                : `<span class="badge bg-success mb-1">Zatwierdzona</span>`;
 
             container.innerHTML += `
                 <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div>
                             <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${j.username}</span>
+                            ${statusBadge}
                             <h5 class="fw-bold text-white mb-0">
                                 ${j.start_city} <i class="fas fa-arrow-right text-info mx-2"></i> ${j.end_city}
                             </h5>
@@ -1272,8 +1281,9 @@ async function deleteSingleNotification(event, notifId) {
                             <span class="badge bg-secondary">${j.cargo || 'Standard'}</span>
                             <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> ${j.formatted_date || ''}</small>
                         </div>
-                        <div>
-                            ${filesHtml}
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">${filesHtml}</div>
+                            <div>${adminActionsHtml}</div>
                         </div>
                     </div>
                 </div>
@@ -1281,6 +1291,21 @@ async function deleteSingleNotification(event, notifId) {
         });
     } catch (err) {
         console.error('Błąd ładowania tras:', err);
+    }
+}
+
+// Funkcja zatwierdzania trasy przez Szefa
+async function approveJob(jobId) {
+    try {
+        const res = await fetch(`/api/jobs/${jobId}/approve`, { method: 'PUT' });
+        const data = await res.json();
+        if (data.success) {
+            loadAllJobs();
+        } else {
+            alert(data.error || 'Nie udało się zatwierdzić trasy.');
+        }
+    } catch (err) {
+        console.error('Błąd akceptacji trasy:', err);
     }
 }
 
