@@ -1214,49 +1214,76 @@
         }
         
         async function loadDispatches() {
-            const res = await fetch('/api/dispatches');
-            if (res.ok) {
-                const dispatches = await res.json();
-                const container = document.getElementById('dispatches-container');
-                container.innerHTML = '';
-                
-                // Kierowca widzi tylko zlecenia przypisane do niego, szef widzi wszystkie
-                let visibleDispatches = dispatches.filter(d => currentUserRole === 'admin' || d.assigned_to === currentUsername);
+    try {
+        const res = await fetch('/api/dispatches');
+        if (!res.ok) return;
+        const dispatches = await res.json();
+        const container = document.getElementById('dispatches-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        let visibleDispatches = dispatches.filter(d => currentUserRole === 'admin' || d.assigned_to === currentUsername || d.assigned_to === 'Wszyscy');
 
-                if (visibleDispatches.length === 0) {
-                    container.innerHTML = `<div class="text-white-50 col-12 text-center py-3">Brak dostępnych zleceń skierowanych do Ciebie.</div>`;
-                    return;
-                }
-
-                visibleDispatches.forEach(d => {
-                    let actionBtn = '';
-                    if (d.status === 'W wolnym obiegu') {
-                        if (currentUserRole !== 'admin' && d.assigned_to !== currentUsername) {
-                            actionBtn = `<span class="badge bg-secondary">Przypisane do innego kierowcy</span>`;
-                        } else {
-                            actionBtn = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
-                        }
-                    } else if (d.status === 'W trakcie' && d.accepted_by_username === currentUsername) {
-                        actionBtn = `<button class="btn btn-success btn-sm fw-bold" onclick="openJobReportForm(${d.id}, '${d.start_city}', '${d.end_city}')"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
-                    } else {
-                        actionBtn = `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username})</span>`;
-                    }
-
-                    container.innerHTML += `
-                        <div class="col-md-6">
-                            <div class="bg-card-bms p-4">
-                                <h4 class="fw-bold text-white mb-2">${d.start_city} ➔ ${d.end_city}</h4>
-                                <p class="text-info mb-1">Przypisany kierowca: <strong>${d.assigned_to}</strong></p>
-                                <p class="text-light mb-2">Zestaw: ${d.truck_name || 'Standard'}</p>
-                                ${d.notes ? `<p class="text-white-50 small mb-3">Ładunek/Uwagi: ${d.notes}</p>` : ''}
-                                <div>${actionBtn}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
+        if (visibleDispatches.length === 0) {
+            container.innerHTML = `<div class="text-white-50 col-12 text-center py-3">Brak dostępnych zleceń w dyspozytorni.</div>`;
+            return;
         }
 
+        visibleDispatches.forEach(d => {
+            let actionBtn = '';
+            if (d.status === 'W wolnym obiegu') {
+                if (currentUserRole !== 'admin' && d.assigned_to !== currentUsername && d.assigned_to !== 'Wszyscy') {
+                    actionBtn = `<span class="badge bg-secondary">Przypisane do innego kierowcy</span>`;
+                } else {
+                    actionBtn = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
+                }
+            } else if (d.status === 'W trakcie' && (d.accepted_by_username === currentUsername || currentUserRole === 'admin')) {
+                actionBtn = `<button class="btn btn-success btn-sm fw-bold" onclick="openJobReportForm(${d.id}, '${d.start_city}', '${d.end_city}')"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
+            } else {
+                actionBtn = `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username || 'Kierowca'})</span>`;
+            }
+
+            // Przycisk usuwania zlecenia dla szefa
+            let deleteDispatchBtn = currentUserRole === 'admin' 
+                ? `<button class="btn btn-outline-danger btn-sm" onclick="deleteDispatch(${d.id})" title="Usuń zlecenie"><i class="fa-solid fa-trash"></i></button>` 
+                : '';
+
+            container.innerHTML += `
+                <div class="col-md-6">
+                    <div class="bg-card-bms p-4 position-relative">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h4 class="fw-bold text-white mb-0">${d.start_city} <i class="fa-solid fa-arrow-right text-info mx-1"></i> ${d.end_city}</h4>
+                            <div>${deleteDispatchBtn}</div>
+                        </div>
+                        <p class="text-info mb-1 small">Przypisany kierowca: <strong>${d.assigned_to}</strong></p>
+                        <p class="text-light mb-2 small">Zestaw: ${d.truck_name || 'Standard'}</p>
+                        ${d.notes ? `<p class="text-white-50 small mb-3">Ładunek/Uwagi: ${d.notes}</p>` : ''}
+                        <div class="mt-3">${actionBtn}</div>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (e) {
+        console.error("Błąd ładowania dyspozytorni:", e);
+    }
+}
+
+async function deleteDispatch(id) {
+    if (!confirm('Czy na pewno chcesz usunąć to zlecenie z dyspozytorni?')) return;
+    try {
+        const res = await fetch(`/api/dispatches/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadDispatches();
+            alert('Zlecenie zostało usunięte.');
+        } else {
+            alert('Nie udało się usunąć zlecenia.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Błąd połączenia z serwerem.');
+    }
+}
         async function submitDispatchForm(e) {
             e.preventDefault();
             const data = {
