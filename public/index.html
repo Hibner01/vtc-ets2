@@ -993,40 +993,45 @@
         }
 
         function renderAssignedTruckOnDashboard() {
-            const container = document.getElementById('my-assigned-truck-box');
-            let foundModel = null;
-            let foundPlate = null;
+    const container = document.getElementById('my-assigned-truck-box');
+    let foundModel = null;
+    let foundPlate = null;
 
-            for (let plate in assignedTrucksStorage) {
-                if (assignedTrucksStorage[plate] === currentUsername) {
-                    foundPlate = plate;
-                    for (let model in staticTrucksSpecs) {
-                        if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
-                            foundModel = model;
-                            break;
-                        }
-                    }
+    for (let plate in assignedTrucksStorage) {
+        if (assignedTrucksStorage[plate] === currentUsername) {
+            foundPlate = plate;
+            for (let model in staticTrucksSpecs) {
+                if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
+                    foundModel = model;
                     break;
                 }
             }
-
-            if (!foundModel || !foundPlate) {
-                container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
-                return;
-            }
-
-            const spec = staticTrucksSpecs[foundModel];
-            container.innerHTML = `
-                <div class="text-center">
-                    <h6 class="fw-bold text-info mb-2">${foundModel}</h6>
-                    <span class="badge bg-dark border border-secondary mb-3 px-3 py-1 fs-6">${foundPlate}</span>
-                    <img src="${spec.photo}" class="img-fluid rounded border border-secondary mb-3" style="max-height: 260px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
-                    <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
-                        <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
-                    </button>
-                </div>
-            `;
+            break;
         }
+    }
+
+    if (!foundModel || !foundPlate) {
+        container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
+        return;
+    }
+
+    const spec = staticTrucksSpecs[foundModel];
+    container.innerHTML = `
+        <div class="text-center">
+            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                <h6 class="fw-bold text-info mb-0">${foundModel}</h6>
+                <span class="badge bg-dark border border-secondary px-3 py-1 fs-6">${foundPlate}</span>
+            </div>
+            <!-- Powiększone zdjęcie zestawu (pełna szerokość karty i większa wysokość) -->
+            <div class="mb-3">
+                <img src="${spec.photo}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+            </div>
+            <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
+                <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
+            </button>
+        </div>
+    `;
+}
 async function loadNotifications() {
     const list = document.getElementById('notif-list');
     const badge = document.getElementById('notif-count');
