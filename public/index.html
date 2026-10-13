@@ -5,6 +5,8 @@
     <title>Mazren Spedition - Mazren Control System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.2.3/css/flag-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
     <style>
         body { 
             background-color: #0b0f19; 
@@ -136,10 +138,13 @@
             border-color: #3b82f6; 
         }
 
+        /* zdjęcia pojazdów pokazywane W CAŁOŚCI (bez przycinania) */
         .truck-img-preview {
             width: 100%;
-            height: 320px;
-            object-fit: cover;
+            height: auto;
+            max-height: 460px;
+            object-fit: contain;
+            background-color: #0b0f19;
             border-radius: 16px;
             border: 1px solid #334155;
             box-shadow: 0 4px 14px rgba(0,0,0,0.6);
@@ -147,10 +152,20 @@
 
         .truck-card-grid-img {
             width: 100%;
-            height: 130px;
-            object-fit: cover;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            object-fit: contain;
+            background-color: #0b0f19;
             border-radius: 12px;
             border: 1px solid #1f2937;
+        }
+
+        .vehicle-photo-full {
+            width: 100%;
+            height: auto;
+            max-height: 340px;
+            object-fit: contain;
+            background-color: #0b0f19;
         }
 
         .input-group-custom {
@@ -242,49 +257,76 @@
             overflow-y: auto; 
         }
 
-        /* Styl wzorowany na polskiej tablicy rejestracyjnej */
+        /* Polska tablica rejestracyjna: biała, czarna ramka, niebieski pasek UE z gwiazdami i "PL" */
         .polish-license-plate {
             display: inline-flex;
             align-items: stretch;
-            background-color: #ffffff;
-            color: #000000;
-            border: 2px solid #1e293b;
-            border-radius: 6px;
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: 800;
-            font-size: 1.05rem;
-            letter-spacing: 2px;
+            font-size: 1.1rem;
+            padding: 0.14em;
+            background: linear-gradient(180deg, #ffffff 0%, #e6e3da 100%);
+            border-radius: 0.4em;
+            box-shadow: 0 0.12em 0.35em rgba(0,0,0,0.6), inset 0 0 0 0.06em #b9b6ab;
+        }
+
+        .polish-license-plate.plate-sm { font-size: 0.8rem; }
+
+        .polish-plate-inner {
+            display: flex;
+            align-items: stretch;
+            border: 0.09em solid #111111;
+            border-radius: 0.3em;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            background: linear-gradient(180deg, #ffffff 0%, #f0eee7 100%);
         }
 
         .polish-plate-eu {
-            background-color: #003399;
-            color: #ffffff;
-            width: 26px;
+            width: 2.05em;
+            background: linear-gradient(180deg, #0c42b0 0%, #00297d 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding-top: 3px;
-            font-size: 9px;
-            font-weight: bold;
+            justify-content: center;
+            gap: 0.1em;
+            padding: 0.15em 0;
         }
 
-        .polish-plate-eu .eu-stars {
-            font-size: 7px;
-            line-height: 5px;
-            color: #ffcc00;
-            margin-bottom: 2px;
+        .polish-plate-eu svg { width: 1.4em; height: 1.4em; display: block; }
+
+        .polish-plate-eu span {
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            font-size: 0.55em;
+            line-height: 1;
+            letter-spacing: 0.04em;
         }
 
         .polish-plate-text {
-            padding: 4px 12px;
+            padding: 0.05em 0.6em 0.05em 0.5em;
             display: flex;
             align-items: center;
-            background-color: #ffffff;
-            color: #111827;
+            color: #0d0d0d;
+            font-family: 'Roboto Condensed', 'Arial Narrow', 'Liberation Sans Narrow', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 1.6em;
+            letter-spacing: 0.06em;
+            line-height: 1.1;
+            white-space: nowrap;
+            text-shadow: 0 0.03em 0 rgba(255,255,255,0.9), 0 -0.015em 0.02em rgba(0,0,0,0.35);
         }
+
+        /* --- flagi państw --- */
+        .fi { border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,0.18); vertical-align: middle; }
+
+        /* --- linki społecznościowe (O nas) --- */
+        .social-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 12px 26px; border-radius: 30px; font-weight: 700;
+            color: #ffffff; text-decoration: none; transition: transform 0.2s, filter 0.2s;
+        }
+        .social-btn:hover { transform: translateY(-2px); filter: brightness(1.12); color: #ffffff; }
+        .social-discord { background-color: #5865F2; }
+        .social-tiktok { background-color: #111111; border: 1px solid #fe2c55; }
     </style>
 </head>
 <body>
@@ -402,7 +444,7 @@
                     <a id="nav-dispatcher" class="nav-item-bms" onclick="switchTab('dispatcher')">
                         <i class="fa-solid fa-headset"></i> <span data-i18n="navDispatcher">Dyspozytornia</span>
                     </a>
-                    <a id="nav-garage" class="nav-item-bms" onclick="switchTab('garage')">
+                    <a id="nav-garage" class="nav-item-bms" onclick="switchTab('garage'); closeVehicleDetail()">
                         <i class="fa-solid fa-truck"></i> <span data-i18n="navGarage">Garaż</span>
                     </a>
                     <a id="nav-documents" class="nav-item-bms" onclick="switchTab('documents')">
@@ -439,7 +481,7 @@
 
                     <div class="d-flex align-items-center gap-3">
                         <div class="dropdown">
-                            <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" onclick="markNotifsAsRead()">
+                            <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <i class="fa-solid fa-bell"></i>
                                 <span id="notif-count" class="badge bg-danger notif-badge d-none">0</span>
                             </button>
@@ -657,8 +699,22 @@
                                             <label class="form-label text-white" data-i18n="selectTruck">Zestaw kierowcy</label>
                                             <select id="dispatch_truck" class="form-select bg-dark text-white border-secondary"></select>
                                         </div>
-                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="fromCity">Skąd</label><input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa (PL)"></div>
-                                        <div class="col-md-3"><label class="form-label text-white" data-i18n="toCity">Dokąd</label><input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin (DE)"></div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-white" data-i18n="fromCity">Skąd</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-dark border-secondary" style="min-width:46px; justify-content:center;"><span id="dispatch_start_flag" class="fi"></span></span>
+                                                <select id="dispatch_start_country" class="form-select bg-dark text-white border-secondary" style="max-width:42%;" required onchange="updateFlagPreview('dispatch_start')"></select>
+                                                <input type="text" id="dispatch_start" class="form-control bg-dark text-white border-secondary" required placeholder="np. Warszawa">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-white" data-i18n="toCity">Dokąd</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-dark border-secondary" style="min-width:46px; justify-content:center;"><span id="dispatch_end_flag" class="fi"></span></span>
+                                                <select id="dispatch_end_country" class="form-select bg-dark text-white border-secondary" style="max-width:42%;" required onchange="updateFlagPreview('dispatch_end')"></select>
+                                                <input type="text" id="dispatch_end" class="form-control bg-dark text-white border-secondary" required placeholder="np. Berlin">
+                                            </div>
+                                        </div>
                                         <div class="col-md-12"><label class="form-label text-white" data-i18n="notes">Uwagi / Ładunek</label><input type="text" id="dispatch_notes" class="form-control bg-dark text-white border-secondary" placeholder="Dodatkowe informacje..."></div>
                                         <div class="col-md-12"><button type="submit" class="btn btn-pill-white fw-bold" data-i18n="publishDispatch">Opublikuj zlecenie</button></div>
                                     </form>
@@ -719,16 +775,61 @@
 
                     <div id="tab-garage" style="display:none;">
                         <div id="garage-main-view">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4 class="fw-bold mb-0 text-white" data-i18n="trucksHeader">Ciężarówki</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <div class="d-flex gap-2">
+                                    <button id="gtab-trucks" class="btn btn-sm btn-pill-white" onclick="setGarageType('trucks')"><i class="fa-solid fa-truck me-1"></i> <span data-i18n="tabTrucks">Ciężarówki</span></button>
+                                    <button id="gtab-trailers" class="btn btn-sm btn-pill-dark" onclick="setGarageType('trailers')"><i class="fa-solid fa-trailer me-1"></i> <span data-i18n="tabTrailers">Naczepy</span></button>
+                                </div>
+                                <button id="garage-add-btn" class="btn btn-sm btn-pill-white fw-bold d-none" onclick="toggleVehiclePanel(true)"></button>
                             </div>
                             <hr class="border-secondary mb-4">
+
+                            <div id="garage-add-panel" class="bg-card-bms p-4 mb-4 border border-warning" style="display:none;">
+                                <h5 class="fw-bold text-warning mb-3" id="garage-add-title"></h5>
+                                <form id="vehicle-form" onsubmit="submitVehicleForm(event)" class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white" data-i18n="g_modelName">Nazwa / model</label>
+                                        <input type="text" id="veh_model" class="form-control bg-dark text-white border-secondary" required placeholder="np. SCANIA S730">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white" data-i18n="g_plates">Tablice rejestracyjne (oddziel przecinkami)</label>
+                                        <input type="text" id="veh_plates" class="form-control bg-dark text-white border-secondary" placeholder="np. WRA 1234S, WRA 1235S">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white" data-i18n="g_photoFront">Zdjęcie (przód)</label>
+                                        <input type="file" id="veh_photo" class="form-control bg-dark text-white border-secondary" accept="image/*">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white" data-i18n="g_photoBack">Zdjęcie (tył)</label>
+                                        <input type="file" id="veh_photo_back" class="form-control bg-dark text-white border-secondary" accept="image/*">
+                                    </div>
+
+                                    <div id="veh-truck-fields" class="col-12">
+                                        <div class="row g-3">
+                                            <div class="col-md-4"><label class="form-label text-white" data-i18n="g_cabin">Kabina</label><input type="text" id="veh_cabin" class="form-control bg-dark text-white border-secondary" placeholder="np. Highline"></div>
+                                            <div class="col-md-4"><label class="form-label text-white" data-i18n="g_chassis">Podwozie</label><input type="text" id="veh_chassis" class="form-control bg-dark text-white border-secondary" placeholder="np. 4x2"></div>
+                                            <div class="col-md-4"><label class="form-label text-white" data-i18n="g_engine">Silnik</label><input type="text" id="veh_engine" class="form-control bg-dark text-white border-secondary" placeholder="np. DC13 500 Euro 6"></div>
+                                            <div class="col-md-6"><label class="form-label text-white" data-i18n="g_gearbox">Skrzynia</label><input type="text" id="veh_gearbox" class="form-control bg-dark text-white border-secondary" placeholder="np. I-Shift"></div>
+                                            <div class="col-md-6"><label class="form-label text-white" data-i18n="g_interior">Wnętrze</label><input type="text" id="veh_interior" class="form-control bg-dark text-white border-secondary" placeholder="np. Exclusive"></div>
+                                        </div>
+                                    </div>
+                                    <div id="veh-trailer-fields" class="col-12" style="display:none;">
+                                        <label class="form-label text-white" data-i18n="g_description">Opis / typ naczepy</label>
+                                        <input type="text" id="veh_description" class="form-control bg-dark text-white border-secondary" placeholder="np. Firanka 13.6m, Krone Profi Liner">
+                                    </div>
+
+                                    <div class="col-12 d-flex gap-2">
+                                        <button type="submit" id="veh-submit-btn" class="btn btn-pill-white fw-bold" data-i18n="g_saveGarage">Zapisz w garażu</button>
+                                        <button type="button" class="btn btn-pill-dark" onclick="toggleVehiclePanel(false)" data-i18n="g_cancel">Anuluj</button>
+                                    </div>
+                                </form>
+                            </div>
 
                             <div id="garage-grid" class="row g-4"></div>
                         </div>
 
                         <div id="garage-detail-view" style="display: none;">
-                            <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeTruckDetail()"><i class="fa-solid fa-arrow-left me-1"></i> <span data-i18n="backBtn">Powrót</span></button>
+                            <button class="btn btn-pill-dark btn-sm mb-4" onclick="closeVehicleDetail()"><i class="fa-solid fa-arrow-left me-1"></i> <span data-i18n="backBtn">Powrót</span></button>
                             <div class="bg-card-bms p-4 p-md-5" id="truck-detail-content"></div>
                         </div>
                     </div>
@@ -802,6 +903,16 @@
                             <p class="fs-5 leading-relaxed text-white" data-i18n="aboutText">
                                 <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!
                             </p>
+                            <hr class="border-secondary my-4">
+                            <div class="text-white-50 small fw-semibold text-uppercase mb-3" data-i18n="followUs">Znajdź nas w sieci</div>
+                            <div class="d-flex justify-content-center flex-wrap gap-3">
+                                <a id="link-discord" class="social-btn social-discord" href="#" target="_blank" rel="noopener noreferrer">
+                                    <i class="fa-brands fa-discord fs-5"></i> <span data-i18n="joinDiscord">Dołącz na Discord</span>
+                                </a>
+                                <a id="link-tiktok" class="social-btn social-tiktok" href="#" target="_blank" rel="noopener noreferrer">
+                                    <i class="fa-brands fa-tiktok fs-5"></i> <span data-i18n="followTiktok">Obserwuj na TikTok</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
 
@@ -836,22 +947,153 @@
         let currentUserId = null;
         let currentUserRole = '';
         let currentUsername = '';
-        let currentLang = 'pl';
+        // =====================================================================
+        //  >>> TU WKLEJ LINKI FIRMY (zmień tylko tekst w cudzysłowie) <<<
+        // =====================================================================
+        const DISCORD_URL = 'https://discord.gg/TWOJ_KOD_ZAPROSZENIA';
+        const TIKTOK_URL  = 'https://www.tiktok.com/@mazren.spedition';
+
+        let currentLang = localStorage.getItem('vtc_lang') || 'pl';
         let allUsersList = [];
 
-        let assignedTrucksStorage = JSON.parse(localStorage.getItem('vtc_assigned_drivers') || '{}');
+        // stan garażu (ładowany z bazy danych, nie z localStorage)
+        let trucksData = [];
+        let trailersData = [];
+        let garageType = 'trucks';
 
-        const staticTrucksSpecs = {
-            "SCANIA R500": { cabin: "Highline", chassis: "4x2 type 2", engine: "DC13 165 500 Euro 6", gearbox: "G33CMR", interior: "Exclusive Dark Eu", accessories: "Własne", photo: "/scaniarprzod.jpg", photoBack: "/scaniartyl.jpg", defaultUnits: ["WRA 8001S", "WRA 8002S", "WRA 8003S"] },
-            "SCANIA PGR 520": { cabin: "CR19T Topline 2008-2018", chassis: "4x2 4000mm", engine: "DC16 101 520 Euro 6", gearbox: "GRSO900R", interior: "Treated New Gauges Radio", accessories: "Własne", photo: "/scaniapgrprzod.jpg", photoBack: "/scaniapgrtyl.jpg", defaultUnits: ["WRA 6614S", "WRA 6615S", "WRA 6616S"] },
-            "RENAULT PRIVILEGE 400": { cabin: "High Roof", chassis: "4x2", engine: "400 Euro2", gearbox: "Optidriver R", interior: "Privilege", accessories: "Własne", photo: "/renaultprzod.jpg", photoBack: "/renaulttyl.jpg", defaultUnits: ["WRA 5024S", "WRA 5025S", "WRA 5026S"] },
-            "VOLVO FH2 500": { cabin: "Globetrotter XL", chassis: "4x2", engine: "D13A500", gearbox: "I-Shift", interior: "Standard", accessories: "Własne", photo: "/volvoprzod.jpg", photoBack: "/volvotyl.jpg", defaultUnits: ["WRA 6509S", "WRA 6510S", "WRA 6511S", "WRA 6512S"] },
-            "RENAULT T 480": { cabin: "High Sleeper", chassis: "4x2", engine: "DTI 13 480", gearbox: "Optidriver", interior: "Exclusive Black", accessories: "Własne", photo: "/renaulttprzod.jpg", photoBack: "/renaultttyl.jpg", defaultUnits: ["WRA 7945S", "WRA 7946S", "WRA 7947S"] },
-            "MERCEDES MP4 476": { cabin: "GigaSpace", chassis: "4x2", engine: "OM 471 476KM", gearbox: "PowerShift", interior: "Comfortline", accessories: "Własne", photo: "/mercedesprzod.jpg", photoBack: "/mercedestyl.jpg", defaultUnits: ["WRA 7217S", "WRA 7218S", "WRA 7219S"] },
-            "MAN TGX E6 480": { cabin: "Cabin XXL", chassis: "4x2 BLS", engine: "D2676 480KM", gearbox: "TipMatic", interior: "Beige", accessories: "Własne", photo: "/manprzod.jpg", photoBack: "/mantyl.jpg", defaultUnits: ["WRA 7707S", "WRA 7708S", "WRA 7709S"] },
-            "DAF XF106 510": { cabin: "Super Space Cab", chassis: "4x2", engine: "MX-13 510KM", gearbox: "ZF AS Tronic", interior: "Standard", accessories: "Własne", photo: "/dafprzod.jpg", photoBack: "/daftyl.jpg", defaultUnits: ["WRA 6196S", "WRA 6197S", "WRA 6198S", "WRA 6199S"] },
-            "VOLVO FH4 500": { cabin: "Globetrotter XL", chassis: "4x2", engine: "DC13C500 500KM", gearbox: "VT2514B", interior: "Exclusive", accessories: "Własne", photo: "/volvo4przod.jpg", photoBack: "/volvo4tyl.jpg", defaultUnits: ["WRA 7605S", "WRA 7606S", "WRA 7607S"] }
-        };
+        // =====================================================================
+        //  KRAJE dostępne w ETS2 (podstawka + DLC + ProMods + Poland Rebuilding)
+        //  Format: [kod ISO, nazwa PL, nazwa EN]. Możesz tu dopisać / usunąć kraje.
+        // =====================================================================
+        const COUNTRIES = [
+            ['AL','Albania','Albania'], ['AT','Austria','Austria'], ['BY','Białoruś','Belarus'], ['BE','Belgia','Belgium'],
+            ['BA','Bośnia i Hercegowina','Bosnia and Herzegovina'], ['BG','Bułgaria','Bulgaria'], ['HR','Chorwacja','Croatia'],
+            ['CZ','Czechy','Czechia'], ['DK','Dania','Denmark'], ['EE','Estonia','Estonia'], ['FI','Finlandia','Finland'],
+            ['FR','Francja','France'], ['GR','Grecja','Greece'], ['ES','Hiszpania','Spain'], ['NL','Holandia','Netherlands'],
+            ['IE','Irlandia','Ireland'], ['XK','Kosowo','Kosovo'], ['LI','Liechtenstein','Liechtenstein'], ['LT','Litwa','Lithuania'],
+            ['LU','Luksemburg','Luxembourg'], ['LV','Łotwa','Latvia'], ['MK','Macedonia Północna','North Macedonia'],
+            ['DE','Niemcy','Germany'], ['NO','Norwegia','Norway'], ['PL','Polska','Poland'], ['PT','Portugalia','Portugal'],
+            ['RU','Rosja','Russia'], ['RO','Rumunia','Romania'], ['RS','Serbia','Serbia'], ['SK','Słowacja','Slovakia'],
+            ['SI','Słowenia','Slovenia'], ['CH','Szwajcaria','Switzerland'], ['SE','Szwecja','Sweden'], ['TR','Turcja','Turkey'],
+            ['HU','Węgry','Hungary'], ['GB','Wielka Brytania','United Kingdom'], ['IT','Włochy','Italy'], ['ME','Czarnogóra','Montenegro']
+        ];
+
+        function countryName(code) {
+            if (!code) return '';
+            const c = COUNTRIES.find(x => x[0] === String(code).toUpperCase());
+            if (!c) return String(code).toUpperCase();
+            return currentLang === 'en' ? c[2] : c[1];
+        }
+
+        function flagHtml(code) {
+            if (!code || !/^[A-Za-z]{2}$/.test(code)) return '';
+            return `<span class="fi fi-${code.toLowerCase()} me-1" title="${countryName(code)}"></span>`;
+        }
+
+        function placeHtml(city, code) {
+            return `${flagHtml(code)}${escapeHtml(city)}`;
+        }
+
+        function populateCountrySelects() {
+            const sorted = [...COUNTRIES].sort((a, b) => (currentLang === 'en' ? a[2] : a[1]).localeCompare(currentLang === 'en' ? b[2] : b[1], currentLang));
+            ['dispatch_start_country', 'dispatch_end_country'].forEach(id => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const prev = sel.value;
+                sel.innerHTML = `<option value="" disabled selected>${t('chooseCountry')}</option>` +
+                    sorted.map(c => `<option value="${c[0]}">${currentLang === 'en' ? c[2] : c[1]}</option>`).join('');
+                if (prev) sel.value = prev;
+                updateFlagPreview(id.replace('_country', ''));
+            });
+        }
+
+        function updateFlagPreview(prefix) {
+            const sel = document.getElementById(prefix + '_country');
+            const flag = document.getElementById(prefix + '_flag');
+            if (!sel || !flag) return;
+            flag.className = sel.value ? `fi fi-${sel.value.toLowerCase()}` : 'fi';
+        }
+
+        // =====================================================================
+        //  Pomocnicze
+        // =====================================================================
+        function escapeHtml(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function t(key) {
+            return (i18n[currentLang] && i18n[currentLang][key]) || i18n.pl[key] || key;
+        }
+
+        // Zmniejsza zdjęcia przed wysłaniem (CMR i podsumowania z telefonu/gry potrafią ważyć kilka MB).
+        // Dzięki temu baza w Supabase nie zapełni się szybko, a wysyłka jest szybsza.
+        function compressImage(file, maxDim = 1600, quality = 0.82) {
+            return new Promise(resolve => {
+                if (!file || !file.type || !file.type.startsWith('image/') || file.type === 'image/gif') return resolve(file);
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                    const w = Math.round(img.width * scale);
+                    const h = Math.round(img.height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.drawImage(img, 0, 0, w, h);
+                    canvas.toBlob(blob => {
+                        URL.revokeObjectURL(url);
+                        if (!blob || (blob.size >= file.size && scale === 1)) return resolve(file);
+                        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+                img.src = url;
+            });
+        }
+
+        function activeUsers() {
+            return allUsersList.filter(u => u.status === undefined || u.status === 'approved');
+        }
+
+        async function apiJson(url, method = 'GET', body) {
+            const opts = { method, headers: {} };
+            if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+            const res = await fetch(url, opts);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(data.error || 'Wystąpił błąd.'); return null; }
+            return data;
+        }
+
+        // 12 żółtych gwiazd UE ułożonych w kółko (SVG) - do tablicy rejestracyjnej
+        function euStarsSvg() {
+            const star = (cx, cy, R, r) => {
+                let pts = [];
+                for (let i = 0; i < 10; i++) {
+                    const rad = i % 2 === 0 ? R : r;
+                    const a = -Math.PI / 2 + i * Math.PI / 5;
+                    pts.push((cx + rad * Math.cos(a)).toFixed(2) + ',' + (cy + rad * Math.sin(a)).toFixed(2));
+                }
+                return `<polygon points="${pts.join(' ')}" fill="#ffd400"/>`;
+            };
+            let s = '';
+            for (let i = 0; i < 12; i++) {
+                const a = i * Math.PI / 6;
+                s += star(20 + 13 * Math.sin(a), 20 - 13 * Math.cos(a), 3.4, 1.4);
+            }
+            return `<svg viewBox="0 0 40 40" aria-hidden="true">${s}</svg>`;
+        }
+        const EU_STARS = euStarsSvg();
+
+        function plateHtml(plate, small) {
+            return `<div class="polish-license-plate${small ? ' plate-sm' : ''}">
+                        <div class="polish-plate-inner">
+                            <div class="polish-plate-eu">${EU_STARS}<span>PL</span></div>
+                            <div class="polish-plate-text">${escapeHtml(plate)}</div>
+                        </div>
+                    </div>`;
+        }
 
         const i18n = {
             pl: {
@@ -872,7 +1114,20 @@
                 totalCompanyDeliveries: "Łączna liczba dostaw", budgetStatus: "Stan Budżetu", allCompanyJobs: "Wszystkie Wykonane Trasy w Firmie",
                 driversRanking: "Ranking Kierowców", addExpense: "Zgłoś wydatek", expenseType: "Typ wydatku", submitExpense: "+ Dodaj Wydatek",
                 expensesLog: "Rejestr wydatków firmy", newDispatch: "Nowe Zlecenie w Dyspozytorni", assignDriver: "Przypisz kierowcę",
-                selectTruck: "Zestaw z garażu", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi", publishDispatch: "Opublikuj zlecenie", availableJobs: "Twoje zlecenia w Dyspozytorni:"
+                selectTruck: "Zestaw kierowcy", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi / Ładunek", publishDispatch: "Opublikuj zlecenie", availableJobs: "Twoje zlecenia w Dyspozytorni:",
+                aboutText: "<strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!",
+                followUs: "Znajdź nas w sieci", joinDiscord: "Dołącz na Discord", followTiktok: "Obserwuj na TikTok",
+                chooseCountry: "— kraj —",
+                tabTrucks: "Ciężarówki", tabTrailers: "Naczepy", g_addTruck: "Dodaj ciężarówkę", g_addTrailer: "Dodaj naczepę",
+                g_addTruckTitle: "Nowa ciężarówka w garażu", g_addTrailerTitle: "Nowa naczepa w garażu",
+                g_modelName: "Nazwa / model", g_plates: "Tablice rejestracyjne (oddziel przecinkami)", g_photoFront: "Zdjęcie (przód)", g_photoBack: "Zdjęcie (tył)",
+                g_cabin: "Kabina", g_chassis: "Podwozie", g_engine: "Silnik", g_gearbox: "Skrzynia", g_interior: "Wnętrze", g_description: "Opis / typ naczepy",
+                g_saveGarage: "Zapisz w garażu", g_cancel: "Anuluj", g_units: "szt.", g_freeLower: "wolne", g_free: "Wolny",
+                g_noTrucks: "Brak ciężarówek w garażu.", g_noTrailers: "Brak naczep w garażu.", g_drivers: "Kierowcy",
+                g_assignPanel: "Przypisz (Panel Szefa)", g_release: "-- Zwolnij --", g_saveBtn: "Zapisz", g_assigned: "Zaktualizowano przydział!",
+                g_addUnit: "Dodaj kolejną sztukę tego modelu", g_addUnitPh: "np. WRA 1234S", g_addBtn: "Dodaj", g_deleteModel: "Usuń cały model",
+                g_confirmDeleteModel: "Usunąć cały model wraz ze wszystkimi sztukami z garażu?", g_confirmDeleteUnit: "Usunąć tę sztukę z garażu?",
+                g_added: "Dodano do garażu!", g_viewInGarage: "Zobacz w Garażu", g_trailer: "Naczepa", notifNone: "Brak powiadomień", notifMarkAll: "Oznacz wszystkie jako przeczytane", notifMarkOne: "Oznacz jako przeczytane", notifDelete: "Usuń powiadomienie", notifToday: "Dzisiaj"
             },
             en: {
                 loginBtn: "Sign In", registerBtn: "Register", exitBtn: "Exit", welcomeBack: "Welcome Back!",
@@ -892,16 +1147,39 @@
                 totalCompanyDeliveries: "Total Deliveries", budgetStatus: "Budget Balance", allCompanyJobs: "All Completed Company Routes",
                 driversRanking: "Drivers Leaderboard", addExpense: "Report Expense", expenseType: "Expense Type", submitExpense: "+ Add Expense",
                 expensesLog: "Company Expense Log", newDispatch: "New Dispatch Order", assignDriver: "Assign Driver",
-                selectTruck: "Select Truck", fromCity: "From", toCity: "To", notes: "Notes", publishDispatch: "Publish Order", availableJobs: "Your Dispatch Orders:"
+                selectTruck: "Driver's Truck", fromCity: "From", toCity: "To", notes: "Notes / Cargo", publishDispatch: "Publish Order", availableJobs: "Your Dispatch Orders:",
+                aboutText: "<strong>Mazren Spedition Ltd.</strong> is a virtual trucking company operating in the world of Euro Truck Simulator 2, founded on 20 September 2026. Our goal is to build an active, close-knit community where we drive across Europe together, complete a wide variety of jobs and take part in company convoys and events. The server is intended for everyone over 31 years of age (read it backwards). We focus on realism, a great atmosphere, activity, driving etiquette and, above all, having fun together. Join Mazren Spedition and start your trucking adventure with us!",
+                followUs: "Find us online", joinDiscord: "Join our Discord", followTiktok: "Follow us on TikTok",
+                chooseCountry: "— country —",
+                tabTrucks: "Trucks", tabTrailers: "Trailers", g_addTruck: "Add truck", g_addTrailer: "Add trailer",
+                g_addTruckTitle: "New truck in the garage", g_addTrailerTitle: "New trailer in the garage",
+                g_modelName: "Name / model", g_plates: "License plates (comma separated)", g_photoFront: "Photo (front)", g_photoBack: "Photo (back)",
+                g_cabin: "Cabin", g_chassis: "Chassis", g_engine: "Engine", g_gearbox: "Gearbox", g_interior: "Interior", g_description: "Description / trailer type",
+                g_saveGarage: "Save to garage", g_cancel: "Cancel", g_units: "pcs", g_freeLower: "free", g_free: "Free",
+                g_noTrucks: "No trucks in the garage.", g_noTrailers: "No trailers in the garage.", g_drivers: "Drivers",
+                g_assignPanel: "Assign (Boss Panel)", g_release: "-- Release --", g_saveBtn: "Save", g_assigned: "Assignment updated!",
+                g_addUnit: "Add another unit of this model", g_addUnitPh: "e.g. WRA 1234S", g_addBtn: "Add", g_deleteModel: "Delete whole model",
+                g_confirmDeleteModel: "Delete this whole model with all its units from the garage?", g_confirmDeleteUnit: "Remove this unit from the garage?",
+                g_added: "Added to the garage!", g_viewInGarage: "View in Garage", g_trailer: "Trailer", notifNone: "No notifications", notifMarkAll: "Mark all as read", notifMarkOne: "Mark as read", notifDelete: "Delete notification", notifToday: "Today"
             }
         };
 
         function changeLanguage(lang) {
             currentLang = lang;
+            localStorage.setItem('vtc_lang', lang);
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (i18n[lang] && i18n[lang][key]) el.innerText = i18n[lang][key];
+                if (i18n[lang] && i18n[lang][key]) el.innerHTML = i18n[lang][key];
             });
+            const sel = document.getElementById('lang-selector');
+            if (sel && sel.value !== lang) sel.value = lang;
+            populateCountrySelects();
+            const garageTab = document.getElementById('tab-garage');
+            if (garageTab && garageTab.style.display === 'block' && typeof renderGarage === 'function') {
+                renderGarage();
+                closeVehicleDetail();
+            }
+            if (typeof updateClock === 'function') updateClock();
         }
 
         function updateClock() {
@@ -927,9 +1205,10 @@
         }
 
         function switchTab(tab) {
+            if (tab === 'management' && currentUserRole !== 'admin') tab = 'dashboard';
             ['dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
-                const nav = document.getElementById('nav-' + t);
+                const nav = document.getElementById(t === 'management' ? 'admin-tab-btn' : 'nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
                 if (nav) nav.classList.toggle('active', tab === t);
             });
@@ -955,7 +1234,8 @@
             const driverSelect = document.getElementById('dispatch_assigned');
             if (!driverSelect) return;
 
-            driverSelect.innerHTML = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+            driverSelect.innerHTML = activeUsers().map(u => `<option value="${escapeHtml(u.username)}">${escapeHtml(u.username)}</option>`).join('') +
+                `<option value="Wszyscy">Wszyscy (wolny obieg)</option>`;
             onAdminDriverSelectChange();
         }
 
@@ -964,30 +1244,19 @@
             const truckSelect = document.getElementById('dispatch_truck');
             if (!driverSelect || !truckSelect) return;
 
-            const selectedDriver = driverSelect.value;
-            let driverTrucks = [];
-
-            for (let plate in assignedTrucksStorage) {
-                if (assignedTrucksStorage[plate] === selectedDriver) {
-                    for (let model in staticTrucksSpecs) {
-                        if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
-                            driverTrucks.push(`${model} (${plate})`);
-                        }
-                    }
-                }
-            }
+            const selectedDriver = (driverSelect.value || '').toLowerCase();
+            const driverTrucks = trucksData
+                .filter(tr => (tr.driver_name || '').toLowerCase() === selectedDriver)
+                .map(tr => `${tr.truck_model} (${tr.plates})`);
 
             if (driverTrucks.length === 0) {
                 truckSelect.innerHTML = `<option value="Brak przypisanego zestawu">Brak przypisanego zestawu w garażu</option>`;
             } else {
-                truckSelect.innerHTML = driverTrucks.map(t => `<option value="${t}">${t}</option>`).join('');
+                truckSelect.innerHTML = driverTrucks.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
             }
         }
 
         async function checkUser() {
-            const savedUser = localStorage.getItem('vtc_logged_user');
-            if (!savedUser) return showLogin();
-
             try {
                 const res = await fetch('/api/user');
                 if (res.ok) {
@@ -1012,10 +1281,13 @@
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
                     }
 
-                    renderAssignedTruckOnDashboard();
+                    renderAssignedTruckOnDashboard(data);
                     loadNotifications();
 
+                    if (data.role === 'admin') await migrateLegacyAssignments();
+                    await refreshVehicles();
                     await fetchDriversList();
+                    populateCountrySelects();
                     switchTab('dashboard');
                     loadCompanyStats();
                     loadMyJobs();
@@ -1023,47 +1295,28 @@
             } catch (e) { showLogin(); }
         }
 
-        function renderAssignedTruckOnDashboard() {
+        function renderAssignedTruckOnDashboard(data) {
             const container = document.getElementById('my-assigned-truck-box');
-            let foundModel = null;
-            let foundPlate = null;
+            const truck = data && data.assignedTruck;
+            const trailer = data && data.assignedTrailer;
 
-            for (let plate in assignedTrucksStorage) {
-                if (assignedTrucksStorage[plate] === currentUsername) {
-                    foundPlate = plate;
-                    for (let model in staticTrucksSpecs) {
-                        if ((staticTrucksSpecs[model].defaultUnits || []).includes(plate)) {
-                            foundModel = model;
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-
-            if (!foundModel || !foundPlate) {
-                container.innerHTML = `<div class="text-white-50 text-center py-4">Brak przypisanego zestawu w garażu.</div>`;
+            if (!truck) {
+                container.innerHTML = `<div class="text-white-50 text-center py-4">${t('noTruckAssigned')}</div>`;
                 return;
             }
 
-            const spec = staticTrucksSpecs[foundModel];
             container.innerHTML = `
                 <div class="text-center">
                     <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                        <h6 class="fw-bold text-info mb-0">${foundModel}</h6>
-                        <div class="polish-license-plate">
-                            <div class="polish-plate-eu">
-                                <div class="eu-stars">★★★★★<br>★★★★★</div>
-                                <span>PL</span>
-                            </div>
-                            <div class="polish-plate-text">${foundPlate}</div>
-                        </div>
+                        <h6 class="fw-bold text-info mb-0">${escapeHtml(truck.truck_model)}</h6>
+                        ${plateHtml(truck.plates, false)}
                     </div>
                     <div class="mb-3">
-                        <img src="${spec.photo}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+                        <img src="${truck.photo || '/logo.png'}" class="vehicle-photo-full rounded border border-secondary shadow-sm" loading="lazy" onerror="this.src='/logo.png'">
                     </div>
-                    <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${foundModel}')">
-                        <i class="fa-solid fa-truck me-1"></i> Zobacz w Garażu
+                    ${trailer ? `<div class="text-start text-white-50 small mb-3"><i class="fa-solid fa-trailer me-1 text-warning"></i> ${t('g_trailer')}: <strong class="text-white">${escapeHtml(trailer.trailer_model)}</strong> (${escapeHtml(trailer.plates)})</div>` : ''}
+                    <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${encodeURIComponent(truck.truck_model)}')">
+                        <i class="fa-solid fa-truck me-1"></i> ${t('g_viewInGarage')}
                     </button>
                 </div>
             `;
@@ -1078,53 +1331,80 @@
                 const res = await fetch('/api/notifications');
                 if (!res.ok) return;
                 const notifs = await res.json();
+                const unread = notifs.filter(n => !n.is_read).length;
 
-                if (notifs.length > 0) {
-                    badge.classList.remove('d-none');
-                    badge.innerText = notifs.length;
-                    
-                    list.innerHTML = notifs.map(n => {
-                        let formattedDate = '';
-                        if (n.created_at) {
-                            const dateObj = new Date(n.created_at);
-                            formattedDate = dateObj.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' o ' + dateObj.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-                        } else {
-                            formattedDate = 'Dzisiaj';
-                        }
+                // licznik = tylko NIEPRZECZYTANE
+                badge.classList.toggle('d-none', unread === 0);
+                badge.innerText = unread;
 
-                        return `
-                            <li class="p-2 border-bottom border-secondary text-white small notification-item bg-dark d-flex align-items-center justify-content-between">
-                                <div class="flex-grow-1" style="cursor: pointer;" onclick="handleNotificationClick(${n.job_id || 'null'})">
-                                    <div class="d-flex align-items-start">
-                                        <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
-                                        <div>
-                                            <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
-                                            <div class="text-light">${n.message || n.text}</div>
-                                            <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${formattedDate}</div>
-                                        </div>
+                if (notifs.length === 0) {
+                    list.innerHTML = `<li class="p-2 text-white-50 text-center small">${t('notifNone')}</li>`;
+                    return;
+                }
+
+                const locale = currentLang === 'en' ? 'en-GB' : 'pl-PL';
+                const header = unread > 0
+                    ? `<li class="px-2 pb-2 text-end"><button type="button" class="btn btn-sm btn-outline-info" onclick="markAllNotifsRead(event)"><i class="fa-solid fa-check-double me-1"></i> ${t('notifMarkAll')}</button></li>`
+                    : '';
+
+                list.innerHTML = header + notifs.map(n => {
+                    const dateStr = n.created_at
+                        ? new Date(n.created_at).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                          new Date(n.created_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+                        : t('notifToday');
+                    const isNew = !n.is_read;
+
+                    return `
+                        <li class="p-2 border-bottom border-secondary text-white small bg-dark d-flex align-items-center justify-content-between"
+                            style="${isNew ? 'border-left: 3px solid #38bdf8 !important;' : 'opacity: 0.6;'}">
+                            <div class="flex-grow-1" style="cursor: pointer;" onclick="handleNotificationClick(${n.job_id || 'null'}, '${n.action_tab || ''}', ${n.id})">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa-solid fa-truck-fast ${isNew ? 'text-warning' : 'text-secondary'} me-2 mt-1"></i>
+                                    <div>
+                                        <div class="${isNew ? 'fw-bold' : ''}">${escapeHtml(n.title || '')}</div>
+                                        <div class="text-light">${escapeHtml(n.message || n.text || '')}</div>
+                                        <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${dateStr}</div>
                                     </div>
                                 </div>
-                                <button class="btn btn-outline-danger btn-sm ms-2 border-0" type="button" onclick="deleteSingleNotification(event, ${n.id})" title="Usuń powiadomienie">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </li>
-                        `;
-                    }).join('');
-                } else {
-                    badge.classList.add('d-none');
-                    list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
-                }
+                            </div>
+                            <div class="d-flex flex-column ms-2">
+                                ${isNew ? `<button class="btn btn-outline-info btn-sm border-0" type="button" onclick="markOneNotifRead(event, ${n.id})" title="${t('notifMarkOne')}"><i class="fa-solid fa-check"></i></button>` : ''}
+                                <button class="btn btn-outline-danger btn-sm border-0" type="button" onclick="deleteSingleNotification(event, ${n.id})" title="${t('notifDelete')}"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </li>`;
+                }).join('');
             } catch (err) {
                 console.error("Błąd ładowania powiadomień:", err);
             }
         }
 
-        function handleNotificationClick(jobId) {
-            if (jobId && jobId !== 'null') {
-                if (typeof switchTab === 'function') {
-                    switchTab('dispatcher');
-                }
-            }
+        async function markOneNotifRead(event, id) {
+            if (event) event.stopPropagation();
+            try {
+                await fetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+                loadNotifications();
+            } catch (e) { console.error(e); }
+        }
+
+        async function markAllNotifsRead(event) {
+            if (event) event.stopPropagation();
+            try {
+                await fetch('/api/notifications/read', { method: 'PUT' });
+                loadNotifications();
+            } catch (e) { console.error(e); }
+        }
+
+        // co minutę sprawdzaj nowe powiadomienia (nie nadpisuj listy, gdy jest otwarta)
+        setInterval(() => {
+            const list = document.getElementById('notif-list');
+            if (currentUserId && list && !list.classList.contains('show')) loadNotifications();
+        }, 60000);
+
+        function handleNotificationClick(jobId, tab, notifId) {
+            if (notifId) fetch(`/api/notifications/${notifId}/read`, { method: 'PUT' }).then(loadNotifications).catch(() => {});
+            if (tab === 'management' && currentUserRole === 'admin') return switchTab('management');
+            if (tab === 'garage') return switchTab('garage');
+            if (jobId && jobId !== 'null') switchTab('dispatcher');
         }
 
         async function deleteSingleNotification(event, notifId) {
@@ -1245,7 +1525,7 @@
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="fw-bold text-white mb-0">
-                                    ${j.start_city} <i class="fa-solid fa-arrow-right text-info mx-2"></i> ${j.end_city}
+                                    ${placeHtml(j.start_city, j.start_country)} <i class="fa-solid fa-arrow-right text-info mx-2"></i> ${placeHtml(j.end_city, j.end_country)}
                                 </h5>
                                 <div class="text-end">
                                     <span class="fw-bold text-success fs-5">${j.income || 0} €</span>
@@ -1303,7 +1583,7 @@
                                     <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${j.username}</span>
                                     ${statusBadge}
                                     <h5 class="fw-bold text-white mb-0">
-                                        ${j.start_city} <i class="fas fa-arrow-right text-info mx-2"></i> ${j.end_city}
+                                        ${placeHtml(j.start_city, j.start_country)} <i class="fas fa-arrow-right text-info mx-2"></i> ${placeHtml(j.end_city, j.end_country)}
                                     </h5>
                                 </div>
                                 <div class="text-end">
@@ -1404,7 +1684,7 @@
                         <div class="col-md-6">
                             <div class="bg-card-bms p-4 position-relative">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h4 class="fw-bold text-white mb-0">${d.start_city} <i class="fa-solid fa-arrow-right text-info mx-1"></i> ${d.end_city}</h4>
+                                    <h4 class="fw-bold text-white mb-0">${placeHtml(d.start_city, d.start_country)} <i class="fa-solid fa-arrow-right text-info mx-1"></i> ${placeHtml(d.end_city, d.end_country)}</h4>
                                     <div>${deleteDispatchBtn}</div>
                                 </div>
                                 <p class="text-info mb-1 small">Przypisany kierowca: <strong>${d.assigned_to}</strong></p>
@@ -1443,6 +1723,8 @@
                 truck_name: document.getElementById('dispatch_truck').value,
                 start_city: document.getElementById('dispatch_start').value,
                 end_city: document.getElementById('dispatch_end').value,
+                start_country: document.getElementById('dispatch_start_country').value,
+                end_country: document.getElementById('dispatch_end_country').value,
                 notes: document.getElementById('dispatch_notes').value
             };
             const res = await fetch('/api/dispatches', {
@@ -1452,6 +1734,7 @@
             });
             if (res.ok) {
                 document.getElementById('dispatch-form').reset();
+                populateCountrySelects();
                 onAdminDriverSelectChange();
                 loadDispatches();
                 alert('Zlecenie zostało opublikowane pomyślnie!');
@@ -1475,36 +1758,32 @@
 
         async function submitJobReport(e) {
             e.preventDefault();
-            
+
+            const btn = e.submitter || document.querySelector('#job-report-form button[type="submit"]');
+            const btnText = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Wysyłanie...'; }
+
             const dispatchId = document.getElementById('report_dispatch_id').value;
-            const distance = document.getElementById('report_distance').value;
-            const income = document.getElementById('report_income').value;
-            const cargo = document.getElementById('report_cargo').value || 'Standard';
-
-            const cmrFile = document.getElementById('report_cmr').files[0];
-            const summaryFile = document.getElementById('report_summary').files[0];
-
             const formData = new FormData();
-            formData.append('distance', distance);
-            formData.append('income', income);
-            formData.append('cargo', cargo);
-
-            if (cmrFile) formData.append('cmr_file', cmrFile);
-            if (summaryFile) formData.append('summary_photo', summaryFile);
+            formData.append('distance', document.getElementById('report_distance').value);
+            formData.append('income', document.getElementById('report_income').value);
+            formData.append('cargo', document.getElementById('report_cargo').value || 'Standard');
 
             try {
-                const res = await fetch(`/api/dispatches/${dispatchId}/complete`, {
-                    method: 'POST',
-                    body: formData
-                });
+                const cmrFile = document.getElementById('report_cmr').files[0];
+                const summaryFile = document.getElementById('report_summary').files[0];
+                if (cmrFile) { const f = await compressImage(cmrFile); formData.append('cmr_file', f, f.name); }
+                if (summaryFile) { const f = await compressImage(summaryFile); formData.append('summary_photo', f, f.name); }
+
+                const res = await fetch(`/api/dispatches/${dispatchId}/complete`, { method: 'POST', body: formData });
 
                 if (res.ok) {
                     document.getElementById('job-report-form').reset();
                     document.getElementById('driver-report-section').style.display = 'none';
                     alert('Raport trasy został pomyślnie wysłany i dodany do statystyk firmy!');
-                    if (typeof loadMyJobs === 'function') loadMyJobs();
-                    if (typeof loadDispatches === 'function') loadDispatches();
-                    if (typeof loadCompanyStats === 'function') loadCompanyStats();
+                    loadMyJobs();
+                    loadDispatches();
+                    loadCompanyStats();
                 } else {
                     const errorData = await res.json().catch(() => ({}));
                     alert(errorData.error || 'Błąd podczas wysyłania raportu trasy.');
@@ -1512,106 +1791,370 @@
             } catch (err) {
                 console.error(err);
                 alert('Wystąpił błąd połączenia z serwerem.');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = btnText; }
             }
+        }
+
+        // =====================================================================
+        //  GARAŻ: ciężarówki + naczepy (dane z bazy, zdjęcia z bazy)
+        // =====================================================================
+        async function refreshVehicles() {
+            try {
+                const [a, b] = await Promise.all([fetch('/api/trucks'), fetch('/api/trailers')]);
+                trucksData = a.ok ? await a.json() : [];
+                trailersData = b.ok ? await b.json() : [];
+            } catch (e) { console.error('Błąd ładowania garażu:', e); }
+        }
+
+        async function migrateLegacyAssignments() {
+            // jednorazowo przenosi stare przydziały z localStorage przeglądarki Szefa do bazy
+            try {
+                const raw = localStorage.getItem('vtc_assigned_drivers');
+                if (!raw || localStorage.getItem('vtc_assign_migrated')) return;
+                const map = JSON.parse(raw);
+                if (!Object.keys(map).length) return;
+                const r = await fetch('/api/trucks/import-assignments', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assignments: map })
+                });
+                if (r.ok) localStorage.setItem('vtc_assign_migrated', '1');
+            } catch (e) { console.error('Migracja przydziałów nie powiodła się:', e); }
+        }
+
+        const modelOf = (type, row) => type === 'trailers' ? row.trailer_model : row.truck_model;
+        const vehicleList = type => type === 'trailers' ? trucksOrTrailers('trailers') : trucksOrTrailers('trucks');
+        function trucksOrTrailers(type) { return type === 'trailers' ? trailersData : trucksData; }
+        const isFree = u => !u.driver_name || u.driver_name === 'Wolne';
+
+        function groupVehicles(type) {
+            const map = new Map();
+            vehicleList(type).forEach(r => {
+                const m = modelOf(type, r);
+                const k = m.toLowerCase();
+                if (!map.has(k)) map.set(k, { model: m, photo: r.photo || '', photo_back: r.photo_back || '', first: r, units: [] });
+                const g = map.get(k);
+                if (!g.photo && r.photo) g.photo = r.photo;
+                if (!g.photo_back && r.photo_back) g.photo_back = r.photo_back;
+                g.units.push(r);
+            });
+            return [...map.values()];
         }
 
         async function loadGarage() {
+            await refreshVehicles();
+            renderGarage();
+        }
+
+        function setGarageType(type) {
+            garageType = type;
+            toggleVehiclePanel(false);
+            closeVehicleDetail();
+            renderGarage();
+        }
+
+        function renderGarage() {
+            document.getElementById('gtab-trucks').className = 'btn btn-sm ' + (garageType === 'trucks' ? 'btn-pill-white' : 'btn-pill-dark');
+            document.getElementById('gtab-trailers').className = 'btn btn-sm ' + (garageType === 'trailers' ? 'btn-pill-white' : 'btn-pill-dark');
+
+            const addBtn = document.getElementById('garage-add-btn');
+            addBtn.classList.toggle('d-none', currentUserRole !== 'admin');
+            addBtn.innerHTML = `<i class="fa-solid fa-plus me-1"></i> ${t(garageType === 'trucks' ? 'g_addTruck' : 'g_addTrailer')}`;
+
             const grid = document.getElementById('garage-grid');
-            grid.innerHTML = '';
-            for (let modelName in staticTrucksSpecs) {
-                const spec = staticTrucksSpecs[modelName];
-                grid.innerHTML += `
+            const groups = groupVehicles(garageType);
+
+            if (groups.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center text-white-50 py-5">${t(garageType === 'trucks' ? 'g_noTrucks' : 'g_noTrailers')}</div>`;
+                return;
+            }
+
+            grid.innerHTML = groups.map(g => {
+                const free = g.units.filter(isFree).length;
+                return `
                     <div class="col-md-3">
-                        <div class="truck-card" onclick="openTruckGroupDetail('${modelName}')">
-                            <h5 class="fw-bold text-white mb-2">${modelName}</h5>
-                            <img src="${spec.photo}" class="truck-card-grid-img mb-2" loading="lazy" onerror="this.src='/logo.png'">
-                            <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto">Więcej informacji</a>
+                        <div class="truck-card" onclick="openVehicleDetail('${encodeURIComponent(g.model)}')">
+                            <h5 class="fw-bold text-white mb-2 text-center">${escapeHtml(g.model)}</h5>
+                            <img src="${g.photo || '/logo.png'}" class="truck-card-grid-img mb-2" loading="lazy" onerror="this.src='/logo.png'">
+                            <div class="text-white-50 small mb-1">${g.units.length} ${t('g_units')} · ${free} ${t('g_freeLower')}</div>
+                            <a href="#" class="text-white small fw-semibold text-decoration-underline mt-auto" onclick="event.preventDefault()">${t('moreInfo')}</a>
                         </div>
-                    </div>
-                `;
+                    </div>`;
+            }).join('');
+        }
+
+        function toggleVehiclePanel(show) {
+            const panel = document.getElementById('garage-add-panel');
+            if (!panel) return;
+            panel.style.display = show ? 'block' : 'none';
+            document.getElementById('veh-truck-fields').style.display = garageType === 'trucks' ? 'block' : 'none';
+            document.getElementById('veh-trailer-fields').style.display = garageType === 'trailers' ? 'block' : 'none';
+            document.getElementById('garage-add-title').innerText = t(garageType === 'trucks' ? 'g_addTruckTitle' : 'g_addTrailerTitle');
+            if (!show) document.getElementById('vehicle-form').reset();
+        }
+
+        async function submitVehicleForm(e) {
+            e.preventDefault();
+            const btn = document.getElementById('veh-submit-btn');
+            const btnText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>';
+
+            try {
+                const fd = new FormData();
+                fd.append('model_name', document.getElementById('veh_model').value);
+                fd.append('plates', document.getElementById('veh_plates').value);
+
+                if (garageType === 'trucks') {
+                    ['cabin', 'chassis', 'engine', 'gearbox', 'interior'].forEach(k => fd.append(k, document.getElementById('veh_' + k).value));
+                } else {
+                    fd.append('description', document.getElementById('veh_description').value);
+                }
+
+                const p1 = document.getElementById('veh_photo').files[0];
+                const p2 = document.getElementById('veh_photo_back').files[0];
+                if (p1) { const f = await compressImage(p1, 1400); fd.append('photo', f, f.name); }
+                if (p2) { const f = await compressImage(p2, 1400); fd.append('photo_back', f, f.name); }
+
+                const res = await fetch('/api/' + garageType, { method: 'POST', body: fd });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) { alert(data.error || 'Błąd dodawania pojazdu.'); return; }
+
+                toggleVehiclePanel(false);
+                await refreshVehicles();
+                renderGarage();
+                alert(t('g_added'));
+            } catch (err) {
+                console.error(err);
+                alert('Wystąpił błąd połączenia z serwerem.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = btnText;
             }
         }
 
-        // NAPRAWIONE: Dodana brakująca funkcja openTruckGroupDetail z polskimi tablicami rejestracyjnymi w garażu
-        function openTruckGroupDetail(modelName) {
-            const spec = staticTrucksSpecs[modelName] || {};
+        // wrapper dla starego wywołania z pulpitu
+        function openTruckGroupDetail(modelEnc) {
+            garageType = 'trucks';
+            renderGarage();
+            openVehicleDetail(modelEnc);
+        }
+
+        function openVehicleDetail(modelEnc) {
+            const modelName = decodeURIComponent(modelEnc);
+            const g = groupVehicles(garageType).find(x => x.model.toLowerCase() === modelName.toLowerCase());
+            if (!g) { closeVehicleDetail(); return; }
+
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
-            let platesList = spec.defaultUnits || [];
-            let activeCount = 0;
-            
-            let unitsHtml = platesList.map(plate => {
-                let assignedUser = assignedTrucksStorage[plate] || '';
-                if(assignedUser) activeCount++;
-                return `
-                    <div class="d-flex align-items-center justify-content-between mb-3 text-white fs-6 p-2 rounded bg-dark border border-secondary">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="polish-license-plate" style="font-size: 0.9rem;">
-                                <div class="polish-plate-eu" style="width: 22px; font-size: 8px;">
-                                    <div class="eu-stars" style="font-size: 6px;">★★★★★<br>★★★★★</div>
-                                    <span>PL</span>
-                                </div>
-                                <div class="polish-plate-text" style="padding: 3px 10px;">${plate}</div>
-                            </div>
-                        </div>
-                        <div>${assignedUser ? `<span class="text-warning fw-semibold">@${assignedUser}</span>` : '<span class="text-muted">- Wolny</span>'}</div>
-                    </div>`;
-            }).join('');
+            const isAdmin = currentUserRole === 'admin';
+            const enc = encodeURIComponent(g.model);
+            const activeCount = g.units.filter(u => !isFree(u)).length;
 
-            let bossAssignPanelHtml = '';
-            if (currentUserRole === 'admin') {
-                let optionsPlates = platesList.map(p => `<option value="${p}">${p}</option>`).join('');
-                let optionsDrivers = allUsersList.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
-                bossAssignPanelHtml = `
-                    <div class="bg-card-bms p-3 mb-4 border border-warning rounded-3">
-                        <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-user-gear me-2"></i> Przypisz Zestaw (Panel Szefa)</h6>
+            const unitsHtml = g.units.map(u => `
+                <div class="d-flex align-items-center justify-content-between mb-3 text-white fs-6 p-2 rounded bg-dark border border-secondary">
+                    <div class="d-flex align-items-center gap-3">${plateHtml(u.plates, true)}</div>
+                    <div class="d-flex align-items-center gap-2">
+                        ${isFree(u) ? `<span class="text-muted">- ${t('g_free')}</span>` : `<span class="text-warning fw-semibold">@${escapeHtml(u.driver_name)}</span>`}
+                        ${isAdmin ? `<button class="btn btn-outline-danger btn-sm border-0" onclick="deleteVehicleUnit(${u.id}, '${enc}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    </div>
+                </div>`).join('');
+
+            let bossPanel = '';
+            if (isAdmin) {
+                const optionsPlates = g.units.map(u => `<option value="${u.id}">${escapeHtml(u.plates)}</option>`).join('');
+                const optionsDrivers = activeUsers().map(u => `<option value="${escapeHtml(u.username)}">${escapeHtml(u.username)}</option>`).join('');
+                bossPanel = `
+                    <div class="bg-card-bms p-3 mb-3 border border-warning rounded-3">
+                        <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-user-gear me-2"></i> ${t('g_assignPanel')}</h6>
                         <div class="row g-2 align-items-center">
-                            <div class="col-md-5"><select id="assign_select_plate" class="form-select form-select-sm bg-dark text-white border-secondary">${optionsPlates}</select></div>
-                            <div class="col-md-5"><select id="assign_select_driver" class="form-select form-select-sm bg-dark text-white border-secondary"><option value="">-- Zwolnij --</option>${optionsDrivers}</select></div>
-                            <div class="col-md-2"><button class="btn btn-pill-white btn-sm w-100 fw-bold" onclick="saveDriverAssignment('${modelName}')">Zapisz</button></div>
+                            <div class="col-md-5"><select id="assign_select_unit" class="form-select form-select-sm bg-dark text-white border-secondary">${optionsPlates}</select></div>
+                            <div class="col-md-5"><select id="assign_select_driver" class="form-select form-select-sm bg-dark text-white border-secondary"><option value="">${t('g_release')}</option>${optionsDrivers}</select></div>
+                            <div class="col-md-2"><button class="btn btn-pill-white btn-sm w-100 fw-bold" style="padding: 6px 10px;" onclick="saveVehicleAssignment('${enc}')">${t('g_saveBtn')}</button></div>
                         </div>
                     </div>
-                `;
+                    <div class="bg-card-bms p-3 mb-4 border border-secondary rounded-3">
+                        <h6 class="fw-bold text-white mb-3"><i class="fa-solid fa-plus me-2"></i> ${t('g_addUnit')}</h6>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="add_unit_plates" class="form-control bg-dark text-white border-secondary" placeholder="${t('g_addUnitPh')}">
+                            <button class="btn btn-pill-white fw-bold" style="padding: 4px 16px;" onclick="addVehicleUnit('${enc}')">${t('g_addBtn')}</button>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm mt-3" onclick="deleteVehicleModel('${enc}')"><i class="fa-solid fa-trash me-1"></i> ${t('g_deleteModel')}</button>
+                    </div>`;
             }
+
+            const f = g.first;
+            const specs = garageType === 'trucks'
+                ? `<li><strong>${t('g_cabin')}:</strong> ${escapeHtml(f.cabin)}</li>
+                   <li><strong>${t('g_chassis')}:</strong> ${escapeHtml(f.chassis)}</li>
+                   <li><strong>${t('g_engine')}:</strong> ${escapeHtml(f.engine)}</li>
+                   <li><strong>${t('g_gearbox')}:</strong> ${escapeHtml(f.gearbox)}</li>
+                   <li><strong>${t('g_interior')}:</strong> ${escapeHtml(f.interior)}</li>`
+                : (f.description ? `<li>${escapeHtml(f.description)}</li>` : '');
 
             document.getElementById('truck-detail-content').innerHTML = `
                 <div class="row g-4">
                     <div class="col-md-7">
-                        <h2 class="fw-bold text-white mb-3">${modelName}</h2>
-                        <div class="mb-3"><img src="${spec.photo}" class="truck-img-preview" loading="lazy" onerror="this.src='/logo.png'"></div>
-                        <div><img src="${spec.photoBack}" class="truck-img-preview" loading="lazy" onerror="this.src='/logo.png'"></div>
+                        <h2 class="fw-bold text-white mb-3">${escapeHtml(g.model)}</h2>
+                        <div class="mb-3"><img src="${g.photo || '/logo.png'}" class="truck-img-preview" loading="lazy" onerror="this.src='/logo.png'"></div>
+                        ${g.photo_back ? `<div><img src="${g.photo_back}" class="truck-img-preview" loading="lazy" onerror="this.src='/logo.png'"></div>` : ''}
                     </div>
                     <div class="col-md-5 border-start border-secondary ps-md-4">
-                        ${bossAssignPanelHtml}
-                        <ul class="list-unstyled lh-lg text-white fs-5 mb-4">
-                            <li><strong>Kabina:</strong> ${spec.cabin}</li>
-                            <li><strong>Podwozie:</strong> ${spec.chassis}</li>
-                            <li><strong>Silnik:</strong> ${spec.engine}</li>
-                            <li><strong>Skrzynia:</strong> ${spec.gearbox}</li>
-                            <li><strong>Wnętrze:</strong> ${spec.interior}</li>
-                        </ul>
+                        ${bossPanel}
+                        <ul class="list-unstyled lh-lg text-white fs-5 mb-4">${specs}</ul>
                         <hr class="border-secondary my-4">
-                        <h5 class="fw-bold mb-3 text-white">Kierowcy (${activeCount}/${platesList.length}):</h5>
+                        <h5 class="fw-bold mb-3 text-white">${t('g_drivers')} (${activeCount}/${g.units.length}):</h5>
                         <div>${unitsHtml}</div>
                     </div>
                 </div>
             `;
         }
 
-        function saveDriverAssignment(modelName) {
-            const plate = document.getElementById('assign_select_plate').value;
-            const driver = document.getElementById('assign_select_driver').value;
-            if (driver) assignedTrucksStorage[plate] = driver;
-            else delete assignedTrucksStorage[plate];
-            localStorage.setItem('vtc_assigned_drivers', JSON.stringify(assignedTrucksStorage));
-            alert('Zaktualizowano przydział!');
-            openTruckGroupDetail(modelName);
+        async function afterVehicleChange(modelEnc) {
+            await refreshVehicles();
+            renderGarage();
+            if (modelEnc) openVehicleDetail(modelEnc);
+            onAdminDriverSelectChange();
         }
 
-        function closeTruckDetail() {
-            document.getElementById('garage-main-view').style.display = 'block';
-            document.getElementById('garage-detail-view').style.display = 'none';
+        async function saveVehicleAssignment(modelEnc) {
+            const id = document.getElementById('assign_select_unit').value;
+            const driver = document.getElementById('assign_select_driver').value;
+            const r = await apiJson(`/api/${garageType}/${id}/assign`, 'PUT', { driver_name: driver });
+            if (r) { alert(t('g_assigned')); afterVehicleChange(modelEnc); }
+        }
+
+        async function addVehicleUnit(modelEnc) {
+            const plates = document.getElementById('add_unit_plates').value.trim();
+            if (!plates) return;
+            const fd = new FormData();
+            fd.append('model_name', decodeURIComponent(modelEnc));
+            fd.append('plates', plates);
+            const res = await fetch('/api/' + garageType, { method: 'POST', body: fd });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(data.error || 'Błąd dodawania.'); return; }
+            afterVehicleChange(modelEnc);
+        }
+
+        async function deleteVehicleUnit(id, modelEnc) {
+            if (!confirm(t('g_confirmDeleteUnit'))) return;
+            const r = await apiJson(`/api/${garageType}/${id}`, 'DELETE');
+            if (!r) return;
+            await refreshVehicles();
+            const stillThere = groupVehicles(garageType).some(g => g.model.toLowerCase() === decodeURIComponent(modelEnc).toLowerCase());
+            if (stillThere) afterVehicleChange(modelEnc); else { closeVehicleDetail(); renderGarage(); }
+        }
+
+        async function deleteVehicleModel(modelEnc) {
+            if (!confirm(t('g_confirmDeleteModel'))) return;
+            const r = await apiJson(`/api/${garageType}/model/${modelEnc}`, 'DELETE');
+            if (!r) return;
+            closeVehicleDetail();
+            await refreshVehicles();
+            renderGarage();
+            onAdminDriverSelectChange();
+        }
+
+        function closeVehicleDetail() {
+            const main = document.getElementById('garage-main-view');
+            const detail = document.getElementById('garage-detail-view');
+            if (main) main.style.display = 'block';
+            if (detail) detail.style.display = 'none';
+        }
+        const closeTruckDetail = closeVehicleDetail;
+
+        // =====================================================================
+        //  ZARZĄDZANIE KONTAMI (tylko Szef)
+        // =====================================================================
+        let mgmtUsers = [];
+
+        async function loadManagementUsers() {
+            const tbody = document.getElementById('management-users-list');
+            if (!tbody) return;
+            try {
+                const res = await fetch('/api/users');
+                if (!res.ok) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-3">Brak uprawnień lub błąd serwera.</td></tr>';
+                    return;
+                }
+                mgmtUsers = await res.json();
+                allUsersList = mgmtUsers;
+                populateDispatcherDropdowns();
+
+                if (mgmtUsers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-white-50 text-center py-3">Brak użytkowników.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = mgmtUsers.map(u => {
+                    const isMe = u.id === currentUserId;
+                    const isBoss = u.role === 'admin';
+
+                    const statusBadge = u.status === 'pending' ? '<span class="badge bg-warning text-dark">Oczekuje</span>'
+                        : u.status === 'fired' ? '<span class="badge bg-danger">Zwolniony</span>'
+                        : '<span class="badge bg-success">Aktywny</span>';
+                    const roleBadge = isBoss ? '<span class="badge bg-danger">Szef</span>' : '<span class="badge bg-secondary">Kierowca</span>';
+
+                    let actions = '';
+                    if (u.status === 'pending') {
+                        actions += `<button class="btn btn-sm btn-success me-1" onclick="mgmtApprove(${u.id})"><i class="fa-solid fa-check me-1"></i>Zatwierdź</button>`;
+                        actions += `<button class="btn btn-sm btn-outline-danger" onclick="mgmtDelete(${u.id})"><i class="fa-solid fa-xmark me-1"></i>Odrzuć</button>`;
+                    } else if (u.status === 'fired') {
+                        actions += `<button class="btn btn-sm btn-outline-success me-1" onclick="mgmtApprove(${u.id})"><i class="fa-solid fa-rotate-left me-1"></i>Przywróć</button>`;
+                        actions += `<button class="btn btn-sm btn-outline-danger" onclick="mgmtDelete(${u.id})"><i class="fa-solid fa-trash me-1"></i>Usuń na stałe</button>`;
+                    } else {
+                        actions += `<button class="btn btn-sm btn-outline-warning me-1" onclick="mgmtResetPassword(${u.id})"><i class="fa-solid fa-key me-1"></i>Zmień hasło</button>`;
+                        if (!isBoss) actions += `<button class="btn btn-sm btn-outline-danger" onclick="mgmtFire(${u.id})"><i class="fa-solid fa-user-slash me-1"></i>Zwolnij</button>`;
+                    }
+
+                    return `
+                        <tr>
+                            <td class="fw-bold">${escapeHtml(u.username)} ${isMe ? '<span class="text-info small">(Ty)</span>' : ''}</td>
+                            <td class="text-white-50">${escapeHtml(u.email || '-')}</td>
+                            <td>${roleBadge}</td>
+                            <td>${statusBadge}</td>
+                            <td>${actions}</td>
+                        </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error('Błąd ładowania użytkowników:', err);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-3">Błąd połączenia z serwerem.</td></tr>';
+            }
+        }
+
+        const mgmtUser = id => mgmtUsers.find(u => u.id === id) || { username: '?' };
+
+        async function mgmtApprove(id) {
+            const r = await apiJson(`/api/users/${id}/approve`, 'PUT');
+            if (r) loadManagementUsers();
+        }
+
+        async function mgmtFire(id) {
+            const u = mgmtUser(id);
+            if (!confirm(`Zwolnić kierowcę @${u.username}?\n\nKonto zostanie zablokowane (nie zaloguje się), jego pojazdy zostaną zwolnione, a trasy i statystyki firmy ZOSTANĄ zachowane.`)) return;
+            const r = await apiJson(`/api/users/${id}/fire`, 'PUT');
+            if (r) loadManagementUsers();
+        }
+
+        async function mgmtDelete(id) {
+            const u = mgmtUser(id);
+            const warn = u.status === 'fired'
+                ? `Usunąć konto @${u.username} NA STAŁE?\n\nUWAGA: razem z kontem zniknie cała jego historia - trasy (z CMR) i wydatki, a statystyki firmy się zmniejszą. Tego nie da się cofnąć.\n\nJeśli chcesz tylko zablokować dostęp, zostaw konto jako zwolnione.`
+                : `Odrzucić i usunąć rejestrację @${u.username}?`;
+            if (!confirm(warn)) return;
+            const r = await apiJson(`/api/users/${id}`, 'DELETE');
+            if (r) { loadManagementUsers(); loadCompanyStats(); }
+        }
+
+        async function mgmtResetPassword(id) {
+            const u = mgmtUser(id);
+            const input = prompt(`Nowe hasło dla @${u.username} (min. 6 znaków).\n\nZostaw puste i kliknij OK, aby wygenerować losowe hasło.`);
+            if (input === null) return;
+            const r = await apiJson(`/api/users/${id}/password`, 'PUT', { password: input });
+            if (!r) return;
+            if (r.password) alert(`Nowe hasło dla @${u.username}:\n\n${r.password}\n\nPrzekaż je kierowcy (np. na Discordzie). Hasło wyświetla się tylko teraz!`);
+            else alert(`Hasło dla @${u.username} zostało zmienione.`);
         }
 
         async function loadExpenses() {
@@ -1754,6 +2297,14 @@
                 dateInput.valueAsDate = new Date();
             }
         });
+
+        // linki w zakładce "O nas"
+        document.getElementById('link-discord').href = DISCORD_URL;
+        document.getElementById('link-tiktok').href = TIKTOK_URL;
+
+        // przywróć zapamiętany język
+        document.getElementById('lang-selector').value = currentLang;
+        changeLanguage(currentLang);
 
         checkUser();
     </script>
