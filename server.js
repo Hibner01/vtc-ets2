@@ -385,7 +385,10 @@ app.post('/api/logout', (req, res) => { req.session.destroy(() => res.json({ suc
 app.get('/api/notifications', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 AND is_read = false ORDER BY id DESC LIMIT 15', [req.session.userId]);
+        // przeczytane powiadomienia sprzątamy po 14 dniach
+        await pool.query("DELETE FROM notifications WHERE user_id = $1 AND is_read = true AND created_at < NOW() - INTERVAL '14 days'", [req.session.userId]);
+        // zwracamy przeczytane i nieprzeczytane (front sam liczy nieprzeczytane na liczniku)
+        const result = await pool.query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY id DESC LIMIT 30', [req.session.userId]);
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: 'Błąd powiadomień' }); }
 });
@@ -399,6 +402,13 @@ app.put('/api/notifications/read', async (req, res) => {
         console.error(err);
         res.status(500).json({ error: 'Błąd aktualizacji' }); 
     }
+});
+
+app.put('/api/notifications/:id/read', requireLogin, async (req, res) => {
+    try {
+        await pool.query('UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2', [req.params.id, req.session.userId]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd aktualizacji' }); }
 });
 
 app.delete('/api/notifications/:id', async (req, res) => {
