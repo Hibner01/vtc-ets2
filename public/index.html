@@ -6,6 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.2.3/css/flag-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
     <style>
         body { 
             background-color: #0b0f19; 
@@ -137,10 +138,13 @@
             border-color: #3b82f6; 
         }
 
+        /* zdjęcia pojazdów pokazywane W CAŁOŚCI (bez przycinania) */
         .truck-img-preview {
             width: 100%;
-            height: 320px;
-            object-fit: cover;
+            height: auto;
+            max-height: 460px;
+            object-fit: contain;
+            background-color: #0b0f19;
             border-radius: 16px;
             border: 1px solid #334155;
             box-shadow: 0 4px 14px rgba(0,0,0,0.6);
@@ -148,10 +152,20 @@
 
         .truck-card-grid-img {
             width: 100%;
-            height: 130px;
-            object-fit: cover;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            object-fit: contain;
+            background-color: #0b0f19;
             border-radius: 12px;
             border: 1px solid #1f2937;
+        }
+
+        .vehicle-photo-full {
+            width: 100%;
+            height: auto;
+            max-height: 340px;
+            object-fit: contain;
+            background-color: #0b0f19;
         }
 
         .input-group-custom {
@@ -243,48 +257,62 @@
             overflow-y: auto; 
         }
 
-        /* Styl wzorowany na polskiej tablicy rejestracyjnej */
+        /* Polska tablica rejestracyjna: biała, czarna ramka, niebieski pasek UE z gwiazdami i "PL" */
         .polish-license-plate {
             display: inline-flex;
             align-items: stretch;
-            background-color: #ffffff;
-            color: #000000;
-            border: 2px solid #1e293b;
-            border-radius: 6px;
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: 800;
-            font-size: 1.05rem;
-            letter-spacing: 2px;
+            font-size: 1.1rem;
+            padding: 0.14em;
+            background: linear-gradient(180deg, #ffffff 0%, #e6e3da 100%);
+            border-radius: 0.4em;
+            box-shadow: 0 0.12em 0.35em rgba(0,0,0,0.6), inset 0 0 0 0.06em #b9b6ab;
+        }
+
+        .polish-license-plate.plate-sm { font-size: 0.8rem; }
+
+        .polish-plate-inner {
+            display: flex;
+            align-items: stretch;
+            border: 0.09em solid #111111;
+            border-radius: 0.3em;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            background: linear-gradient(180deg, #ffffff 0%, #f0eee7 100%);
         }
 
         .polish-plate-eu {
-            background-color: #003399;
-            color: #ffffff;
-            width: 26px;
+            width: 2.05em;
+            background: linear-gradient(180deg, #0c42b0 0%, #00297d 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding-top: 3px;
-            font-size: 9px;
-            font-weight: bold;
+            justify-content: center;
+            gap: 0.1em;
+            padding: 0.15em 0;
         }
 
-        .polish-plate-eu .eu-stars {
-            font-size: 7px;
-            line-height: 5px;
-            color: #ffcc00;
-            margin-bottom: 2px;
+        .polish-plate-eu svg { width: 1.4em; height: 1.4em; display: block; }
+
+        .polish-plate-eu span {
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+            font-size: 0.55em;
+            line-height: 1;
+            letter-spacing: 0.04em;
         }
 
         .polish-plate-text {
-            padding: 4px 12px;
+            padding: 0.05em 0.6em 0.05em 0.5em;
             display: flex;
             align-items: center;
-            background-color: #ffffff;
-            color: #111827;
+            color: #0d0d0d;
+            font-family: 'Roboto Condensed', 'Arial Narrow', 'Liberation Sans Narrow', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 1.6em;
+            letter-spacing: 0.06em;
+            line-height: 1.1;
+            white-space: nowrap;
+            text-shadow: 0 0.03em 0 rgba(255,255,255,0.9), 0 -0.015em 0.02em rgba(0,0,0,0.35);
         }
 
         /* --- flagi państw --- */
@@ -453,7 +481,7 @@
 
                     <div class="d-flex align-items-center gap-3">
                         <div class="dropdown">
-                            <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" onclick="markNotifsAsRead()">
+                            <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <i class="fa-solid fa-bell"></i>
                                 <span id="notif-count" class="badge bg-danger notif-badge d-none">0</span>
                             </button>
@@ -1038,14 +1066,32 @@
             return data;
         }
 
+        // 12 żółtych gwiazd UE ułożonych w kółko (SVG) - do tablicy rejestracyjnej
+        function euStarsSvg() {
+            const star = (cx, cy, R, r) => {
+                let pts = [];
+                for (let i = 0; i < 10; i++) {
+                    const rad = i % 2 === 0 ? R : r;
+                    const a = -Math.PI / 2 + i * Math.PI / 5;
+                    pts.push((cx + rad * Math.cos(a)).toFixed(2) + ',' + (cy + rad * Math.sin(a)).toFixed(2));
+                }
+                return `<polygon points="${pts.join(' ')}" fill="#ffd400"/>`;
+            };
+            let s = '';
+            for (let i = 0; i < 12; i++) {
+                const a = i * Math.PI / 6;
+                s += star(20 + 13 * Math.sin(a), 20 - 13 * Math.cos(a), 3.4, 1.4);
+            }
+            return `<svg viewBox="0 0 40 40" aria-hidden="true">${s}</svg>`;
+        }
+        const EU_STARS = euStarsSvg();
+
         function plateHtml(plate, small) {
-            const st = small ? ' style="font-size: 0.9rem;"' : '';
-            const eu = small ? ' style="width: 22px; font-size: 8px;"' : '';
-            const stars = small ? ' style="font-size: 6px;"' : '';
-            const pad = small ? ' style="padding: 3px 10px;"' : '';
-            return `<div class="polish-license-plate"${st}>
-                        <div class="polish-plate-eu"${eu}><div class="eu-stars"${stars}>★★★★★<br>★★★★★</div><span>PL</span></div>
-                        <div class="polish-plate-text"${pad}>${escapeHtml(plate)}</div>
+            return `<div class="polish-license-plate${small ? ' plate-sm' : ''}">
+                        <div class="polish-plate-inner">
+                            <div class="polish-plate-eu">${EU_STARS}<span>PL</span></div>
+                            <div class="polish-plate-text">${escapeHtml(plate)}</div>
+                        </div>
                     </div>`;
         }
 
@@ -1081,7 +1127,7 @@
                 g_assignPanel: "Przypisz (Panel Szefa)", g_release: "-- Zwolnij --", g_saveBtn: "Zapisz", g_assigned: "Zaktualizowano przydział!",
                 g_addUnit: "Dodaj kolejną sztukę tego modelu", g_addUnitPh: "np. WRA 1234S", g_addBtn: "Dodaj", g_deleteModel: "Usuń cały model",
                 g_confirmDeleteModel: "Usunąć cały model wraz ze wszystkimi sztukami z garażu?", g_confirmDeleteUnit: "Usunąć tę sztukę z garażu?",
-                g_added: "Dodano do garażu!", g_viewInGarage: "Zobacz w Garażu", g_trailer: "Naczepa"
+                g_added: "Dodano do garażu!", g_viewInGarage: "Zobacz w Garażu", g_trailer: "Naczepa", notifNone: "Brak powiadomień", notifMarkAll: "Oznacz wszystkie jako przeczytane", notifMarkOne: "Oznacz jako przeczytane", notifDelete: "Usuń powiadomienie", notifToday: "Dzisiaj"
             },
             en: {
                 loginBtn: "Sign In", registerBtn: "Register", exitBtn: "Exit", welcomeBack: "Welcome Back!",
@@ -1114,7 +1160,7 @@
                 g_assignPanel: "Assign (Boss Panel)", g_release: "-- Release --", g_saveBtn: "Save", g_assigned: "Assignment updated!",
                 g_addUnit: "Add another unit of this model", g_addUnitPh: "e.g. WRA 1234S", g_addBtn: "Add", g_deleteModel: "Delete whole model",
                 g_confirmDeleteModel: "Delete this whole model with all its units from the garage?", g_confirmDeleteUnit: "Remove this unit from the garage?",
-                g_added: "Added to the garage!", g_viewInGarage: "View in Garage", g_trailer: "Trailer"
+                g_added: "Added to the garage!", g_viewInGarage: "View in Garage", g_trailer: "Trailer", notifNone: "No notifications", notifMarkAll: "Mark all as read", notifMarkOne: "Mark as read", notifDelete: "Delete notification", notifToday: "Today"
             }
         };
 
@@ -1266,7 +1312,7 @@
                         ${plateHtml(truck.plates, false)}
                     </div>
                     <div class="mb-3">
-                        <img src="${truck.photo || '/logo.png'}" class="w-100 rounded border border-secondary shadow-sm" style="height: 280px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+                        <img src="${truck.photo || '/logo.png'}" class="vehicle-photo-full rounded border border-secondary shadow-sm" loading="lazy" onerror="this.src='/logo.png'">
                     </div>
                     ${trailer ? `<div class="text-start text-white-50 small mb-3"><i class="fa-solid fa-trailer me-1 text-warning"></i> ${t('g_trailer')}: <strong class="text-white">${escapeHtml(trailer.trailer_model)}</strong> (${escapeHtml(trailer.plates)})</div>` : ''}
                     <button class="btn btn-pill-dark btn-sm w-100 fw-bold" onclick="switchTab('garage'); openTruckGroupDetail('${encodeURIComponent(truck.truck_model)}')">
@@ -1285,52 +1331,66 @@
                 const res = await fetch('/api/notifications');
                 if (!res.ok) return;
                 const notifs = await res.json();
+                const unread = notifs.filter(n => !n.is_read).length;
 
-                if (notifs.length > 0) {
-                    badge.classList.remove('d-none');
-                    badge.innerText = notifs.length;
-                    
-                    list.innerHTML = notifs.map(n => {
-                        let formattedDate = '';
-                        if (n.created_at) {
-                            const dateObj = new Date(n.created_at);
-                            formattedDate = dateObj.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' o ' + dateObj.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-                        } else {
-                            formattedDate = 'Dzisiaj';
-                        }
+                // licznik = tylko NIEPRZECZYTANE
+                badge.classList.toggle('d-none', unread === 0);
+                badge.innerText = unread;
 
-                        return `
-                            <li class="p-2 border-bottom border-secondary text-white small notification-item bg-dark d-flex align-items-center justify-content-between">
-                                <div class="flex-grow-1" style="cursor: pointer;" onclick="handleNotificationClick(${n.job_id || 'null'}, '${n.action_tab || ''}')">
-                                    <div class="d-flex align-items-start">
-                                        <i class="fa-solid fa-truck-fast text-warning me-2 mt-1"></i>
-                                        <div>
-                                            <div class="fw-bold">${n.title || 'Nowe zlecenie'}</div>
-                                            <div class="text-light">${n.message || n.text}</div>
-                                            <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${formattedDate}</div>
-                                        </div>
+                if (notifs.length === 0) {
+                    list.innerHTML = `<li class="p-2 text-white-50 text-center small">${t('notifNone')}</li>`;
+                    return;
+                }
+
+                const locale = currentLang === 'en' ? 'en-GB' : 'pl-PL';
+                const header = unread > 0
+                    ? `<li class="px-2 pb-2 text-end"><button type="button" class="btn btn-sm btn-outline-info" onclick="markAllNotifsRead(event)"><i class="fa-solid fa-check-double me-1"></i> ${t('notifMarkAll')}</button></li>`
+                    : '';
+
+                list.innerHTML = header + notifs.map(n => {
+                    const dateStr = n.created_at
+                        ? new Date(n.created_at).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                          new Date(n.created_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+                        : t('notifToday');
+                    const isNew = !n.is_read;
+
+                    return `
+                        <li class="p-2 border-bottom border-secondary text-white small bg-dark d-flex align-items-center justify-content-between"
+                            style="${isNew ? 'border-left: 3px solid #38bdf8 !important;' : 'opacity: 0.6;'}">
+                            <div class="flex-grow-1" style="cursor: pointer;" onclick="handleNotificationClick(${n.job_id || 'null'}, '${n.action_tab || ''}', ${n.id})">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa-solid fa-truck-fast ${isNew ? 'text-warning' : 'text-secondary'} me-2 mt-1"></i>
+                                    <div>
+                                        <div class="${isNew ? 'fw-bold' : ''}">${escapeHtml(n.title || '')}</div>
+                                        <div class="text-light">${escapeHtml(n.message || n.text || '')}</div>
+                                        <div class="text-info mt-1" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>${dateStr}</div>
                                     </div>
                                 </div>
-                                <button class="btn btn-outline-danger btn-sm ms-2 border-0" type="button" onclick="deleteSingleNotification(event, ${n.id})" title="Usuń powiadomienie">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </li>
-                        `;
-                    }).join('');
-                } else {
-                    badge.classList.add('d-none');
-                    list.innerHTML = `<li class="p-2 text-white-50 text-center small">Brak powiadomień</li>`;
-                }
+                            </div>
+                            <div class="d-flex flex-column ms-2">
+                                ${isNew ? `<button class="btn btn-outline-info btn-sm border-0" type="button" onclick="markOneNotifRead(event, ${n.id})" title="${t('notifMarkOne')}"><i class="fa-solid fa-check"></i></button>` : ''}
+                                <button class="btn btn-outline-danger btn-sm border-0" type="button" onclick="deleteSingleNotification(event, ${n.id})" title="${t('notifDelete')}"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </li>`;
+                }).join('');
             } catch (err) {
                 console.error("Błąd ładowania powiadomień:", err);
             }
         }
 
-        async function markNotifsAsRead() {
-            // oznacza powiadomienia jako przeczytane po otwarciu dzwonka (lista zostaje widoczna do odświeżenia)
+        async function markOneNotifRead(event, id) {
+            if (event) event.stopPropagation();
+            try {
+                await fetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+                loadNotifications();
+            } catch (e) { console.error(e); }
+        }
+
+        async function markAllNotifsRead(event) {
+            if (event) event.stopPropagation();
             try {
                 await fetch('/api/notifications/read', { method: 'PUT' });
-                document.getElementById('notif-count').classList.add('d-none');
+                loadNotifications();
             } catch (e) { console.error(e); }
         }
 
@@ -1340,7 +1400,8 @@
             if (currentUserId && list && !list.classList.contains('show')) loadNotifications();
         }, 60000);
 
-        function handleNotificationClick(jobId, tab) {
+        function handleNotificationClick(jobId, tab, notifId) {
+            if (notifId) fetch(`/api/notifications/${notifId}/read`, { method: 'PUT' }).then(loadNotifications).catch(() => {});
             if (tab === 'management' && currentUserRole === 'admin') return switchTab('management');
             if (tab === 'garage') return switchTab('garage');
             if (jobId && jobId !== 'null') switchTab('dispatcher');
