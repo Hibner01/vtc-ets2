@@ -225,6 +225,7 @@ async function initDB() {
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS start_country VARCHAR(2);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS end_country VARCHAR(2);`);
         await seedTrucks();
+        await clientApi.initTables();
 
         console.log('Baza danych zainicjalizowana pomyślnie.');
     } catch (err) {
@@ -238,13 +239,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 app.set('trust proxy', 1);
+if (!process.env.SESSION_SECRET) {
+    console.warn('UWAGA: brak zmiennej SESSION_SECRET - używany jest domyślny, publiczny sekret! Ustaw SESSION_SECRET w panelu Rendera.');
+}
 app.use(session({
     store: new PgSessionStore(pool),
     secret: process.env.SESSION_SECRET || 'mazren-spedition-secret-key',
     resave: false,
     saveUninitialized: false,
     rolling: true,
-    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' }
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: 'auto' }
 }));
 
 // sprzątanie wygasłych sesji co godzinę
@@ -272,6 +276,7 @@ function requireAdmin(req, res, next) {
 async function killUserSessions(userId, exceptSid) {
     try {
         await pool.query("DELETE FROM sessions WHERE (sess->>'userId')::int = $1 AND sid <> $2", [userId, exceptSid || '']);
+        await pool.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);
     } catch (e) { console.error('Błąd kasowania sesji:', e.message); }
 }
 
@@ -291,6 +296,7 @@ app.post('/api/register', async (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
     if (!username || !email || !password) return res.status(400).json({ error: 'Uzupełnij wszystkie pola.' });
     if (password !== confirmPassword) return res.status(400).json({ error: 'Hasła nie są identyczne!' });
+    if (String(password).length < 6) return res.status(400).json({ error: 'Hasło musi mieć minimum 6 znaków.' });
 
     try {
         const nickTaken = await pool.query('SELECT 1 FROM users WHERE LOWER(username) = LOWER($1)', [username.trim()]);
@@ -316,11 +322,28 @@ app.post('/api/register', async (req, res) => {
     } catch (err) { res.status(400).json({ error: 'Użytkownik z tym adresem e-mail już istnieje.' }); }
 });
 
+// Ochrona przed zgadywaniem haseł: max 8 nieudanych prób / 15 min na parę IP + login.
+const loginFails = new Map();
+setInterval(() => {
+    const now = Date.now();
+    for (const [k, v] of loginFails) if (v.until < now) loginFails.delete(k);
+}, 10 * 60 * 1000);
+
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Uzupełnij login/e-mail i hasło.' });
 
     const inputVal = email.toLowerCase().trim();
+    const failKey = req.ip + '|' + inputVal;
+    const fails = loginFails.get(failKey);
+    if (fails && fails.count >= 8 && fails.until > Date.now()) {
+        return res.status(429).json({ error: 'Za dużo nieudanych prób logowania. Spróbuj za kilkanaście minut.' });
+    }
+    const registerFail = () => {
+        const cur = loginFails.get(failKey);
+        if (cur && cur.until > Date.now()) cur.count++;
+        else loginFails.set(failKey, { count: 1, until: Date.now() + 15 * 60 * 1000 });
+    };
 
     try {
         const result = await pool.query(
@@ -328,12 +351,13 @@ app.post('/api/login', async (req, res) => {
             [inputVal]
         );
 
-        if (result.rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowy e-mail/login lub hasło.' });
+        if (result.rows.length === 0) { registerFail(); return res.status(401).json({ error: 'Nieprawidłowy e-mail/login lub hasło.' }); }
 
         const user = result.rows[0];
 
         const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(401).json({ error: 'Nieprawidłowy e-mail/login lub hasło.' });
+        if (!match) { registerFail(); return res.status(401).json({ error: 'Nieprawidłowy e-mail/login lub hasło.' }); }
+        loginFails.delete(failKey);
 
         if (user.status === 'pending') return res.status(403).json({ error: 'Konto oczekuje na akceptację Szefa!' });
         if (user.status === 'fired') return res.status(403).json({ error: 'To konto zostało dezaktywowane przez Szefa.' });
@@ -510,7 +534,7 @@ app.delete('/api/users/:id', requireAdmin, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania' }); }
 });
 
-app.get('/api/documents', async (req, res) => {
+app.get('/api/documents', requireLogin, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM documents ORDER BY id DESC');
         res.json(result.rows);
@@ -612,19 +636,23 @@ app.delete('/api/dispatches/:id', async (req, res) => {
 app.put('/api/dispatches/:id/accept', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const dispRes = await pool.query('SELECT assigned_to FROM dispatches WHERE id = $1', [req.params.id]);
-        if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zlecenia' });
+        // Jedno zapytanie = atomowo: zlecenie musi być wolne i przeznaczone dla tego kierowcy (albo dla Wszystkich).
+        const upd = await pool.query(
+            `UPDATE dispatches SET status = 'W trakcie', accepted_by_id = $1, accepted_by_username = $2
+             WHERE id = $3 AND status = 'W wolnym obiegu' AND (assigned_to = 'Wszyscy' OR assigned_to = $2)
+             RETURNING id`,
+            [req.session.userId, req.session.username, req.params.id]
+        );
+        if (upd.rows.length > 0) return res.json({ success: true });
 
-        const disp = dispRes.rows[0];
-        if (disp.assigned_to !== 'Wszyscy' && disp.assigned_to !== req.session.username) {
+        const cur = await pool.query('SELECT assigned_to, status, accepted_by_id FROM dispatches WHERE id = $1', [req.params.id]);
+        if (cur.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zlecenia' });
+        const d = cur.rows[0];
+        if (d.accepted_by_id === req.session.userId) return res.json({ success: true });
+        if (d.assigned_to !== 'Wszyscy' && d.assigned_to !== req.session.username) {
             return res.status(403).json({ error: 'To zlecenie jest przypisane do innego kierowcy!' });
         }
-
-        await pool.query(
-            'UPDATE dispatches SET status = $1, accepted_by_id = $2, accepted_by_username = $3 WHERE id = $4',
-            ['W trakcie', req.session.userId, req.session.username, req.params.id]
-        );
-        res.json({ success: true });
+        res.status(409).json({ error: 'To zlecenie zostało już przyjęte przez innego kierowcę.' });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji' }); }
 });
 
@@ -670,7 +698,7 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
         res.status(500).json({ error: 'Błąd raportowania trasy (sprawdź rozmiar i typ pliku).' }); }
 });
 
-app.get('/api/expenses', async (req, res) => {
+app.get('/api/expenses', requireLogin, async (req, res) => {
     try {
         const query = `SELECT expenses.*, users.username FROM expenses JOIN users ON expenses.user_id = users.id ORDER BY expenses.id DESC`;
         const result = await pool.query(query);
@@ -848,10 +876,11 @@ app.post('/api/trucks/import-assignments', requireAdmin, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd importu przydziałów' }); }
 });
 
-app.get('/api/jobs', async (req, res) => {
+app.get('/api/jobs', requireLogin, async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT jobs.*, users.username, TO_CHAR(jobs.created_at, 'DD.MM.YYYY HH24:MI') as formatted_date 
+            SELECT jobs.*, users.username, TO_CHAR(jobs.created_at, 'DD.MM.YYYY HH24:MI') as formatted_date,
+                   EXISTS (SELECT 1 FROM trips WHERE trips.job_id = jobs.id) AS has_trip
             FROM jobs 
             JOIN users ON jobs.user_id = users.id 
             ORDER BY jobs.id DESC
@@ -890,7 +919,7 @@ app.delete('/api/jobs/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd usuwania trasy' }); }
 });
 
-app.get('/api/company-stats', async (req, res) => {
+app.get('/api/company-stats', requireLogin, async (req, res) => {
     try {
         const totalKmRes = await pool.query("SELECT SUM(distance) as total FROM jobs");
         const totalDeliveriesRes = await pool.query("SELECT COUNT(*) as total FROM jobs");
@@ -918,5 +947,8 @@ app.get('/api/company-stats', async (req, res) => {
         });
     } catch (err) { res.status(500).json({ error: 'Błąd statystyk' }); }
 });
+
+// API aplikacji kierowcy (telemetria ETS2) - patrz client-api.js
+const clientApi = require('./client-api')({ app, pool, requireLogin, addNotification });
 
 initDB().then(() => app.listen(PORT, () => console.log(`Serwer VTC działa na porcie ${PORT}`)));
