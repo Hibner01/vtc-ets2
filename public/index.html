@@ -450,6 +450,9 @@
                     <a id="nav-documents" class="nav-item-bms" onclick="switchTab('documents')">
                         <i class="fa-solid fa-folder-open"></i> <span data-i18n="navDocuments">Dokumenty</span>
                     </a>
+                    <a id="nav-client" class="nav-item-bms" onclick="switchTab('client')">
+                        <i class="fa-solid fa-satellite-dish"></i> <span>Aplikacja</span>
+                    </a>
                     <a id="nav-about" class="nav-item-bms" onclick="switchTab('about')">
                         <i class="fa-solid fa-circle-info"></i> <span data-i18n="navAbout">O nas</span>
                     </a>
@@ -898,6 +901,32 @@
                         </div>
                     </div>
 
+                    <div id="tab-client" style="display:none;">
+                        <div class="bg-card-bms p-4" style="max-width: 900px;">
+                            <h4 class="fw-bold mb-2"><i class="fa-solid fa-satellite-dish me-2 text-info"></i>Aplikacja kierowcy</h4>
+                            <p class="text-white-50">Aplikacja na Twoim komputerze sama odczytuje trasę z Euro Truck Simulator 2 (miasta, dystans, przychód, uszkodzenia, ślad trasy) i zamyka zlecenie na stronie. Nie musisz już wpisywać danych ręcznie.</p>
+                            <ol class="text-white-50 small mb-4">
+                                <li>Zainstaluj serwer telemetrii ETS2 (instrukcja w pliku README od Szefa) i uruchom go razem z grą.</li>
+                                <li>Kliknij <strong>Wygeneruj token</strong> poniżej i skopiuj go.</li>
+                                <li>Uruchom <strong>MazrenClient.exe</strong> i wklej adres strony oraz token przy pierwszym uruchomieniu.</li>
+                                <li>Przyjmij zlecenie w Dyspozytorni, weź w grze pasującą trasę i jedź. Reszta dzieje się automatycznie.</li>
+                            </ol>
+                            <div id="client-token-status" class="mb-3 small"></div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-info fw-bold" onclick="generateClientToken()"><i class="fa-solid fa-key me-1"></i> Wygeneruj token</button>
+                                <button class="btn btn-outline-danger" onclick="revokeClientToken()"><i class="fa-solid fa-ban me-1"></i> Odwołaj token</button>
+                            </div>
+                            <div id="client-token-box" class="d-none mt-3 p-3 border border-warning rounded-3">
+                                <div class="text-warning fw-bold small mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> Skopiuj token teraz. Nie pokażemy go ponownie.</div>
+                                <div class="input-group">
+                                    <input id="client-token-value" class="form-control bg-dark text-white border-secondary font-monospace" readonly>
+                                    <button class="btn btn-outline-warning" onclick="copyClientToken()">Kopiuj</button>
+                                </div>
+                                <div class="small text-white-50 mt-2">Adres strony do wpisania w aplikacji: <code id="client-site-url"></code></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="tab-about" style="display:none;">
                         <div class="bg-card-bms p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
                             <p class="fs-5 leading-relaxed text-white" data-i18n="aboutText">
@@ -951,7 +980,7 @@
         //  >>> TU WKLEJ LINKI FIRMY (zmień tylko tekst w cudzysłowie) <<<
         // =====================================================================
         const DISCORD_URL = 'https://discord.gg/TWOJ_KOD_ZAPROSZENIA';
-        const TIKTOK_URL  = 'https://www.tiktok.com/@mazren.spedition';
+        const TIKTOK_URL  = 'https://www.tiktok.com/@TWOJ_PROFIL';
 
         let currentLang = localStorage.getItem('vtc_lang') || 'pl';
         let allUsersList = [];
@@ -1206,7 +1235,7 @@
 
         function switchTab(tab) {
             if (tab === 'management' && currentUserRole !== 'admin') tab = 'dashboard';
-            ['dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'about', 'management'].forEach(t => {
+            ['dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById(t === 'management' ? 'admin-tab-btn' : 'nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
@@ -1215,6 +1244,7 @@
             if (tab === 'company-stats') loadCompanyStatsFull();
             else if (tab === 'dispatcher') loadDispatches();
             else if (tab === 'finances') loadExpenses();
+            else if (tab === 'client') loadClientTab();
             else if (tab === 'garage') loadGarage();
             else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
         }
@@ -1520,6 +1550,7 @@
                     let filesHtml = '';
                     if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
                     if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
+                    if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
@@ -1563,6 +1594,7 @@
                     let filesHtml = '';
                     if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
                     if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
+                    if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
                     
                     let adminActionsHtml = '';
                     if (currentUserRole === 'admin') {
@@ -2308,5 +2340,94 @@
 
         checkUser();
     </script>
+
+<div class="modal fade" id="routeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="route-title"><i class="fa-solid fa-route me-2 text-warning"></i>Trasa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="route-body"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ===== Aplikacja kierowcy: token ===== */
+async function loadClientTab() {
+    const box = document.getElementById('client-token-status');
+    document.getElementById('client-token-box').classList.add('d-none');
+    try {
+        const r = await fetch('/api/client/token/status');
+        const d = await r.json();
+        const fmt = v => v ? new Date(v).toLocaleString('pl-PL') : 'nigdy';
+        box.innerHTML = d.has_token
+            ? `<span class="badge bg-success me-2">Token aktywny</span> wygenerowany: ${fmt(d.created_at)}, ostatnie użycie: ${fmt(d.last_used_at)}`
+            : '<span class="badge bg-secondary">Brak tokenu</span>';
+    } catch (e) { box.textContent = 'Nie udało się pobrać statusu tokenu.'; }
+}
+async function generateClientToken() {
+    if (!confirm('Wygenerować nowy token? Poprzedni przestanie działać.')) return;
+    const r = await fetch('/api/client/token', { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) return alert(d.error || 'Błąd');
+    document.getElementById('client-token-value').value = d.token;
+    document.getElementById('client-site-url').textContent = window.location.origin;
+    document.getElementById('client-token-box').classList.remove('d-none');
+    const box = document.getElementById('client-token-status');
+    box.innerHTML = '<span class="badge bg-success">Token aktywny</span> (właśnie wygenerowany)';
+}
+async function revokeClientToken() {
+    if (!confirm('Odwołać token? Aplikacja przestanie działać do czasu wygenerowania nowego.')) return;
+    await fetch('/api/client/token', { method: 'DELETE' });
+    loadClientTab();
+}
+function copyClientToken() {
+    const el = document.getElementById('client-token-value');
+    el.select();
+    navigator.clipboard ? navigator.clipboard.writeText(el.value) : document.execCommand('copy');
+}
+
+/* ===== Podgląd trasy (SVG, bez zewnętrznej mapy) ===== */
+async function showRoute(jobId) {
+    const body = document.getElementById('route-body');
+    body.innerHTML = '<div class="text-center text-white-50 py-5">Ładowanie trasy...</div>';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('routeModal')).show();
+    try {
+        const r = await fetch('/api/trips/by-job/' + jobId);
+        const d = await r.json();
+        if (!r.ok) { body.innerHTML = '<div class="text-danger">' + escapeHtml(d.error || 'Błąd') + '</div>'; return; }
+        const t = d.trip, pts = d.points;
+        document.getElementById('route-title').innerHTML = '<i class="fa-solid fa-route me-2 text-warning"></i>' + escapeHtml(t.start_city) + ' ➔ ' + escapeHtml(t.end_city);
+
+        let svg = '<div class="text-white-50 py-4 text-center">Brak zapisanych punktów trasy.</div>';
+        if (pts.length >= 2) {
+            const W = 760, H = 420, PAD = 24;
+            const xs = pts.map(p => p[1]), zs = pts.map(p => p[2]);
+            const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
+            const sc = Math.min((W - 2 * PAD) / ((maxX - minX) || 1), (H - 2 * PAD) / ((maxZ - minZ) || 1));
+            // ETS2: x rośnie na wschód, z rośnie na południe, więc z idzie wprost na oś Y obrazu (północ u góry)
+            const px = x => PAD + (x - minX) * sc, py = z => PAD + (z - minZ) * sc;
+            const line = pts.map(p => px(p[1]).toFixed(1) + ',' + py(p[2]).toFixed(1)).join(' ');
+            const a = pts[0], b = pts[pts.length - 1];
+            svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;background:#0b0f19;border:1px solid #1e293b;border-radius:12px">
+                <polyline points="${line}" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                <circle cx="${px(a[1])}" cy="${py(a[2])}" r="7" fill="#22c55e"/>
+                <circle cx="${px(b[1])}" cy="${py(b[2])}" r="7" fill="#ef4444"/>
+                <text x="${W - 12}" y="${H - 10}" text-anchor="end" fill="#64748b" font-size="12">N ↑</text></svg>`;
+        }
+        let mins = '-';
+        if (pts.length >= 2) mins = Math.round((pts[pts.length - 1][0] - pts[0][0]) / 60000) + ' min';
+        const stat = (l, v) => `<div class="col-6 col-md-3 mb-2"><div class="text-white-50 small">${l}</div><div class="fw-bold">${v}</div></div>`;
+        body.innerHTML = svg + '<div class="row mt-3">' +
+            stat('Dystans', (t.distance || 0) + ' km') + stat('Czas jazdy', mins) +
+            stat('Prędkość maks.', (t.max_speed || 0) + ' km/h') + stat('Paliwo', (t.fuel_used || 0) + ' l') +
+            stat('Uszkodzenia', (t.damage_pct || 0) + ' %') + stat('Ładunek', escapeHtml(t.cargo || '-')) +
+            stat('Przychód', (t.income || 0) + ' €') + stat('Zlecenie', t.matched ? 'zgodne' : '<span class="text-warning">bez zlecenia</span>') +
+            '</div>';
+    } catch (e) { body.innerHTML = '<div class="text-danger">Błąd wczytywania trasy.</div>'; }
+}
+</script>
 </body>
 </html>
