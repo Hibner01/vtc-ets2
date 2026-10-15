@@ -185,6 +185,7 @@ async function initDB() {
         `);
 
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_override INTEGER;`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS job_id INTEGER DEFAULT NULL;`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
@@ -239,6 +240,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 app.set('trust proxy', 1);
+app.get('/healthz', (req, res) => res.type('text').send('ok'));
 if (!process.env.SESSION_SECRET) {
     console.warn('UWAGA: brak zmiennej SESSION_SECRET - używany jest domyślny, publiczny sekret! Ustaw SESSION_SECRET w panelu Rendera.');
 }
@@ -446,12 +448,150 @@ app.delete('/api/notifications/:id', async (req, res) => {
     }
 });
 
+// =====================================================================
+//  RANGI KIEROWCÓW
+//  Rangi automatyczne liczą się z ZATWIERDZONYCH kilometrów (próg minKm).
+//  Szef może ręcznie nadać dowolną rangę (też "specjalną", tylko ręczną) albo wrócić do "Auto".
+//  Nazwy, progi, ikony (Font Awesome) i kolory zmienisz tylko tutaj.
+// =====================================================================
+const RANKS = [
+    { name: 'Rekrut',                  minKm: 0,      icon: 'fa-seedling',       color: '#94a3b8' },
+    { name: 'Kierowca',                minKm: 500,    icon: 'fa-road',           color: '#38bdf8' },
+    { name: 'Kierowca Zawodowy',       minKm: 2500,   icon: 'fa-truck',          color: '#22c55e' },
+    { name: 'Kierowca Międzynarodowy', minKm: 7500,   icon: 'fa-earth-europe',   color: '#14b8a6' },
+    { name: 'Starszy Kierowca',        minKm: 15000,  icon: 'fa-medal',          color: '#a78bfa' },
+    { name: 'Mistrz Szos',             minKm: 30000,  icon: 'fa-trophy',         color: '#f59e0b' },
+    { name: 'Weteran Trasy',           minKm: 60000,  icon: 'fa-star',           color: '#fb923c' },
+    { name: 'Legenda Mazren',          minKm: 100000, icon: 'fa-crown',          color: '#facc15' },
+    { name: 'Dyspozytor',  manual: true,              icon: 'fa-headset',        color: '#f472b6' },
+    { name: 'Instruktor',  manual: true,              icon: 'fa-chalkboard-user', color: '#fb7185' }
+];
+
+function autoRankIndex(km) {
+    let idx = 0;
+    RANKS.forEach((r, i) => { if (!r.manual && km >= r.minKm) idx = i; });
+    return idx;
+}
+
+function rankFor(km, override) {
+    const manual = Number.isInteger(override) && !!RANKS[override];
+    const idx = manual ? override : autoRankIndex(km);
+    const r = RANKS[idx];
+    return { index: idx, name: r.name, icon: r.icon, color: r.color, manual };
+}
+
+app.get('/api/ranks', requireLogin, (req, res) => {
+    res.json({ ranks: RANKS.map(r => ({ name: r.name, minKm: r.minKm || 0, manual: !!r.manual, icon: r.icon, color: r.color })) });
+});
+
+app.get('/api/my-rank', requireLogin, async (req, res) => {
+    try {
+        const r = await pool.query(
+            `SELECT u.rank_override, COALESCE((SELECT SUM(distance) FROM jobs WHERE user_id = u.id AND status = 'approved'), 0) AS km
+             FROM users u WHERE u.id = $1`, [req.session.userId]);
+        if (r.rows.length === 0) return res.status(404).json({ error: 'Brak użytkownika' });
+        const km = parseInt(r.rows[0].km) || 0;
+        const info = rankFor(km, r.rows[0].rank_override);
+        const autoIdx = autoRankIndex(km);
+        const next = RANKS.slice(autoIdx + 1).find(x => !x.manual) || null;
+        res.json({ ...info, km, current_min: RANKS[autoIdx].minKm, next: next ? { name: next.name, minKm: next.minKm } : null });
+    } catch (e) { res.status(500).json({ error: 'Błąd rangi' }); }
+});
+
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
-        const result = await pool.query('SELECT id, username, email, role, status FROM users ORDER BY id DESC');
-        res.json(result.rows);
+        const result = await pool.query(
+            `SELECT u.id, u.username, u.email, u.role, u.status, u.rank_override,
+                    COALESCE((SELECT SUM(distance) FROM jobs j WHERE j.user_id = u.id AND j.status = 'approved'), 0) AS approved_km
+             FROM users u ORDER BY u.id DESC`);
+        res.json(result.rows.map(u => ({
+            id: u.id, username: u.username, email: u.email, role: u.role, status: u.status,
+            approved_km: parseInt(u.approved_km) || 0,
+            rank: rankFor(parseInt(u.approved_km) || 0, u.rank_override)
+        })));
     } catch (err) { res.status(500).json({ error: 'Błąd użytkowników' }); }
+});
+
+// Szef nadaje rangę ręcznie (rank: numer z listy /api/ranks) albo zdejmuje ją (rank: null / "auto").
+app.put('/api/users/:id/rank', requireAdmin, async (req, res) => {
+    const v = req.body.rank;
+    let val = null;
+    if (v !== null && v !== undefined && v !== '' && v !== 'auto') {
+        val = parseInt(v);
+        if (!Number.isInteger(val) || !RANKS[val]) return res.status(400).json({ error: 'Nieprawidłowa ranga.' });
+    }
+    try {
+        const r = await pool.query('UPDATE users SET rank_override = $1 WHERE id = $2 RETURNING id', [val, req.params.id]);
+        if (r.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono kierowcy.' });
+        if (val !== null) await addNotification(req.params.id, 'Nowa ranga', `Szef nadał Ci rangę: ${RANKS[val].name}`, null, 'jobs');
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'Błąd zmiany rangi' }); }
+});
+
+// =====================================================================
+//  IMPORT HISTORII TRAS (np. z Trucksbook) - tylko Szef.
+//  rows: [{ username, date, start_city, end_city, cargo, distance, income, line }], dry_run: true = tylko sprawdź
+// =====================================================================
+function parseImportDate(v) {
+    const str = String(v || '').trim();
+    let y, m, d;
+    let mt = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(str);
+    if (mt) { y = +mt[1]; m = +mt[2]; d = +mt[3]; }
+    else if ((mt = /^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/.exec(str))) { d = +mt[1]; m = +mt[2]; y = +mt[3]; }
+    else return null;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+app.post('/api/admin/import-jobs', requireAdmin, async (req, res) => {
+    const rows = Array.isArray(req.body.rows) ? req.body.rows.slice(0, 2000) : [];
+    const dryRun = req.body.dry_run === true;
+    if (rows.length === 0) return res.status(400).json({ error: 'Brak wierszy do importu.' });
+
+    const client = await pool.connect();
+    try {
+        const users = await client.query('SELECT id, username FROM users');
+        const byName = new Map(users.rows.map(u => [u.username.toLowerCase(), u.id]));
+        let imported = 0, skipped = 0;
+        const errors = [];
+
+        await client.query('BEGIN');
+        for (let i = 0; i < rows.length; i++) {
+            const r = rows[i] || {};
+            const line = r.line || (i + 1);
+            const uid = byName.get(String(r.username || '').trim().toLowerCase());
+            const start = String(r.start_city || '').trim().slice(0, 255);
+            const end = String(r.end_city || '').trim().slice(0, 255);
+            const cargo = String(r.cargo || '').trim().slice(0, 255) || 'Standard';
+            const dist = Math.round(Number(r.distance));
+            const inc = Math.max(0, Math.round(Number(r.income) || 0));
+            const date = parseImportDate(r.date);
+
+            if (!uid) { errors.push(`Wiersz ${line}: nie ma kierowcy "${r.username}" (kierowca musi mieć konto na stronie)`); continue; }
+            if (!start || !end) { errors.push(`Wiersz ${line}: brak miasta startu lub celu`); continue; }
+            if (!Number.isFinite(dist) || dist <= 0 || dist > 20000) { errors.push(`Wiersz ${line}: zły dystans`); continue; }
+            if (!date) { errors.push(`Wiersz ${line}: zła data "${r.date}" (użyj np. 15.09.2026 albo 2026-09-15)`); continue; }
+
+            const dup = await client.query(
+                'SELECT 1 FROM jobs WHERE user_id = $1 AND start_city = $2 AND end_city = $3 AND distance = $4 AND created_at::date = $5::date LIMIT 1',
+                [uid, start, end, dist, date]);
+            if (dup.rows.length > 0) { skipped++; continue; }
+
+            await client.query(
+                `INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo, status, created_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, '', '', 'approved', $7::date + TIME '12:00')`,
+                [uid, start, end, cargo, dist, inc, date]);
+            imported++;
+        }
+        await client.query(dryRun ? 'ROLLBACK' : 'COMMIT');
+        res.json({ success: true, dry_run: dryRun, imported, skipped, errors });
+    } catch (e) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        console.error('Błąd importu tras:', e.message);
+        res.status(500).json({ error: 'Błąd importu tras (nic nie zapisano).' });
+    } finally { client.release(); }
 });
 
 app.put('/api/users/:id/approve', async (req, res) => {
@@ -896,9 +1036,19 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
         if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono trasy' });
 
         const job = jobRes.rows[0];
+        const kmBefore = parseInt((await pool.query("SELECT COALESCE(SUM(distance),0) AS km FROM jobs WHERE user_id = $1 AND status = 'approved'", [job.user_id])).rows[0].km) || 0;
         await pool.query("UPDATE jobs SET status = 'approved' WHERE id = $1", [req.params.id]);
         
         await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`, null, 'jobs');
+
+        // automatyczny awans (tylko gdy Szef nie nadał rangi ręcznie)
+        const after = await pool.query("SELECT u.rank_override, COALESCE((SELECT SUM(distance) FROM jobs WHERE user_id = u.id AND status = 'approved'),0) AS km FROM users u WHERE u.id = $1", [job.user_id]);
+        if (after.rows.length > 0 && after.rows[0].rank_override === null) {
+            const kmAfter = parseInt(after.rows[0].km) || 0;
+            if (autoRankIndex(kmAfter) > autoRankIndex(kmBefore)) {
+                await addNotification(job.user_id, 'Awans!', `Gratulacje! Awansowałeś do rangi: ${RANKS[autoRankIndex(kmAfter)].name}`, null, 'jobs');
+            }
+        }
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
 });
@@ -932,9 +1082,10 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
         const totalExpenses = parseInt(totalExpensesRes.rows[0].total_expenses || 0);
 
         const rankingRes = await pool.query(`
-            SELECT users.username, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries 
+            SELECT users.username, users.rank_override, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries,
+                   COALESCE(SUM(jobs.distance) FILTER (WHERE jobs.status = 'approved'), 0) as approved_km
             FROM jobs JOIN users ON jobs.user_id = users.id 
-            GROUP BY users.username ORDER BY km DESC
+            GROUP BY users.username, users.rank_override ORDER BY km DESC
         `);
 
         res.json({
@@ -943,7 +1094,7 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
             totalIncome,
             totalExpenses,
             totalCompanyBudget: totalIncome - totalExpenses,
-            driversRanking: rankingRes.rows
+            driversRanking: rankingRes.rows.map(d => ({ username: d.username, km: d.km, deliveries: d.deliveries, rank: rankFor(parseInt(d.approved_km) || 0, d.rank_override) }))
         });
     } catch (err) { res.status(500).json({ error: 'Błąd statystyk' }); }
 });
