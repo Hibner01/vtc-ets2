@@ -185,7 +185,6 @@ async function initDB() {
         `);
 
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
-        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_override INTEGER;`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS job_id INTEGER DEFAULT NULL;`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
@@ -225,6 +224,24 @@ async function initDB() {
         await pool.query(`ALTER TABLE dispatches ADD COLUMN IF NOT EXISTS end_country VARCHAR(2);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS start_country VARCHAR(2);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS end_country VARCHAR(2);`);
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_rank VARCHAR(40);`);
+        // Zakupy pojazdów (zakładka Finanse). Każdy zakup ma też wpis w "expenses", więc zmniejsza budżet firmy.
+        // Usunięcie wydatku automatycznie usuwa zakup (ON DELETE CASCADE) i odwrotnie.
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS vehicle_purchases (
+                id SERIAL PRIMARY KEY,
+                vehicle_type VARCHAR(10) NOT NULL,
+                model_name VARCHAR(255) NOT NULL,
+                plates VARCHAR(50) DEFAULT '',
+                price INTEGER NOT NULL,
+                purchase_date DATE DEFAULT CURRENT_DATE,
+                note TEXT DEFAULT '',
+                added_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                expense_id INTEGER REFERENCES expenses(id) ON DELETE CASCADE,
+                in_garage BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
         await seedTrucks();
         await clientApi.initTables();
 
@@ -240,7 +257,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 app.set('trust proxy', 1);
-app.get('/healthz', (req, res) => res.type('text').send('ok'));
 if (!process.env.SESSION_SECRET) {
     console.warn('UWAGA: brak zmiennej SESSION_SECRET - używany jest domyślny, publiczny sekret! Ustaw SESSION_SECRET w panelu Rendera.');
 }
@@ -282,10 +298,66 @@ async function killUserSessions(userId, exceptSid) {
     } catch (e) { console.error('Błąd kasowania sesji:', e.message); }
 }
 
-// Serwowanie plików (CMR, podsumowania, zdjęcia pojazdów) z bazy danych
-app.get('/api/files/:id', requireLogin, async (req, res) => {
+// ====================== RANGI ======================
+// Ranga AUTOMATYCZNA zależy od łącznych kilometrów kierowcy (te same trasy, co w statystykach firmy).
+// Ranga RĘCZNA (users.custom_rank) nadawana przez Szefa ma pierwszeństwo przy wyświetlaniu.
+// Progi możesz zmienić tutaj; nazwy rang (PL/EN) są w index.html w słowniku "rank_...".
+const AUTO_RANKS = [
+    { key: 'recruit',      min: 0 },
+    { key: 'driver',       min: 1000 },
+    { key: 'experienced',  min: 5000 },
+    { key: 'professional', min: 15000 },
+    { key: 'veteran',      min: 40000 },
+    { key: 'legend',       min: 100000 }
+];
+
+function rankInfoFor(km) {
+    km = Number(km) || 0;
+    let idx = 0;
+    AUTO_RANKS.forEach((r, i) => { if (km >= r.min) idx = i; });
+    const next = AUTO_RANKS[idx + 1] || null;
+    return {
+        key: AUTO_RANKS[idx].key,
+        min: AUTO_RANKS[idx].min,
+        next: next ? { key: next.key, min: next.min, remaining: Math.max(0, next.min - km) } : null
+    };
+}
+
+async function fetchRanking() {
+    const r = await pool.query(`
+        SELECT users.username, users.custom_rank, SUM(jobs.distance) AS km, COUNT(jobs.id) AS deliveries
+        FROM jobs JOIN users ON jobs.user_id = users.id
+        GROUP BY users.id, users.username, users.custom_rank
+        ORDER BY km DESC
+    `);
+    return r.rows.map(x => {
+        const km = parseInt(x.km || 0);
+        return {
+            username: x.username,
+            custom_rank: x.custom_rank || null,
+            km,
+            deliveries: parseInt(x.deliveries || 0),
+            auto_rank: rankInfoFor(km).key
+        };
+    });
+}
+
+// Serwowanie plików (CMR, zdjęcia pojazdów) z bazy danych.
+// Zalogowani widzą wszystko. GOŚCIE (bez logowania) mogą pobrać WYŁĄCZNIE zdjęcia pojazdów z garażu.
+app.get('/api/files/:id', async (req, res) => {
     try {
-        const r = await pool.query('SELECT mime, data FROM files WHERE id = $1', [parseInt(req.params.id)]);
+        const id = parseInt(req.params.id);
+        if (!req.session.userId) {
+            const url = '/api/files/' + id;
+            const isVehiclePhoto = await pool.query(
+                `SELECT 1 FROM trucks WHERE photo = $1 OR photo_back = $1
+                 UNION ALL
+                 SELECT 1 FROM trailers WHERE photo = $1 OR photo_back = $1
+                 LIMIT 1`, [url]
+            );
+            if (isVehiclePhoto.rows.length === 0) return res.status(401).send('Brak dostępu');
+        }
+        const r = await pool.query('SELECT mime, data FROM files WHERE id = $1', [id]);
         if (r.rows.length === 0) return res.status(404).send('Nie znaleziono pliku');
         res.set('Content-Type', r.rows[0].mime);
         res.set('X-Content-Type-Options', 'nosniff');
@@ -374,7 +446,7 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/user', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const userRes = await pool.query('SELECT id, username, email, role, status FROM users WHERE id = $1', [req.session.userId]);
+        const userRes = await pool.query('SELECT id, username, email, role, status, custom_rank FROM users WHERE id = $1', [req.session.userId]);
         if (userRes.rows.length === 0) return res.status(401).json({ error: 'Użytkownik nie istnieje' });
         
         const user = userRes.rows[0];
@@ -389,6 +461,9 @@ app.get('/api/user', async (req, res) => {
             AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_TIMESTAMP)
         `, [user.id]);
 
+        const totalRes = await pool.query('SELECT COALESCE(SUM(distance), 0) AS total FROM jobs WHERE user_id = $1', [user.id]);
+        const totalKm = parseInt(totalRes.rows[0].total || 0);
+
         const truckRes = await pool.query('SELECT * FROM trucks WHERE LOWER(driver_name) = LOWER($1) ORDER BY id LIMIT 1', [user.username]);
         const trailerRes = await pool.query('SELECT * FROM trailers WHERE LOWER(driver_name) = LOWER($1) ORDER BY id LIMIT 1', [user.username]);
 
@@ -400,6 +475,9 @@ app.get('/api/user', async (req, res) => {
             monthlyKm: parseInt(kmRes.rows[0].total || 0),
             monthlyDeliveries: parseInt(kmRes.rows[0].deliveries || 0),
             limitKm: 6000,
+            totalKm,
+            rank: rankInfoFor(totalKm),
+            customRank: user.custom_rank || null,
             assignedTruck: truckRes.rows.length > 0 ? truckRes.rows[0] : null,
             assignedTrailer: trailerRes.rows.length > 0 ? trailerRes.rows[0] : null
         });
@@ -448,150 +526,19 @@ app.delete('/api/notifications/:id', async (req, res) => {
     }
 });
 
-// =====================================================================
-//  RANGI KIEROWCÓW
-//  Rangi automatyczne liczą się z ZATWIERDZONYCH kilometrów (próg minKm).
-//  Szef może ręcznie nadać dowolną rangę (też "specjalną", tylko ręczną) albo wrócić do "Auto".
-//  Nazwy, progi, ikony (Font Awesome) i kolory zmienisz tylko tutaj.
-// =====================================================================
-const RANKS = [
-    { name: 'Rekrut',                  minKm: 0,      icon: 'fa-seedling',       color: '#94a3b8' },
-    { name: 'Kierowca',                minKm: 500,    icon: 'fa-road',           color: '#38bdf8' },
-    { name: 'Kierowca Zawodowy',       minKm: 2500,   icon: 'fa-truck',          color: '#22c55e' },
-    { name: 'Kierowca Międzynarodowy', minKm: 7500,   icon: 'fa-earth-europe',   color: '#14b8a6' },
-    { name: 'Starszy Kierowca',        minKm: 15000,  icon: 'fa-medal',          color: '#a78bfa' },
-    { name: 'Mistrz Szos',             minKm: 30000,  icon: 'fa-trophy',         color: '#f59e0b' },
-    { name: 'Weteran Trasy',           minKm: 60000,  icon: 'fa-star',           color: '#fb923c' },
-    { name: 'Legenda Mazren',          minKm: 100000, icon: 'fa-crown',          color: '#facc15' },
-    { name: 'Dyspozytor',  manual: true,              icon: 'fa-headset',        color: '#f472b6' },
-    { name: 'Instruktor',  manual: true,              icon: 'fa-chalkboard-user', color: '#fb7185' }
-];
-
-function autoRankIndex(km) {
-    let idx = 0;
-    RANKS.forEach((r, i) => { if (!r.manual && km >= r.minKm) idx = i; });
-    return idx;
-}
-
-function rankFor(km, override) {
-    const manual = Number.isInteger(override) && !!RANKS[override];
-    const idx = manual ? override : autoRankIndex(km);
-    const r = RANKS[idx];
-    return { index: idx, name: r.name, icon: r.icon, color: r.color, manual };
-}
-
-app.get('/api/ranks', requireLogin, (req, res) => {
-    res.json({ ranks: RANKS.map(r => ({ name: r.name, minKm: r.minKm || 0, manual: !!r.manual, icon: r.icon, color: r.color })) });
-});
-
-app.get('/api/my-rank', requireLogin, async (req, res) => {
-    try {
-        const r = await pool.query(
-            `SELECT u.rank_override, COALESCE((SELECT SUM(distance) FROM jobs WHERE user_id = u.id AND status = 'approved'), 0) AS km
-             FROM users u WHERE u.id = $1`, [req.session.userId]);
-        if (r.rows.length === 0) return res.status(404).json({ error: 'Brak użytkownika' });
-        const km = parseInt(r.rows[0].km) || 0;
-        const info = rankFor(km, r.rows[0].rank_override);
-        const autoIdx = autoRankIndex(km);
-        const next = RANKS.slice(autoIdx + 1).find(x => !x.manual) || null;
-        res.json({ ...info, km, current_min: RANKS[autoIdx].minKm, next: next ? { name: next.name, minKm: next.minKm } : null });
-    } catch (e) { res.status(500).json({ error: 'Błąd rangi' }); }
-});
-
 app.get('/api/users', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
-        const result = await pool.query(
-            `SELECT u.id, u.username, u.email, u.role, u.status, u.rank_override,
-                    COALESCE((SELECT SUM(distance) FROM jobs j WHERE j.user_id = u.id AND j.status = 'approved'), 0) AS approved_km
-             FROM users u ORDER BY u.id DESC`);
-        res.json(result.rows.map(u => ({
-            id: u.id, username: u.username, email: u.email, role: u.role, status: u.status,
-            approved_km: parseInt(u.approved_km) || 0,
-            rank: rankFor(parseInt(u.approved_km) || 0, u.rank_override)
-        })));
+        const result = await pool.query(`
+            SELECT users.id, users.username, users.email, users.role, users.status, users.custom_rank,
+                   COALESCE((SELECT SUM(distance) FROM jobs WHERE jobs.user_id = users.id), 0) AS total_km
+            FROM users ORDER BY users.id DESC
+        `);
+        res.json(result.rows.map(u => {
+            const km = parseInt(u.total_km || 0);
+            return { ...u, total_km: km, auto_rank: rankInfoFor(km).key };
+        }));
     } catch (err) { res.status(500).json({ error: 'Błąd użytkowników' }); }
-});
-
-// Szef nadaje rangę ręcznie (rank: numer z listy /api/ranks) albo zdejmuje ją (rank: null / "auto").
-app.put('/api/users/:id/rank', requireAdmin, async (req, res) => {
-    const v = req.body.rank;
-    let val = null;
-    if (v !== null && v !== undefined && v !== '' && v !== 'auto') {
-        val = parseInt(v);
-        if (!Number.isInteger(val) || !RANKS[val]) return res.status(400).json({ error: 'Nieprawidłowa ranga.' });
-    }
-    try {
-        const r = await pool.query('UPDATE users SET rank_override = $1 WHERE id = $2 RETURNING id', [val, req.params.id]);
-        if (r.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono kierowcy.' });
-        if (val !== null) await addNotification(req.params.id, 'Nowa ranga', `Szef nadał Ci rangę: ${RANKS[val].name}`, null, 'jobs');
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: 'Błąd zmiany rangi' }); }
-});
-
-// =====================================================================
-//  IMPORT HISTORII TRAS (np. z Trucksbook) - tylko Szef.
-//  rows: [{ username, date, start_city, end_city, cargo, distance, income, line }], dry_run: true = tylko sprawdź
-// =====================================================================
-function parseImportDate(v) {
-    const str = String(v || '').trim();
-    let y, m, d;
-    let mt = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(str);
-    if (mt) { y = +mt[1]; m = +mt[2]; d = +mt[3]; }
-    else if ((mt = /^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/.exec(str))) { d = +mt[1]; m = +mt[2]; y = +mt[3]; }
-    else return null;
-    const dt = new Date(Date.UTC(y, m - 1, d));
-    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
-    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
-
-app.post('/api/admin/import-jobs', requireAdmin, async (req, res) => {
-    const rows = Array.isArray(req.body.rows) ? req.body.rows.slice(0, 2000) : [];
-    const dryRun = req.body.dry_run === true;
-    if (rows.length === 0) return res.status(400).json({ error: 'Brak wierszy do importu.' });
-
-    const client = await pool.connect();
-    try {
-        const users = await client.query('SELECT id, username FROM users');
-        const byName = new Map(users.rows.map(u => [u.username.toLowerCase(), u.id]));
-        let imported = 0, skipped = 0;
-        const errors = [];
-
-        await client.query('BEGIN');
-        for (let i = 0; i < rows.length; i++) {
-            const r = rows[i] || {};
-            const line = r.line || (i + 1);
-            const uid = byName.get(String(r.username || '').trim().toLowerCase());
-            const start = String(r.start_city || '').trim().slice(0, 255);
-            const end = String(r.end_city || '').trim().slice(0, 255);
-            const cargo = String(r.cargo || '').trim().slice(0, 255) || 'Standard';
-            const dist = Math.round(Number(r.distance));
-            const inc = Math.max(0, Math.round(Number(r.income) || 0));
-            const date = parseImportDate(r.date);
-
-            if (!uid) { errors.push(`Wiersz ${line}: nie ma kierowcy "${r.username}" (kierowca musi mieć konto na stronie)`); continue; }
-            if (!start || !end) { errors.push(`Wiersz ${line}: brak miasta startu lub celu`); continue; }
-            if (!Number.isFinite(dist) || dist <= 0 || dist > 20000) { errors.push(`Wiersz ${line}: zły dystans`); continue; }
-            if (!date) { errors.push(`Wiersz ${line}: zła data "${r.date}" (użyj np. 15.09.2026 albo 2026-09-15)`); continue; }
-
-            const dup = await client.query(
-                'SELECT 1 FROM jobs WHERE user_id = $1 AND start_city = $2 AND end_city = $3 AND distance = $4 AND created_at::date = $5::date LIMIT 1',
-                [uid, start, end, dist, date]);
-            if (dup.rows.length > 0) { skipped++; continue; }
-
-            await client.query(
-                `INSERT INTO jobs (user_id, start_city, end_city, cargo, distance, income, cmr_file, summary_photo, status, created_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, '', '', 'approved', $7::date + TIME '12:00')`,
-                [uid, start, end, cargo, dist, inc, date]);
-            imported++;
-        }
-        await client.query(dryRun ? 'ROLLBACK' : 'COMMIT');
-        res.json({ success: true, dry_run: dryRun, imported, skipped, errors });
-    } catch (e) {
-        try { await client.query('ROLLBACK'); } catch (_) {}
-        console.error('Błąd importu tras:', e.message);
-        res.status(500).json({ error: 'Błąd importu tras (nic nie zapisano).' });
-    } finally { client.release(); }
 });
 
 app.put('/api/users/:id/approve', async (req, res) => {
@@ -601,6 +548,21 @@ app.put('/api/users/:id/approve', async (req, res) => {
         await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!', null, 'jobs');
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd zatwierdzania' }); }
+});
+
+// RANGA RĘCZNA: puste pole = wróć do rangi automatycznej (z kilometrów)
+app.put('/api/users/:id/rank', requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const rank = String(req.body.rank || '').trim().slice(0, 40);
+    try {
+        const r = await pool.query('UPDATE users SET custom_rank = $1 WHERE id = $2 RETURNING id', [rank || null, id]);
+        if (r.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono użytkownika' });
+        if (rank) await addNotification(id, 'Nowa ranga', `Szef nadał Ci rangę: ${rank}`, null, 'jobs');
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Błąd nadawania rangi' });
+    }
 });
 
 function randomPassword() {
@@ -871,11 +833,14 @@ app.put('/api/expenses/:id', async (req, res) => {
     if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
 
     try {
-        const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
+        const expCheck = await pool.query('SELECT user_id, type FROM expenses WHERE id = $1', [req.params.id]);
         if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
 
         if (req.session.role !== 'admin' && expCheck.rows[0].user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Możesz edytować tylko własne wydatki!' });
+        }
+        if (String(expCheck.rows[0].type || '').startsWith('purchase_')) {
+            return res.status(400).json({ error: 'Zakupu pojazdu nie edytuje się tutaj. Usuń go w sekcji Zakupy pojazdów i dodaj ponownie.' });
         }
 
         await pool.query(
@@ -1016,6 +981,128 @@ app.post('/api/trucks/import-assignments', requireAdmin, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd importu przydziałów' }); }
 });
 
+// ====================== ZAKUPY POJAZDÓW (zakładka Finanse) ======================
+// Szef dodaje i usuwa zakupy, kierowcy mogą je tylko przeglądać.
+const TRUCK_EXTRA_DEFAULTS = { cabin: 'Standard', chassis: 'Standard', engine: 'Standard', gearbox: 'Standard', interior: 'Standard', accessories: 'Standard' };
+const TRAILER_EXTRA_DEFAULTS = { description: '' };
+
+// Dodaje JEDNĄ sztukę do garażu (nowy model albo kolejna sztuka istniejącego - wtedy dziedziczy zdjęcia i dane).
+async function addUnitToGarage(db, vehicleType, model, plate, photo, photoBack, body) {
+    const table = vehicleType === 'trailer' ? 'trailers' : 'trucks';
+    const modelCol = vehicleType === 'trailer' ? 'trailer_model' : 'truck_model';
+    const extra = vehicleType === 'trailer' ? TRAILER_EXTRA_DEFAULTS : TRUCK_EXTRA_DEFAULTS;
+    const extraKeys = Object.keys(extra);
+
+    const existing = await db.query(`SELECT * FROM ${table} WHERE LOWER(${modelCol}) = LOWER($1) ORDER BY id LIMIT 1`, [model]);
+    const proto = existing.rows[0] || {};
+    const modelName = proto[modelCol] || model;
+
+    const cols = [modelCol, 'plates', 'photo', 'photo_back', ...extraKeys];
+    const vals = [
+        modelName, plate, photo || proto.photo || '', photoBack || proto.photo_back || '',
+        ...extraKeys.map(k => ((body[k] || '').trim()) || proto[k] || extra[k])
+    ];
+    const ph = vals.map((_, i) => '$' + (i + 1)).join(', ');
+    await db.query(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${ph})`, vals);
+    return modelName;
+}
+
+app.get('/api/purchases', requireLogin, async (req, res) => {
+    try {
+        const r = await pool.query(`
+            SELECT p.id, p.vehicle_type, p.model_name, p.plates, p.price, p.purchase_date, p.note, p.in_garage,
+                   p.created_at, u.username AS added_by_name
+            FROM vehicle_purchases p
+            LEFT JOIN users u ON u.id = p.added_by
+            ORDER BY p.purchase_date DESC, p.id DESC
+        `);
+        res.json(r.rows);
+    } catch (err) { res.status(500).json({ error: 'Błąd pobierania zakupów' }); }
+});
+
+app.post('/api/purchases', requireAdmin, vehicleUpload, async (req, res) => {
+    const body = req.body || {};
+    const vehicleType = body.vehicle_type === 'trailer' ? 'trailer' : 'truck';
+    const model = String(body.model_name || '').trim().slice(0, 255);
+    const price = parseInt(body.price);
+    const plate = String(body.plates || '').trim().toUpperCase().slice(0, 50) || 'BRAK';
+    const note = String(body.note || '').trim().slice(0, 500);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(body.purchase_date || '') ? body.purchase_date : new Date().toISOString().slice(0, 10);
+    const addToGarage = String(body.add_to_garage) !== 'false';
+
+    if (!model) return res.status(400).json({ error: 'Podaj model / nazwę pojazdu.' });
+    if (!(price > 0) || price > 100000000) return res.status(400).json({ error: 'Podaj poprawną cenę (większą od 0).' });
+
+    const garageTable = vehicleType === 'trailer' ? 'trailers' : 'trucks';
+    const label = vehicleType === 'trailer' ? 'naczepy' : 'ciężarówki';
+
+    let client;
+    try {
+        if (addToGarage && plate !== 'BRAK') {
+            const dup = await pool.query(`SELECT 1 FROM ${garageTable} WHERE plates = $1`, [plate]);
+            if (dup.rows.length > 0) return res.status(400).json({ error: 'Pojazd z taką tablicą już jest w garażu.' });
+        }
+
+        // zdjęcia zapisujemy tylko gdy pojazd trafia do garażu
+        let photo = '', photoBack = '';
+        if (addToGarage) {
+            photo = (await saveFile(req.files && req.files.photo ? req.files.photo[0] : null)) || '';
+            photoBack = (await saveFile(req.files && req.files.photo_back ? req.files.photo_back[0] : null)) || '';
+        }
+
+        client = await pool.connect();
+        await client.query('BEGIN');
+
+        const description = `Zakup ${label}: ${model}${plate !== 'BRAK' ? ` (${plate})` : ''}`;
+        const exp = await client.query(
+            'INSERT INTO expenses (user_id, type, amount, description, expense_date) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [req.session.userId, 'purchase_' + vehicleType, price, description, date]
+        );
+
+        let modelName = model;
+        if (addToGarage) modelName = await addUnitToGarage(client, vehicleType, model, plate, photo, photoBack, body);
+
+        await client.query(
+            `INSERT INTO vehicle_purchases (vehicle_type, model_name, plates, price, purchase_date, note, added_by, expense_id, in_garage)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [vehicleType, modelName, plate === 'BRAK' ? '' : plate, price, date, note, req.session.userId, exp.rows[0].id, addToGarage]
+        );
+        await client.query('COMMIT');
+
+        // budżet firmy po zakupie (tak samo liczony jak w /api/company-stats)
+        const inc = await pool.query('SELECT COALESCE(SUM(income), 0) AS v FROM jobs');
+        const exs = await pool.query('SELECT COALESCE(SUM(amount), 0) AS v FROM expenses');
+        const budgetAfter = parseInt(inc.rows[0].v || 0) - parseInt(exs.rows[0].v || 0);
+
+        // powiadomienie dla pozostałych aktywnych członków firmy
+        try {
+            const others = await pool.query("SELECT id FROM users WHERE status = 'approved' AND id <> $1", [req.session.userId]);
+            for (const u of others.rows) {
+                await addNotification(u.id, 'Nowy zakup floty', `Firma kupiła ${vehicleType === 'trailer' ? 'naczepę' : 'ciężarówkę'}: ${model}${plate !== 'BRAK' ? ` (${plate})` : ''}.`, null, 'finances');
+            }
+        } catch (e) { console.error('Powiadomienia o zakupie:', e.message); }
+
+        res.json({ success: true, budget_after: budgetAfter, added_to_garage: addToGarage });
+    } catch (err) {
+        if (client) { try { await client.query('ROLLBACK'); } catch (e) {} }
+        console.error('Błąd dodawania zakupu:', err);
+        res.status(500).json({ error: 'Błąd zapisu zakupu (sprawdź rozmiar i typ zdjęć).' });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// Usunięcie zakupu zwraca kwotę do budżetu (kasuje powiązany wydatek). Pojazd w garażu ZOSTAJE - usuwa się go w Garażu.
+app.delete('/api/purchases/:id', requireAdmin, async (req, res) => {
+    try {
+        const p = await pool.query('SELECT id, expense_id FROM vehicle_purchases WHERE id = $1', [req.params.id]);
+        if (p.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zakupu' });
+        if (p.rows[0].expense_id) await pool.query('DELETE FROM expenses WHERE id = $1', [p.rows[0].expense_id]);
+        await pool.query('DELETE FROM vehicle_purchases WHERE id = $1', [p.rows[0].id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: 'Błąd usuwania zakupu' }); }
+});
+
 app.get('/api/jobs', requireLogin, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -1029,6 +1116,51 @@ app.get('/api/jobs', requireLogin, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania tras' }); }
 });
 
+// Dodanie / podmiana CMR przy ISTNIEJĄCEJ trasie (np. utworzonej automatycznie z telemetrii).
+// Kierowca: swoja trasa, gdy CMR jeszcze brak albo trasa czeka na zatwierdzenie. Szef: zawsze.
+const cmrUpload = (req, res, next) => {
+    upload.single('cmr_file')(req, res, err => {
+        if (err) return res.status(400).json({ error: 'Plik jest za duży (max 12 MB) lub niepoprawny.' });
+        next();
+    });
+};
+
+app.post('/api/jobs/:id/cmr', requireLogin, cmrUpload, async (req, res) => {
+    const jobId = parseInt(req.params.id);
+    if (!req.file) return res.status(400).json({ error: 'Wybierz plik ze zdjęciem lub skanem CMR.' });
+    try {
+        const jr = await pool.query('SELECT user_id, status, cmr_file, start_city, end_city FROM jobs WHERE id = $1', [jobId]);
+        if (jr.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono trasy.' });
+        const job = jr.rows[0];
+
+        const isAdmin = req.session.role === 'admin';
+        const isOwner = job.user_id === req.session.userId;
+        if (!isAdmin && !isOwner) return res.status(403).json({ error: 'To nie jest Twoja trasa.' });
+        if (!isAdmin && job.cmr_file && job.status !== 'pending') {
+            return res.status(403).json({ error: 'Zatwierdzonej trasy z CMR nie możesz już zmienić. Poproś Szefa.' });
+        }
+
+        const url = await saveFile(req.file);
+        await pool.query('UPDATE jobs SET cmr_file = $1 WHERE id = $2', [url, jobId]);
+
+        // stary plik CMR (jeśli był w bazie) usuwamy, żeby nie zapychać darmowej bazy
+        if (job.cmr_file && job.cmr_file.startsWith('/api/files/')) {
+            await pool.query('DELETE FROM files WHERE id = $1', [parseInt(job.cmr_file.split('/').pop())]).catch(() => {});
+        }
+
+        if (!isAdmin) {
+            const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
+            for (const adm of admins.rows) {
+                await addNotification(adm.id, 'CMR dodany', `Kierowca @${req.session.username} dodał CMR do trasy ${job.start_city} ➔ ${job.end_city}.`, jobId, 'jobs');
+            }
+        }
+        res.json({ success: true, cmr_file: url });
+    } catch (err) {
+        console.error('Błąd dodawania CMR:', err);
+        res.status(500).json({ error: 'Błąd zapisu CMR.' });
+    }
+});
+
 app.put('/api/jobs/:id/approve', async (req, res) => {
     if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
     try {
@@ -1036,19 +1168,9 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
         if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono trasy' });
 
         const job = jobRes.rows[0];
-        const kmBefore = parseInt((await pool.query("SELECT COALESCE(SUM(distance),0) AS km FROM jobs WHERE user_id = $1 AND status = 'approved'", [job.user_id])).rows[0].km) || 0;
         await pool.query("UPDATE jobs SET status = 'approved' WHERE id = $1", [req.params.id]);
         
         await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`, null, 'jobs');
-
-        // automatyczny awans (tylko gdy Szef nie nadał rangi ręcznie)
-        const after = await pool.query("SELECT u.rank_override, COALESCE((SELECT SUM(distance) FROM jobs WHERE user_id = u.id AND status = 'approved'),0) AS km FROM users u WHERE u.id = $1", [job.user_id]);
-        if (after.rows.length > 0 && after.rows[0].rank_override === null) {
-            const kmAfter = parseInt(after.rows[0].km) || 0;
-            if (autoRankIndex(kmAfter) > autoRankIndex(kmBefore)) {
-                await addNotification(job.user_id, 'Awans!', `Gratulacje! Awansowałeś do rangi: ${RANKS[autoRankIndex(kmAfter)].name}`, null, 'jobs');
-            }
-        }
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
 });
@@ -1081,12 +1203,7 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
         const totalIncome = parseInt(totalIncomeRes.rows[0].total_income || 0);
         const totalExpenses = parseInt(totalExpensesRes.rows[0].total_expenses || 0);
 
-        const rankingRes = await pool.query(`
-            SELECT users.username, users.rank_override, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries,
-                   COALESCE(SUM(jobs.distance) FILTER (WHERE jobs.status = 'approved'), 0) as approved_km
-            FROM jobs JOIN users ON jobs.user_id = users.id 
-            GROUP BY users.username, users.rank_override ORDER BY km DESC
-        `);
+        const driversRanking = await fetchRanking();
 
         res.json({
             totalCompanyKm,
@@ -1094,9 +1211,63 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
             totalIncome,
             totalExpenses,
             totalCompanyBudget: totalIncome - totalExpenses,
-            driversRanking: rankingRes.rows.map(d => ({ username: d.username, km: d.km, deliveries: d.deliveries, rank: rankFor(parseInt(d.approved_km) || 0, d.rank_override) }))
+            driversRanking
         });
     } catch (err) { res.status(500).json({ error: 'Błąd statystyk' }); }
+});
+
+// ====================== TRYB GOŚCIA (bez logowania) ======================
+// Udostępniamy tylko: garaż (bez nazw kierowców), zbiorcze statystyki i ranking (nick, km, dostawy) oraz ostatnie
+// zatwierdzone trasy (bez przychodów i dokumentów). Odpowiedzi są krótko cache'owane, żeby anonimowy ruch nie obciążał bazy.
+const publicCache = new Map();
+async function cachedPublic(key, ttlMs, producer) {
+    const hit = publicCache.get(key);
+    if (hit && hit.until > Date.now()) return hit.value;
+    const value = await producer();
+    publicCache.set(key, { value, until: Date.now() + ttlMs });
+    return value;
+}
+
+app.get('/api/public/garage', async (req, res) => {
+    try {
+        const data = await cachedPublic('garage', 15000, async () => {
+            const [tr, tl] = await Promise.all([
+                pool.query('SELECT * FROM trucks ORDER BY LOWER(truck_model), id'),
+                pool.query('SELECT * FROM trailers ORDER BY LOWER(trailer_model), id')
+            ]);
+            // nazwy kierowców ukrywamy: gość widzi tylko "Wolne" / "Zajęty"
+            const strip = r => {
+                const { driver_name, ...rest } = r;
+                return { ...rest, driver_name: (!driver_name || driver_name === 'Wolne') ? 'Wolne' : 'Zajęty' };
+            };
+            return { trucks: tr.rows.map(strip), trailers: tl.rows.map(strip) };
+        });
+        res.json(data);
+    } catch (e) { res.status(500).json({ error: 'Błąd garażu' }); }
+});
+
+app.get('/api/public/stats', async (req, res) => {
+    try {
+        const data = await cachedPublic('stats', 30000, async () => {
+            const totals = await pool.query('SELECT COALESCE(SUM(distance), 0) AS km, COUNT(*) AS deliveries FROM jobs');
+            const drivers = await pool.query("SELECT COUNT(*) AS n FROM users WHERE status = 'approved'");
+            const recent = await pool.query(`
+                SELECT users.username, jobs.start_city, jobs.end_city, jobs.start_country, jobs.end_country,
+                       jobs.distance, jobs.cargo, TO_CHAR(jobs.created_at, 'DD.MM.YYYY HH24:MI') AS formatted_date
+                FROM jobs JOIN users ON jobs.user_id = users.id
+                WHERE jobs.status = 'approved'
+                ORDER BY jobs.id DESC LIMIT 10
+            `);
+            return {
+                totalCompanyKm: parseInt(totals.rows[0].km || 0),
+                totalDeliveries: parseInt(totals.rows[0].deliveries || 0),
+                activeDrivers: parseInt(drivers.rows[0].n || 0),
+                driversRanking: await fetchRanking(),
+                recentJobs: recent.rows
+            };
+        });
+        res.json(data);
+    } catch (e) { res.status(500).json({ error: 'Błąd statystyk' }); }
 });
 
 // API aplikacji kierowcy (telemetria ETS2) - patrz client-api.js
