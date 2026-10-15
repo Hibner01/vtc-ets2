@@ -207,6 +207,22 @@
         }
         .set-chip b { color: #fff; font-weight: 600; }
 
+        .rank-badge {
+            --rc: #94a3b8;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 11px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #fff;
+            background: rgba(11, 15, 25, 0.55);
+            border: 1px solid var(--rc);
+            white-space: nowrap;
+        }
+        .rank-badge i { color: var(--rc); }
+
         .vehicle-photo-full {
             width: 100%;
             height: auto;
@@ -554,6 +570,14 @@
                             <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> <span data-i18n="welcomeBackBanner">WITAJ Z POWROTEM</span></div>
                             <h2 class="fw-bold display-6 mb-1" id="banner-username">WladekKiero</h2>
                             <span class="badge bg-white text-dark fw-bold px-3 py-2 rounded-pill" id="banner-role">Kierowca</span>
+                            <div id="banner-rank-box" class="mt-3 d-none" style="max-width: 440px;">
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                    <span id="banner-rank"></span>
+                                    <span class="small opacity-75" id="banner-rank-km"></span>
+                                </div>
+                                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.25);"><div id="banner-rank-bar" class="progress-bar" style="background: #fff; width: 0%;"></div></div>
+                                <div class="small opacity-75 mt-1" id="banner-rank-next"></div>
+                            </div>
                         </div>
 
                         <div class="row g-3 mb-4">
@@ -804,10 +828,6 @@
                                             <label class="form-label text-info fw-semibold"><i class="fa-solid fa-file-invoice me-1"></i> Zdjęcie / Skan CMR</label>
                                             <input type="file" id="report_cmr" class="form-control bg-dark text-white border-secondary" accept="image/*">
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label text-info fw-semibold"><i class="fa-solid fa-image me-1"></i> Zdjęcie Podsumowania Trasy</label>
-                                            <input type="file" id="report_summary" class="form-control bg-dark text-white border-secondary" accept="image/*">
-                                        </div>
 
                                         <div class="col-md-6 d-flex align-items-end">
                                             <button type="submit" class="btn btn-success fw-bold w-100">Zatwierdź i wyślij raport trasy</button>
@@ -999,6 +1019,7 @@
                                             <th data-i18n="driver">Kierowca</th>
                                             <th>E-mail</th>
                                             <th data-i18n="role">Rola</th>
+                                            <th>Ranga</th>
                                             <th>Status</th>
                                             <th data-i18n="actions">Akcje</th>
                                         </tr>
@@ -1006,6 +1027,19 @@
                                     <tbody id="management-users-list"></tbody>
                                 </table>
                             </div>
+                        </div>
+
+                        <div class="bg-card-bms p-4 mt-4">
+                            <h5 class="fw-bold mb-1 text-warning"><i class="fa-solid fa-file-import me-2"></i>Import historii tras (np. z Trucksbook)</h5>
+                            <p class="text-white-50 small mb-2">Wklej po jednej trasie w wierszu (możesz skopiować z Excela lub Arkuszy Google). Kolumny w tej kolejności, oddzielone średnikiem lub tabulatorem:</p>
+                            <p class="mb-2"><code>kierowca ; data ; skąd ; dokąd ; ładunek ; km ; przychód</code></p>
+                            <p class="text-white-50 small">Przykład: <code>WladekKiero;15.09.2026;Warszawa;Berlin;Mąka;1120;5400</code>. Nazwa kierowcy musi być taka jak jego login na stronie. Pierwszy wiersz z nagłówkiem jest pomijany. Trasy zapisują się jako zatwierdzone, z datą z wiersza i bez plików. Powtórki (ten sam kierowca, dzień, trasa i dystans) są pomijane, więc można bezpiecznie wkleić listę drugi raz.</p>
+                            <textarea id="import-text" rows="8" class="form-control bg-dark text-white border-secondary font-monospace mb-3" placeholder="kierowca;data;skąd;dokąd;ładunek;km;przychód"></textarea>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-warning fw-bold" onclick="importJobs(true)"><i class="fa-solid fa-magnifying-glass me-1"></i> Sprawdź (bez zapisu)</button>
+                                <button class="btn btn-warning fw-bold" onclick="importJobs(false)"><i class="fa-solid fa-file-import me-1"></i> Importuj</button>
+                            </div>
+                            <div id="import-result" class="mt-3 small"></div>
                         </div>
                     </div>
 
@@ -1550,6 +1584,7 @@
         }
 
         async function loadCompanyStats() {
+            loadMyRank();
             const res = await fetch('/api/company-stats');
             if (res.ok) {
                 const data = await res.json();
@@ -1571,7 +1606,7 @@
                 (data.driversRanking || []).forEach((d, idx) => {
                     rankContainer.innerHTML += `
                         <div class="pill-row">
-                            <div class="fw-bold text-white">${idx + 1}. ${d.username}</div>
+                            <div class="fw-bold text-white">${idx + 1}. ${escapeHtml(d.username)} ${d.rank ? rankBadgeHtml(d.rank) : ''}</div>
                             <div class="text-light">${d.deliveries} dostaw</div>
                             <div class="fw-bold text-white">${d.km} km</div>
                         </div>
@@ -1586,6 +1621,7 @@
                 const res = await fetch('/api/jobs');
                 if (!res.ok) return;
                 const jobs = await res.json();
+                cacheJobs(jobs);
                 const myJobs = jobs.filter(j => j.username === currentUsername);
                 const container = document.getElementById('my-jobs-container');
                 
@@ -1600,6 +1636,7 @@
                     if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
                     if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
                     if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
+                    if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
@@ -1631,6 +1668,7 @@
                 const res = await fetch('/api/jobs');
                 if (!res.ok) return;
                 const jobs = await res.json();
+                cacheJobs(jobs);
                 const container = document.getElementById('all-jobs-container');
 
                 if (!container) return;
@@ -1644,6 +1682,7 @@
                     if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
                     if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
                     if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
+                    if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
                     
                     let adminActionsHtml = '';
                     if (currentUserRole === 'admin') {
@@ -1852,9 +1891,7 @@
 
             try {
                 const cmrFile = document.getElementById('report_cmr').files[0];
-                const summaryFile = document.getElementById('report_summary').files[0];
                 if (cmrFile) { const f = await compressImage(cmrFile); formData.append('cmr_file', f, f.name); }
-                if (summaryFile) { const f = await compressImage(summaryFile); formData.append('summary_photo', f, f.name); }
 
                 const res = await fetch(`/api/dispatches/${dispatchId}/complete`, { method: 'POST', body: formData });
 
@@ -2171,15 +2208,16 @@
             try {
                 const res = await fetch('/api/users');
                 if (!res.ok) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-3">Brak uprawnień lub błąd serwera.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-3">Brak uprawnień lub błąd serwera.</td></tr>';
                     return;
                 }
                 mgmtUsers = await res.json();
+                await ensureRanks();
                 allUsersList = mgmtUsers;
                 populateDispatcherDropdowns();
 
                 if (mgmtUsers.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-white-50 text-center py-3">Brak użytkowników.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-white-50 text-center py-3">Brak użytkowników.</td></tr>';
                     return;
                 }
 
@@ -2209,13 +2247,14 @@
                             <td class="fw-bold">${escapeHtml(u.username)} ${isMe ? '<span class="text-info small">(Ty)</span>' : ''}</td>
                             <td class="text-white-50">${escapeHtml(u.email || '-')}</td>
                             <td>${roleBadge}</td>
+                            <td>${rankSelectHtml(u)}</td>
                             <td>${statusBadge}</td>
                             <td>${actions}</td>
                         </tr>`;
                 }).join('');
             } catch (err) {
                 console.error('Błąd ładowania użytkowników:', err);
-                tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-3">Błąd połączenia z serwerem.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-3">Błąd połączenia z serwerem.</td></tr>';
             }
         }
 
@@ -2452,7 +2491,119 @@ function copyClientToken() {
     navigator.clipboard ? navigator.clipboard.writeText(el.value) : document.execCommand('copy');
 }
 
-/* ===== Podgląd trasy (SVG, bez zewnętrznej mapy) ===== */
+/* ===== Rangi ===== */
+let ranksList = [];
+async function ensureRanks() {
+    if (ranksList.length) return;
+    try { const r = await fetch('/api/ranks'); if (r.ok) ranksList = (await r.json()).ranks || []; } catch (e) {}
+}
+function rankBadgeHtml(rank) {
+    if (!rank) return '';
+    return `<span class="rank-badge" style="--rc:${escapeHtml(rank.color)}"><i class="fa-solid ${escapeHtml(rank.icon)}"></i> ${escapeHtml(rank.name)}</span>`;
+}
+async function loadMyRank() {
+    try {
+        const r = await fetch('/api/my-rank');
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('banner-rank').innerHTML = rankBadgeHtml(d);
+        document.getElementById('banner-rank-km').textContent = d.km.toLocaleString('pl-PL') + ' km zatwierdzonych' + (d.manual ? ' (ranga nadana przez Szefa)' : '');
+        let pct = 100, nextTxt = 'Najwyższa ranga automatyczna osiągnięta';
+        if (d.next) {
+            pct = Math.max(0, Math.min(100, Math.round((d.km - d.current_min) / (d.next.minKm - d.current_min) * 100)));
+            nextTxt = `Do rangi "${d.next.name}": ${(d.next.minKm - d.km).toLocaleString('pl-PL')} km`;
+        }
+        document.getElementById('banner-rank-bar').style.width = pct + '%';
+        document.getElementById('banner-rank-next').textContent = nextTxt;
+        document.getElementById('banner-rank-box').classList.remove('d-none');
+    } catch (e) {}
+}
+function rankSelectHtml(u) {
+    if (u.status !== 'approved' || !ranksList.length) return '<span class="text-white-50">-</span>';
+    const manual = u.rank && u.rank.manual;
+    const opts = ranksList.map((r, i) =>
+        `<option value="${i}" ${manual && u.rank.index === i ? 'selected' : ''}>${escapeHtml(r.name)}${r.manual ? ' (ręczna)' : ''}</option>`).join('');
+    return `<select class="form-select form-select-sm bg-dark text-white border-secondary" style="min-width:200px" onchange="mgmtSetRank(${u.id}, this.value)">
+        <option value="auto" ${manual ? '' : 'selected'}>Auto: ${escapeHtml(u.rank ? u.rank.name : '-')}</option>${opts}</select>`;
+}
+async function mgmtSetRank(id, value) {
+    const r = await fetch(`/api/users/${id}/rank`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rank: value }) });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.error || 'Nie udało się zmienić rangi.'); }
+    loadManagementUsers();
+}
+
+/* ===== Import historii tras ===== */
+async function importJobs(dryRun) {
+    const box = document.getElementById('import-result');
+    const lines = document.getElementById('import-text').value.split(/\r?\n/);
+    const rows = [];
+    lines.forEach((raw, i) => {
+        if (!raw.trim()) return;
+        const sep = raw.includes('\t') ? '\t' : ';';
+        const c = raw.split(sep).map(x => x.trim());
+        if (i === 0 && /kierowca|driver|user/i.test(c[0]) && isNaN(parseFloat(c[5]))) return; // nagłówek
+        const num = v => parseFloat(String(v || '').replace(/[^\d.,-]/g, '').replace(',', '.'));
+        rows.push({ line: i + 1, username: c[0], date: c[1], start_city: c[2], end_city: c[3], cargo: c[4], distance: num(c[5]), income: num(c[6]) || 0 });
+    });
+    if (!rows.length) { box.innerHTML = '<span class="text-warning">Wklej najpierw wiersze z trasami.</span>'; return; }
+    if (!dryRun && !confirm(`Zaimportować ${rows.length} wierszy jako zatwierdzone trasy?`)) return;
+    box.innerHTML = '<span class="text-white-50">Przetwarzanie...</span>';
+    try {
+        const r = await fetch('/api/admin/import-jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows, dry_run: dryRun }) });
+        const d = await r.json();
+        if (!r.ok) { box.innerHTML = `<span class="text-danger">${escapeHtml(d.error || 'Błąd importu')}</span>`; return; }
+        let html = `<div class="${d.errors.length ? 'text-warning' : 'text-success'} fw-bold">${dryRun ? 'Sprawdzenie' : 'Import'}: ${d.imported} ${dryRun ? 'do dodania' : 'dodanych'}, ${d.skipped} pominiętych (powtórki), ${d.errors.length} błędów.</div>`;
+        if (d.errors.length) html += '<ul class="mt-2 mb-0 text-warning">' + d.errors.slice(0, 50).map(e => `<li>${escapeHtml(e)}</li>`).join('') + '</ul>';
+        if (!dryRun && d.imported) { html += '<div class="text-white-50 mt-1">Statystyki i rangi zaktualizują się po odświeżeniu strony.</div>'; }
+        box.innerHTML = html;
+    } catch (e) { box.innerHTML = '<span class="text-danger">Błąd połączenia z serwerem.</span>'; }
+}
+
+/* ===== Wirtualny CMR (generowany automatycznie, zamiast skanu) ===== */
+const jobsCache = {};
+function cacheJobs(list) { (list || []).forEach(j => { jobsCache[j.id] = j; }); }
+function openVirtualCmr(jobId) {
+    const j = jobsCache[jobId];
+    if (!j) return alert('Nie znaleziono danych trasy. Odśwież stronę.');
+    const e = escapeHtml;
+    const num = 'MZ/' + (new Date().getFullYear()) + '/' + String(j.id).padStart(5, '0');
+    const box = (n, title, body, extra) => `<div class="b ${extra || ''}"><div class="n">${n}</div><div class="t">${title}</div><div class="v">${body}</div></div>`;
+    const html = `<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><title>CMR ${num}</title>
+<style>
+ body{font-family:Arial,Helvetica,sans-serif;margin:24px;color:#111}
+ h1{font-size:18px;margin:0 0 4px} .sub{font-size:12px;color:#555;margin-bottom:12px}
+ .grid{display:grid;grid-template-columns:1fr 1fr;border:2px solid #111}
+ .b{border:1px solid #111;padding:6px 8px;min-height:62px;position:relative}
+ .b.w{grid-column:1/3} .n{position:absolute;top:4px;right:6px;font-weight:bold;font-size:12px}
+ .t{font-size:10px;text-transform:uppercase;color:#444;margin-bottom:4px} .v{font-size:14px;font-weight:bold}
+ .note{font-size:10px;color:#666;margin-top:10px} .sig{min-height:80px}
+ @media print{body{margin:10mm}}
+</style></head><body>
+<h1>LIST PRZEWOZOWY CMR / CMR CONSIGNMENT NOTE</h1>
+<div class="sub">Nr ${num} &middot; Mazren Spedition Sp. z o.o.</div>
+<div class="grid">
+ ${box(1, 'Nadawca (nazwa, miejscowość)', e(j.start_city))}
+ ${box(16, 'Przewoźnik', 'Mazren Spedition Sp. z o.o.<br><span style="font-weight:normal;font-size:12px">Kierowca: ' + e(j.username) + '</span>')}
+ ${box(2, 'Odbiorca (nazwa, miejscowość)', e(j.end_city))}
+ ${box(4, 'Miejsce i data załadunku', e(j.start_city) + '<br><span style="font-weight:normal;font-size:12px">' + e(j.formatted_date || '') + '</span>')}
+ ${box(3, 'Miejsce przeznaczenia (rozładunek)', e(j.end_city))}
+ ${box(13, 'Przebieg trasy', e(String(j.distance)) + ' km')}
+ ${box('6-12', 'Oznaczenie i rodzaj towaru', e(j.cargo || 'Standard'), 'w')}
+ ${box(17, 'Wartość przewozu (fracht)', e(String(j.income || 0)) + ' EUR')}
+ ${box(21, 'Sporządzono w', e(j.start_city) + ', ' + e((j.formatted_date || '').slice(0, 10)))}
+ ${box(22, 'Podpis i pieczęć nadawcy', '', 'sig')}
+ ${box(23, 'Podpis i pieczęć przewoźnika', '', 'sig')}
+ ${box(24, 'Towar otrzymano (odbiorca)', '', 'sig w')}
+</div>
+<div class="note">Dokument wygenerowany automatycznie na potrzeby gry Euro Truck Simulator 2. Nie jest dokumentem prawnym.</div>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (!w) return alert('Przeglądarka zablokowała nowe okno. Zezwól na wyskakujące okna dla tej strony.');
+    w.document.write(html); w.document.close();
+    setTimeout(() => { try { w.focus(); w.print(); } catch (_) {} }, 400);
+}
+
+/* ===== Podgląd trasy v2 (SVG, kolor = prędkość, bez podkładu mapy) ===== */
 async function showRoute(jobId) {
     const body = document.getElementById('route-body');
     body.innerHTML = '<div class="text-center text-white-50 py-5">Ładowanie trasy...</div>';
@@ -2466,19 +2617,77 @@ async function showRoute(jobId) {
 
         let svg = '<div class="text-white-50 py-4 text-center">Brak zapisanych punktów trasy.</div>';
         if (pts.length >= 2) {
-            const W = 760, H = 420, PAD = 24;
+            const W = 800, H = 440, PAD = 46;
             const xs = pts.map(p => p[1]), zs = pts.map(p => p[2]);
             const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
             const sc = Math.min((W - 2 * PAD) / ((maxX - minX) || 1), (H - 2 * PAD) / ((maxZ - minZ) || 1));
-            // ETS2: x rośnie na wschód, z rośnie na południe, więc z idzie wprost na oś Y obrazu (północ u góry)
-            const px = x => PAD + (x - minX) * sc, py = z => PAD + (z - minZ) * sc;
-            const line = pts.map(p => px(p[1]).toFixed(1) + ',' + py(p[2]).toFixed(1)).join(' ');
-            const a = pts[0], b = pts[pts.length - 1];
-            svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;background:#0b0f19;border:1px solid #1e293b;border-radius:12px">
-                <polyline points="${line}" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-                <circle cx="${px(a[1])}" cy="${py(a[2])}" r="7" fill="#22c55e"/>
-                <circle cx="${px(b[1])}" cy="${py(b[2])}" r="7" fill="#ef4444"/>
-                <text x="${W - 12}" y="${H - 10}" text-anchor="end" fill="#64748b" font-size="12">N ↑</text></svg>`;
+            const offX = (W - (maxX - minX) * sc) / 2, offY = (H - (maxZ - minZ) * sc) / 2;
+            // ETS2: x rośnie na wschód, z na południe, więc z idzie wprost na oś Y obrazu (północ u góry)
+            const P = pts.map(p => ({ x: offX + (p[1] - minX) * sc, y: offY + (p[2] - minZ) * sc, v: p[3] || 0 }));
+
+            // wygładzanie (Catmull-Rom): 4 punkty pośrednie na odcinek
+            const dense = [];
+            for (let i = 0; i < P.length - 1; i++) {
+                const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
+                for (let k = 0; k < 4; k++) {
+                    const u = k / 4, u2 = u * u, u3 = u2 * u;
+                    const f = (a, b, c, e) => 0.5 * ((2 * b) + (-a + c) * u + (2 * a - 5 * b + 4 * c - e) * u2 + (-a + 3 * b - 3 * c + e) * u3);
+                    dense.push({ x: f(p0.x, p1.x, p2.x, p3.x), y: f(p0.y, p1.y, p2.y, p3.y), v: p1.v + (p2.v - p1.v) * u });
+                }
+            }
+            dense.push(P[P.length - 1]);
+
+            const COLORS = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'];
+            const bucket = v => v < 15 ? 0 : v < 40 ? 1 : v < 60 ? 2 : v < 80 ? 3 : 4;
+            const runs = []; let cur = null;
+            for (let i = 0; i < dense.length - 1; i++) {
+                const b = bucket((dense[i].v + dense[i + 1].v) / 2);
+                if (!cur || cur.b !== b) { cur = { b, pts: [dense[i]] }; runs.push(cur); }
+                cur.pts.push(dense[i + 1]);
+            }
+            const poly = r => r.pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+            const glow = dense.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+            const lines = runs.map(r => `<polyline points="${poly(r)}" fill="none" stroke="${COLORS[r.b]}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+
+            // strzałki kierunku (6 sztuk wzdłuż trasy)
+            let arrows = '';
+            for (let k = 1; k <= 6; k++) {
+                const i = Math.floor(dense.length * k / 7);
+                const a = dense[i], b = dense[Math.min(dense.length - 1, i + 3)];
+                const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+                arrows += `<path d="M-5,-4 L5,0 L-5,4 Z" fill="#e2e8f0" opacity="0.85" transform="translate(${a.x.toFixed(1)},${a.y.toFixed(1)}) rotate(${ang.toFixed(0)})"/>`;
+            }
+
+            const A = P[0], B = P[P.length - 1];
+            const label = (pt, text, color) => {
+                const right = pt.x > W / 2;
+                const tx = right ? pt.x - 14 : pt.x + 14, anchor = right ? 'end' : 'start';
+                const ty = pt.y < 40 ? pt.y + 22 : pt.y - 12;
+                return `<text x="${tx}" y="${ty}" text-anchor="${anchor}" fill="${color}" font-size="13" font-weight="700" style="paint-order:stroke;stroke:#0b0f19;stroke-width:4px">${escapeHtml(text)}</text>`;
+            };
+            svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;border:1px solid #1e293b;border-radius:14px;background:#0b0f19">
+                <defs>
+                    <pattern id="rt-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1a2333" stroke-width="1"/></pattern>
+                    <radialGradient id="rt-vig" cx="50%" cy="50%" r="75%"><stop offset="55%" stop-color="#0b0f19" stop-opacity="0"/><stop offset="100%" stop-color="#05070c" stop-opacity="0.85"/></radialGradient>
+                    <filter id="rt-blur"><feGaussianBlur stdDeviation="6"/></filter>
+                </defs>
+                <rect width="${W}" height="${H}" fill="url(#rt-grid)"/>
+                <polyline points="${glow}" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#rt-blur)"/>
+                ${lines}${arrows}
+                <circle cx="${A.x}" cy="${A.y}" r="13" fill="#22c55e" fill-opacity="0.25"/><circle cx="${A.x}" cy="${A.y}" r="7" fill="#22c55e" stroke="#0b0f19" stroke-width="2"/>
+                <circle cx="${B.x}" cy="${B.y}" r="13" fill="#ef4444" fill-opacity="0.25"/><circle cx="${B.x}" cy="${B.y}" r="7" fill="#ef4444" stroke="#0b0f19" stroke-width="2"/>
+                ${label(A, 'START: ' + t.start_city, '#86efac')}${label(B, 'META: ' + t.end_city, '#fca5a5')}
+                <rect width="${W}" height="${H}" fill="url(#rt-vig)" pointer-events="none"/>
+                <text x="${W - 14}" y="${H - 12}" text-anchor="end" fill="#64748b" font-size="12">N ↑</text>
+            </svg>
+            <div class="d-flex align-items-center flex-wrap gap-3 small text-white-50 mt-2">
+                <span>Prędkość:</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[0]}"></i> &lt;15</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[1]}"></i> 15-40</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[2]}"></i> 40-60</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[3]}"></i> 60-80</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[4]}"></i> 80+ km/h</span>
+            </div>`;
         }
         let mins = '-';
         if (pts.length >= 2) mins = Math.round((pts[pts.length - 1][0] - pts[0][0]) / 60000) + ' min';
