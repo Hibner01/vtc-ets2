@@ -18,6 +18,10 @@ const crypto = require('crypto');
 const AUTO_APPROVE = String(process.env.AUTO_APPROVE_TRIPS || '').toLowerCase() === 'true';
 const REQUIRE_DISPATCH = String(process.env.REQUIRE_DISPATCH || '').toLowerCase() === 'true';
 
+//  LENIENT_LINK=false      -> wyłącza łączenie kursu z jedynym przyjętym zleceniem, gdy trasa w grze
+//                              jest INNA niż w zleceniu (domyślnie: true, Szef widzi ostrzeżenie)
+const LENIENT_LINK = String(process.env.LENIENT_LINK || 'true').toLowerCase() !== 'false';
+
 const MAX_POINTS_PER_BATCH = 300;
 const MAX_POINTS_PER_TRIP = 20000;
 
@@ -206,7 +210,11 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 "SELECT id, start_city, end_city FROM dispatches WHERE accepted_by_id = $1 AND status = 'W trakcie' ORDER BY id",
                 [uid]
             );
-            const dispatch = dRes.rows.find(d => cityMatch(d.start_city, source) && cityMatch(d.end_city, dest)) || null;
+            let dispatch = dRes.rows.find(d => cityMatch(d.start_city, source) && cityMatch(d.end_city, dest)) || null;
+            const exact = !!dispatch;
+            // Trasa w grze inna niż w zleceniu (np. Virtual Speditor nie umie stworzyć takiej trasy z modowej mapy):
+            // jeśli kierowca ma dokładnie jedno przyjęte zlecenie, wiążemy kurs z nim i oznaczamy jako niezgodny.
+            if (!dispatch && LENIENT_LINK && dRes.rows.length === 1) dispatch = dRes.rows[0];
 
             if (!dispatch && REQUIRE_DISPATCH) {
                 await client.query('ROLLBACK');
@@ -219,7 +227,7 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 const a = act.rows[0];
                 if (cityMatch(a.start_city, source) && cityMatch(a.end_city, dest)) {
                     await client.query('COMMIT');
-                    return res.json({ success: true, trip_id: a.id, resumed: true, matched: !!a.dispatch_id });
+                    return res.json({ success: true, trip_id: a.id, resumed: true, matched: !!a.matched, linked: !!a.dispatch_id });
                 }
                 await client.query("UPDATE trips SET status = 'aborted', finished_at = NOW() WHERE id = $1", [a.id]);
             }
@@ -227,10 +235,10 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             const ins = await client.query(
                 `INSERT INTO trips (user_id, dispatch_id, start_city, end_city, cargo, matched)
                  VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                [uid, dispatch ? dispatch.id : null, source, dest, cargo, !!dispatch]
+                [uid, dispatch ? dispatch.id : null, source, dest, cargo, exact]
             );
             await client.query('COMMIT');
-            res.json({ success: true, trip_id: ins.rows[0].id, resumed: false, matched: !!dispatch });
+            res.json({ success: true, trip_id: ins.rows[0].id, resumed: false, matched: exact, linked: !!dispatch });
         } catch (e) {
             try { await client.query('ROLLBACK'); } catch (_) {}
             console.error('Błąd startu kursu:', e.message);
@@ -330,13 +338,15 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 );
                 dispatch = d.rows[0] || null;
             }
-            const matched = !!dispatch;
+            const linked = !!dispatch;                 // kurs powiązany z jakimś zleceniem
+            const matched = linked && !!trip.matched;  // ...i trasa w grze jest TA SAMA co w zleceniu
 
+            // zgodna trasa -> miasta ze zlecenia (z krajami); niezgodna -> to, co naprawdę przejechano (z telemetrii)
             const startCity = matched ? dispatch.start_city : trip.start_city;
             const endCity = matched ? dispatch.end_city : trip.end_city;
             const startCountry = matched ? dispatch.start_country : null;
             const endCountry = matched ? dispatch.end_country : null;
-            const cargo = cargoBody || trip.cargo || (matched ? dispatch.cargo : null) || 'Standard';
+            const cargo = cargoBody || trip.cargo || (linked ? dispatch.cargo : null) || 'Standard';
             const jobStatus = (matched && AUTO_APPROVE) ? 'approved' : 'pending';
 
             const job = await client.query(
@@ -352,7 +362,7 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                  WHERE id = $1`,
                 [tripId, jobId, matched, distance, income, fuel, damage, maxSpeed, cargo]
             );
-            if (matched) await client.query('DELETE FROM dispatches WHERE id = $1', [dispatch.id]);
+            if (linked) await client.query('DELETE FROM dispatches WHERE id = $1', [dispatch.id]);
             await client.query('COMMIT');
 
             // powiadomienia (poza transakcją, błędy nie psują wyniku)
@@ -360,13 +370,17 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 await addNotification(uid, 'Trasa Zatwierdzona', `Trasa ${startCity} ➔ ${endCity} została zaliczona automatycznie.`, null, 'jobs');
             } else {
                 const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
-                const note = matched
-                    ? `Kierowca @${username} zakończył trasę ${startCity} ➔ ${endCity} (dane z telemetrii). Czeka na zatwierdzenie.`
-                    : `Kierowca @${username} przejechał trasę ${startCity} ➔ ${endCity} BEZ przyjętego zlecenia (dane z telemetrii). Sprawdź i zatwierdź lub odrzuć.`;
+                let note;
+                if (matched) note = `Kierowca @${username} zakończył trasę ${startCity} ➔ ${endCity} (dane z telemetrii). Czeka na zatwierdzenie.`;
+                else if (linked) note = `Kierowca @${username} zamknął zlecenie ${dispatch.start_city} ➔ ${dispatch.end_city}, ale w grze przejechał INNĄ trasę: ${startCity} ➔ ${endCity}. Sprawdź i zatwierdź lub odrzuć.`;
+                else note = `Kierowca @${username} przejechał trasę ${startCity} ➔ ${endCity} BEZ przyjętego zlecenia (dane z telemetrii). Sprawdź i zatwierdź lub odrzuć.`;
                 for (const adm of admins.rows) await addNotification(adm.id, 'Nowy Raport Trasy', note, jobId, 'jobs');
             }
 
-            res.json({ success: true, status: 'finished', job_id: jobId, matched, job_status: jobStatus });
+            // trasa jest już zapisana z telemetrii, brakuje tylko CMR: przypominamy kierowcy
+            await addNotification(uid, 'Dodaj CMR', `Trasa ${startCity} ➔ ${endCity} została zapisana z telemetrii. Dodaj zdjęcie CMR: Pulpit → Moje trasy → Dodaj CMR.`, jobId, 'jobs');
+
+            res.json({ success: true, status: 'finished', job_id: jobId, matched, linked, job_status: jobStatus });
         } catch (e) {
             try { await client.query('ROLLBACK'); } catch (_) {}
             console.error('Błąd zamykania kursu:', e.message);
@@ -383,7 +397,7 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
         try {
             const t = await pool.query(
                 `SELECT id, start_city, end_city, cargo, distance, income, fuel_used, damage_pct, max_speed,
-                        started_at, finished_at, matched
+                        started_at, finished_at, matched, (dispatch_id IS NOT NULL) AS linked
                  FROM trips WHERE job_id = $1 ORDER BY id DESC LIMIT 1`,
                 [parseInt(req.params.jobId)]
             );
