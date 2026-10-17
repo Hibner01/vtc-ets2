@@ -1057,14 +1057,27 @@
                     </div>
 
                     <div id="tab-client" style="display:none;">
+                        <div class="bg-card-bms p-4 mb-4" style="max-width: 900px;">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h4 class="fw-bold mb-1"><i class="fa-solid fa-download me-2 text-success"></i>Pobierz aplikację kierowcy</h4>
+                                    <div class="text-white-50 small">W paczce: aplikacja Mazren, serwer telemetrii ETS2 i instrukcja. Tylko Windows.</div>
+                                </div>
+                                <div class="text-end">
+                                    <a id="client-download-btn" class="btn btn-success fw-bold px-4 disabled" href="#" download><i class="fa-solid fa-download me-1"></i> Pobierz (.zip)</a>
+                                    <div id="client-download-info" class="small text-white-50 mt-1"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="bg-card-bms p-4" style="max-width: 900px;">
                             <h4 class="fw-bold mb-2"><i class="fa-solid fa-satellite-dish me-2 text-info"></i>Aplikacja kierowcy</h4>
                             <p class="text-white-50">Aplikacja na Twoim komputerze sama odczytuje trasę z Euro Truck Simulator 2 (miasta, dystans, przychód, uszkodzenia, ślad trasy) i zamyka zlecenie na stronie. Nie musisz już wpisywać danych ręcznie.</p>
                             <ol class="text-white-50 small mb-4">
-                                <li>Zainstaluj serwer telemetrii ETS2 (instrukcja w pliku README od Szefa) i uruchom go razem z grą.</li>
+                                <li>Pobierz paczkę przyciskiem wyżej i rozpakuj ją do folderu na dysku (np. na Pulpicie, nie w „Program Files”).</li>
                                 <li>Kliknij <strong>Wygeneruj token</strong> poniżej i skopiuj go.</li>
-                                <li>Uruchom <strong>MazrenClient.exe</strong> i wklej adres strony oraz token przy pierwszym uruchomieniu.</li>
-                                <li>Przyjmij zlecenie w Dyspozytorni, weź w grze pasującą trasę i jedź. Reszta dzieje się automatycznie.</li>
+                                <li>Uruchom <strong>Uruchom-Mazren.bat</strong> (włącza serwer telemetrii i aplikację). Za pierwszym razem wklej adres strony i token w Ustawieniach aplikacji.</li>
+                                <li>Włącz ETS2, przyjmij zlecenie w Dyspozytorni i weź w grze pasującą trasę. Reszta dzieje się automatycznie.</li>
                             </ol>
                             <div id="client-token-status" class="mb-3 small"></div>
                             <div class="d-flex gap-2 flex-wrap">
@@ -2619,8 +2632,33 @@
 </div>
 
 <script>
+/* ===== Aplikacja kierowcy: pobieranie ===== */
+// Plik wgraj do folderu public/download/ w repozytorium. Gdy jest za duży do wgrania przez przeglądarkę GitHuba (limit 25 MB),
+// dodaj go jako "Release" na GitHubie i wklej tu pełny adres pliku, np.:
+// 'https://github.com/TWOJ_LOGIN/TWOJE_REPO/releases/download/v1.0/Mazren-Kierowca.zip'
+const CLIENT_DOWNLOAD_URL = '/download/Mazren-Kierowca.zip';
+async function checkClientDownload() {
+    const btn = document.getElementById('client-download-btn');
+    const info = document.getElementById('client-download-info');
+    if (!btn) return;
+    btn.href = CLIENT_DOWNLOAD_URL;
+    if (/^https?:\/\//i.test(CLIENT_DOWNLOAD_URL)) { btn.classList.remove('disabled'); info.textContent = ''; return; }
+    try {
+        const h = await fetch(CLIENT_DOWNLOAD_URL, { method: 'HEAD' });
+        if (h.ok) {
+            btn.classList.remove('disabled');
+            const len = parseInt(h.headers.get('content-length') || '0');
+            info.textContent = len ? 'Rozmiar: ' + (len / 1048576).toFixed(1) + ' MB' : '';
+        } else {
+            btn.classList.add('disabled');
+            info.textContent = 'Plik jeszcze niedostępny (Szef go nie wgrał).';
+        }
+    } catch (e) { info.textContent = ''; }
+}
+
 /* ===== Aplikacja kierowcy: token ===== */
 async function loadClientTab() {
+    checkClientDownload();
     const box = document.getElementById('client-token-status');
     document.getElementById('client-token-box').classList.add('d-none');
     try {
