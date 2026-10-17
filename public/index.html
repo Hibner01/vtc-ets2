@@ -207,6 +207,22 @@
         }
         .set-chip b { color: #fff; font-weight: 600; }
 
+        .rank-badge {
+            --rc: #94a3b8;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 11px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #fff;
+            background: rgba(11, 15, 25, 0.55);
+            border: 1px solid var(--rc);
+            white-space: nowrap;
+        }
+        .rank-badge i { color: var(--rc); }
+
         .vehicle-photo-full {
             width: 100%;
             height: auto;
@@ -374,26 +390,6 @@
         .social-btn:hover { transform: translateY(-2px); filter: brightness(1.12); color: #ffffff; }
         .social-discord { background-color: #5865F2; }
         .social-tiktok { background-color: #111111; border: 1px solid #fe2c55; }
-
-        /* --- rangi --- */
-        .rank-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 3px 10px; border-radius: 999px;
-            font-size: 0.75rem; font-weight: 700; line-height: 1.3;
-            color: #ffffff; background: rgba(0,0,0,0.38);
-            border: 1px solid var(--rc, #94a3b8);
-            white-space: nowrap; vertical-align: middle;
-        }
-        .rank-badge i { color: var(--rc, #94a3b8); font-size: 0.8em; }
-
-        /* --- zakładka Aplikacja: kroki --- */
-        .step-num {
-            flex: 0 0 34px; height: 34px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; color: #38bdf8;
-            background: rgba(56,189,248,0.12); border: 1px solid #38bdf8;
-        }
-        .step-row { display: flex; gap: 14px; align-items: flex-start; }
     </style>
 </head>
 <body>
@@ -410,9 +406,6 @@
                 </button>
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')">
                     <i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="registerBtn">Zarejestruj się</span>
-                </button>
-                <button class="btn btn-pill-dark w-100 mb-3" onclick="enterGuestMode()">
-                    <i class="fa-solid fa-eye me-2"></i> <span data-i18n="guestBtn">Wejdź jako gość</span>
                 </button>
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="exitApp()">
                     <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> <span data-i18n="exitBtn">Wyjdź</span>
@@ -496,10 +489,9 @@
                 </div>
 
                 <div class="sidebar-user">
-                    <div id="logged-as-label" class="text-secondary small fw-semibold" data-i18n="loggedInAs">ZALOGOWANY JAKO</div>
+                    <div class="text-secondary small fw-semibold" data-i18n="loggedInAs">ZALOGOWANY JAKO</div>
                     <div class="fw-bold text-white fs-6" id="user-display">WladekKiero</div>
                     <span id="admin-badge" class="badge bg-danger mt-1 d-none" data-i18n="bossRole">SZEF / WŁAŚCICIEL</span>
-                    <div id="sidebar-rank" class="mt-2"></div>
                 </div>
 
                 <nav class="nav-sidebar">
@@ -522,7 +514,7 @@
                         <i class="fa-solid fa-folder-open"></i> <span data-i18n="navDocuments">Dokumenty</span>
                     </a>
                     <a id="nav-client" class="nav-item-bms" onclick="switchTab('client')">
-                        <i class="fa-solid fa-satellite-dish"></i> <span data-i18n="navClient">Aplikacja</span>
+                        <i class="fa-solid fa-satellite-dish"></i> <span>Aplikacja</span>
                     </a>
                     <a id="nav-about" class="nav-item-bms" onclick="switchTab('about')">
                         <i class="fa-solid fa-circle-info"></i> <span data-i18n="navAbout">O nas</span>
@@ -534,7 +526,7 @@
 
                 <div class="p-3 border-top border-dark">
                     <button class="nav-item-bms text-danger w-100 border-0 bg-transparent" onclick="performLogout()">
-                        <i class="fa-solid fa-right-from-bracket"></i> <span id="logout-label" data-i18n="logout">Wyloguj się</span>
+                        <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="logout">Wyloguj się</span>
                     </button>
                 </div>
             </aside>
@@ -554,7 +546,7 @@
                     </div>
 
                     <div class="d-flex align-items-center gap-3">
-                        <div class="dropdown" id="notif-wrap">
+                        <div class="dropdown">
                             <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <i class="fa-solid fa-bell"></i>
                                 <span id="notif-count" class="badge bg-danger notif-badge d-none">0</span>
@@ -573,15 +565,19 @@
 
                 <main class="container-fluid p-4 flex-grow-1">
 
-                    <div id="guest-banner" class="alert alert-info d-none mb-4" data-i18n="guestBanner">Przeglądasz stronę jako gość. <a href='#' class='alert-link' onclick='performLogout(); return false;'>Zaloguj się</a>, aby zobaczyć pozostałe zakładki.</div>
-
                     <div id="tab-dashboard">
                         <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 20px; padding: 28px 32px;">
                             <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> <span data-i18n="welcomeBackBanner">WITAJ Z POWROTEM</span></div>
                             <h2 class="fw-bold display-6 mb-1" id="banner-username">WladekKiero</h2>
                             <span class="badge bg-white text-dark fw-bold px-3 py-2 rounded-pill" id="banner-role">Kierowca</span>
-                            <span id="banner-rank" class="ms-2"></span>
-                            <div id="banner-rank-progress" class="small mt-3" style="max-width: 420px; opacity: 0.95;"></div>
+                            <div id="banner-rank-box" class="mt-3 d-none" style="max-width: 440px;">
+                                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                    <span id="banner-rank"></span>
+                                    <span class="small opacity-75" id="banner-rank-km"></span>
+                                </div>
+                                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.25);"><div id="banner-rank-bar" class="progress-bar" style="background: #fff; width: 0%;"></div></div>
+                                <div class="small opacity-75 mt-1" id="banner-rank-next"></div>
+                            </div>
                         </div>
 
                         <div class="row g-3 mb-4">
@@ -662,7 +658,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="bg-card-bms p-4">
-                                    <div id="budget-card-label" class="text-white-50 small" data-i18n="budgetStatus">Stan Budżetu</div>
+                                    <div class="text-white-50 small" data-i18n="budgetStatus">Stan Budżetu</div>
                                     <div class="fw-bold fs-3 text-success" id="company-budget-full">0 EURO</div>
                                 </div>
                             </div>
@@ -686,6 +682,69 @@
 
                     <div id="tab-finances" style="display:none;">
                         <div class="row g-4">
+                            <div class="col-md-12" id="purchase-card" style="display:none;">
+                                <div class="bg-card-bms p-4">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                                        <h5 class="fw-bold mb-0 text-white"><i class="fa-solid fa-cart-shopping me-2 text-success"></i>Zakup pojazdu (ciężarówka / naczepa)</h5>
+                                        <div class="small text-white-50 text-end">Budżet firmy: <b class="text-white" id="purchase-budget">-</b><br>Zainwestowano w pojazdy: <b class="text-white" id="purchase-total">0 €</b></div>
+                                    </div>
+                                    <p class="text-white-50 small">Cena zostanie odjęta od budżetu firmy (jako wydatek „Zakup pojazdu”), a pojazd od razu trafi do Garażu.</p>
+                                    <form id="purchase-form" onsubmit="submitPurchase(event)">
+                                        <div class="row g-3">
+                                            <div class="col-md-3">
+                                                <label class="form-label text-white fw-semibold">Co kupujesz?</label>
+                                                <select id="buy_kind" class="form-select text-white bg-dark border-secondary" onchange="togglePurchaseType()">
+                                                    <option value="trucks">🚛 Ciężarówka</option>
+                                                    <option value="trailers">🚚 Naczepa</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label class="form-label text-white fw-semibold">Model</label>
+                                                <input type="text" id="buy_model" class="form-control text-white bg-dark border-secondary" placeholder="np. Volvo FH 500" required>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label text-white fw-semibold">Cena łączna (€)</label>
+                                                <input type="number" id="buy_price" min="1" class="form-control text-white bg-dark border-secondary" placeholder="np. 120000" required>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label text-white fw-semibold">Data zakupu</label>
+                                                <input type="date" id="buy_date" class="form-control text-white bg-dark border-secondary">
+                                            </div>
+                                            <div class="col-md-12" id="buy-plates-wrap">
+                                                <label class="form-label text-white fw-semibold">Tablice rejestracyjne <span class="text-white-50 fw-normal">(kilka sztuk: oddziel przecinkami, cena jest wtedy łączna)</span></label>
+                                                <input type="text" id="buy_plates" class="form-control text-white bg-dark border-secondary" placeholder="np. WRA 6509S">
+                                            </div>
+                                            <div class="col-md-12" id="buy-description-wrap" style="display:none;">
+                                                <label class="form-label text-white fw-semibold">Typ / opis naczepy <span class="text-white-50 fw-normal">(opcjonalnie)</span></label>
+                                                <input type="text" id="buy_description" class="form-control text-white bg-dark border-secondary" placeholder="np. Plandeka 13,6 m">
+                                            </div>
+                                        </div>
+
+                                        <div id="buy-specs" class="row g-3 mt-1">
+                                            <div class="col-12"><div class="text-white-50 small">Dane techniczne do Garażu (opcjonalnie):</div></div>
+                                            <div class="col-md-4"><input type="text" id="buy_cabin" class="form-control text-white bg-dark border-secondary" placeholder="Kabina"></div>
+                                            <div class="col-md-4"><input type="text" id="buy_chassis" class="form-control text-white bg-dark border-secondary" placeholder="Podwozie"></div>
+                                            <div class="col-md-4"><input type="text" id="buy_engine" class="form-control text-white bg-dark border-secondary" placeholder="Silnik"></div>
+                                            <div class="col-md-6"><input type="text" id="buy_gearbox" class="form-control text-white bg-dark border-secondary" placeholder="Skrzynia biegów"></div>
+                                            <div class="col-md-6"><input type="text" id="buy_interior" class="form-control text-white bg-dark border-secondary" placeholder="Wnętrze"></div>
+                                        </div>
+
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-md-6">
+                                                <label class="form-label text-white-50 small mb-1">Zdjęcie (opcjonalnie)</label>
+                                                <input type="file" id="buy_photo" class="form-control bg-dark text-white border-secondary" accept="image/*">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label text-white-50 small mb-1">Drugie zdjęcie (opcjonalnie)</label>
+                                                <input type="file" id="buy_photo_back" class="form-control bg-dark text-white border-secondary" accept="image/*">
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button type="submit" id="buy-submit-btn" class="btn btn-success fw-bold px-4"><i class="fa-solid fa-cart-shopping me-1"></i> Kup i dodaj do garażu</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4">
                                     <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>Zgłoś wydatek / koszt</h5>
@@ -741,103 +800,6 @@
                             </div>
 
                             <div class="col-md-12">
-                                 <div class="bg-card-bms p-4" id="purchases-card">
-                                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                                         <h5 class="fw-bold mb-0 text-white"><i class="fa-solid fa-truck-ramp-box me-2 text-primary"></i><span data-i18n="pur_title">Zakupy pojazdów</span></h5>
-                                         <button type="button" id="purchase-add-btn" class="btn btn-sm btn-pill-white fw-bold d-none" onclick="togglePurchaseForm(true)"><i class="fa-solid fa-plus me-1"></i><span data-i18n="pur_add">Dodaj zakup</span></button>
-                                     </div>
-
-                                     <div id="purchase-hint" class="small text-white-50 mb-3 d-none" data-i18n="pur_hint">Zakupy pojazdów dodaje Szef. Tutaj możesz je tylko przeglądać.</div>
-                                     <div id="purchase-summary" class="row g-3 mb-3"></div>
-
-                                     <div id="purchase-form-wrap" class="border border-warning rounded-3 p-3 mb-4" style="display:none;">
-                                         <form id="purchase-form" onsubmit="submitPurchase(event)" class="row g-3">
-                                             <div class="col-md-3">
-                                                 <label class="form-label text-white fw-semibold" data-i18n="pur_type">Rodzaj</label>
-                                                 <select id="pur_type" class="form-select text-white bg-dark border-secondary" onchange="onPurchaseTypeChange()">
-                                                     <option value="truck" data-i18n="pur_truck">Ciężarówka</option>
-                                                     <option value="trailer" data-i18n="pur_trailer">Naczepa</option>
-                                                 </select>
-                                             </div>
-                                             <div class="col-md-5">
-                                                 <label class="form-label text-white fw-semibold" data-i18n="pur_model">Model / nazwa</label>
-                                                 <input type="text" id="pur_model" class="form-control text-white bg-dark border-secondary" maxlength="255" required placeholder="np. SCANIA S730">
-                                             </div>
-                                             <div class="col-md-4">
-                                                 <label class="form-label text-white fw-semibold" data-i18n="pur_plate">Tablica rejestracyjna</label>
-                                                 <input type="text" id="pur_plate" class="form-control text-white bg-dark border-secondary" maxlength="50" placeholder="np. WRA 1234S">
-                                             </div>
-                                             <div class="col-md-4">
-                                                 <label class="form-label text-white fw-semibold" data-i18n="pur_price">Cena (€)</label>
-                                                 <input type="number" id="pur_price" class="form-control text-white bg-dark border-secondary" min="1" step="1" required placeholder="np. 120000">
-                                             </div>
-                                             <div class="col-md-4">
-                                                 <label class="form-label text-white fw-semibold" data-i18n="pur_date">Data zakupu</label>
-                                                 <input type="date" id="pur_date" class="form-control text-white bg-dark border-secondary" required>
-                                             </div>
-                                             <div class="col-md-4">
-                                                 <label class="form-label text-white fw-semibold" data-i18n="pur_note">Notatka (opcjonalnie)</label>
-                                                 <input type="text" id="pur_note" class="form-control text-white bg-dark border-secondary" maxlength="500">
-                                             </div>
-
-                                             <div class="col-12">
-                                                 <div class="form-check">
-                                                     <input class="form-check-input" type="checkbox" id="pur_garage" checked onchange="onPurchaseGarageToggle()">
-                                                     <label class="form-check-label text-white fw-semibold" for="pur_garage" data-i18n="pur_addGarage">Dodaj od razu do garażu</label>
-                                                 </div>
-                                             </div>
-
-                                             <div id="pur-garage-block" class="col-12">
-                                                 <div class="p-3 rounded-3 border border-secondary" style="background:#0b0f19;">
-                                                     <div class="text-white-50 small mb-3" data-i18n="pur_garageHint">Zdjęcia i dane są opcjonalne. Jeśli model jest już w garażu, nowa sztuka przejmie jego zdjęcia i dane.</div>
-                                                     <div class="row g-3">
-                                                         <div class="col-md-6"><label class="form-label text-white" data-i18n="g_photoFront">Zdjęcie (przód)</label><input type="file" id="pur_photo" class="form-control bg-dark text-white border-secondary" accept="image/*"></div>
-                                                         <div class="col-md-6"><label class="form-label text-white" data-i18n="g_photoBack">Zdjęcie (tył)</label><input type="file" id="pur_photo_back" class="form-control bg-dark text-white border-secondary" accept="image/*"></div>
-                                                         <div id="pur-truck-specs" class="col-12">
-                                                             <div class="row g-3">
-                                                                 <div class="col-md-4"><label class="form-label text-white" data-i18n="g_cabin">Kabina</label><input type="text" id="pur_cabin" class="form-control bg-dark text-white border-secondary"></div>
-                                                                 <div class="col-md-4"><label class="form-label text-white" data-i18n="g_chassis">Podwozie</label><input type="text" id="pur_chassis" class="form-control bg-dark text-white border-secondary"></div>
-                                                                 <div class="col-md-4"><label class="form-label text-white" data-i18n="g_engine">Silnik</label><input type="text" id="pur_engine" class="form-control bg-dark text-white border-secondary"></div>
-                                                                 <div class="col-md-6"><label class="form-label text-white" data-i18n="g_gearbox">Skrzynia</label><input type="text" id="pur_gearbox" class="form-control bg-dark text-white border-secondary"></div>
-                                                                 <div class="col-md-6"><label class="form-label text-white" data-i18n="g_interior">Wnętrze</label><input type="text" id="pur_interior" class="form-control bg-dark text-white border-secondary"></div>
-                                                             </div>
-                                                         </div>
-                                                         <div id="pur-trailer-specs" class="col-12" style="display:none;">
-                                                             <label class="form-label text-white" data-i18n="g_description">Opis / typ naczepy</label>
-                                                             <input type="text" id="pur_description" class="form-control bg-dark text-white border-secondary">
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                             </div>
-
-                                             <div class="col-12 d-flex gap-2">
-                                                 <button type="submit" id="pur-submit-btn" class="btn btn-pill-white fw-bold" data-i18n="pur_save">Zapisz zakup</button>
-                                                 <button type="button" class="btn btn-pill-dark" onclick="togglePurchaseForm(false)" data-i18n="g_cancel">Anuluj</button>
-                                             </div>
-                                         </form>
-                                     </div>
-
-                                     <div class="table-responsive">
-                                         <table class="table table-dark table-hover align-middle mb-0">
-                                             <thead>
-                                                 <tr>
-                                                     <th data-i18n="pur_colDate">Data</th>
-                                                     <th data-i18n="pur_colType">Rodzaj</th>
-                                                     <th data-i18n="pur_colModel">Model</th>
-                                                     <th data-i18n="pur_colPlate">Tablica</th>
-                                                     <th data-i18n="pur_colPrice">Cena</th>
-                                                     <th data-i18n="pur_colBy">Dodał</th>
-                                                     <th data-i18n="pur_colNote">Notatka</th>
-                                                     <th id="purchases-actions-th" class="text-end d-none"></th>
-                                                 </tr>
-                                             </thead>
-                                             <tbody id="purchases-table-body"></tbody>
-                                         </table>
-                                     </div>
-                                 </div>
-                             </div>
-
-                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4">
                                     <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-list me-2 text-primary"></i>Historia Wydatków Firmowych</h5>
                                     <div class="table-responsive">
@@ -929,6 +891,7 @@
                                             <label class="form-label text-info fw-semibold"><i class="fa-solid fa-file-invoice me-1"></i> Zdjęcie / Skan CMR</label>
                                             <input type="file" id="report_cmr" class="form-control bg-dark text-white border-secondary" accept="image/*">
                                         </div>
+
                                         <div class="col-md-6 d-flex align-items-end">
                                             <button type="submit" class="btn btn-success fw-bold w-100">Zatwierdź i wyślij raport trasy</button>
                                         </div>
@@ -1070,31 +1033,26 @@
 
                     <div id="tab-client" style="display:none;">
                         <div class="bg-card-bms p-4" style="max-width: 900px;">
-                            <h4 class="fw-bold mb-2"><i class="fa-solid fa-satellite-dish me-2 text-info"></i><span data-i18n="c_title">Aplikacja kierowcy</span></h4>
-                            <p class="text-white-50 mb-4" data-i18n="c_intro">Aplikacja na Twoim komputerze sama odczytuje trasę z Euro Truck Simulator 2 (miasta, dystans, przychód, uszkodzenia, ślad trasy) i zapisuje ją na stronie. Nie musisz już wpisywać danych ręcznie. Jedyne, co dodajesz sam, to zdjęcie CMR.</p>
-
-                            <div class="d-flex flex-column gap-3 mb-4">
-                                <div class="step-row"><div class="step-num">1</div><div class="text-white-50 pt-1" data-i18n="c_step1">Zainstaluj <strong>serwer telemetrii ETS2</strong> (instrukcja od Szefa) i uruchamiaj go razem z grą.</div></div>
-                                <div class="step-row"><div class="step-num">2</div><div class="text-white-50 pt-1" data-i18n="c_step2">Kliknij <strong>Wygeneruj token</strong> poniżej i skopiuj go.</div></div>
-                                <div class="step-row"><div class="step-num">3</div><div class="text-white-50 pt-1" data-i18n="c_step3">Uruchom <strong>MazrenClient.exe</strong>. Otworzy się okno konsoli, w którym wklejasz adres strony i token (tylko przy pierwszym uruchomieniu). Zostaw je otwarte na czas grania.</div></div>
-                                <div class="step-row"><div class="step-num">4</div><div class="text-white-50 pt-1" data-i18n="c_step4">Przyjmij zlecenie w Dyspozytorni, weź w grze pasującą trasę i jedź. Trasa zapisze się sama.</div></div>
-                                <div class="step-row"><div class="step-num">5</div><div class="text-white-50 pt-1" data-i18n="c_step5">Po dojechaniu dodaj <strong>zdjęcie CMR</strong>: Pulpit → Moje trasy → <strong>Dodaj CMR</strong>. Zdjęcie podsumowania nie jest już potrzebne.</div></div>
-                            </div>
-
-                            <hr class="border-secondary">
-
+                            <h4 class="fw-bold mb-2"><i class="fa-solid fa-satellite-dish me-2 text-info"></i>Aplikacja kierowcy</h4>
+                            <p class="text-white-50">Aplikacja na Twoim komputerze sama odczytuje trasę z Euro Truck Simulator 2 (miasta, dystans, przychód, uszkodzenia, ślad trasy) i zamyka zlecenie na stronie. Nie musisz już wpisywać danych ręcznie.</p>
+                            <ol class="text-white-50 small mb-4">
+                                <li>Zainstaluj serwer telemetrii ETS2 (instrukcja w pliku README od Szefa) i uruchom go razem z grą.</li>
+                                <li>Kliknij <strong>Wygeneruj token</strong> poniżej i skopiuj go.</li>
+                                <li>Uruchom <strong>MazrenClient.exe</strong> i wklej adres strony oraz token przy pierwszym uruchomieniu.</li>
+                                <li>Przyjmij zlecenie w Dyspozytorni, weź w grze pasującą trasę i jedź. Reszta dzieje się automatycznie.</li>
+                            </ol>
                             <div id="client-token-status" class="mb-3 small"></div>
                             <div class="d-flex gap-2 flex-wrap">
-                                <button class="btn btn-info fw-bold" onclick="generateClientToken()"><i class="fa-solid fa-key me-1"></i> <span data-i18n="c_generate">Wygeneruj token</span></button>
-                                <button class="btn btn-outline-danger" onclick="revokeClientToken()"><i class="fa-solid fa-ban me-1"></i> <span data-i18n="c_revoke">Odwołaj token</span></button>
+                                <button class="btn btn-info fw-bold" onclick="generateClientToken()"><i class="fa-solid fa-key me-1"></i> Wygeneruj token</button>
+                                <button class="btn btn-outline-danger" onclick="revokeClientToken()"><i class="fa-solid fa-ban me-1"></i> Odwołaj token</button>
                             </div>
                             <div id="client-token-box" class="d-none mt-3 p-3 border border-warning rounded-3">
-                                <div class="text-warning fw-bold small mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> <span data-i18n="c_tokenWarn">Skopiuj token teraz. Nie pokażemy go ponownie.</span></div>
+                                <div class="text-warning fw-bold small mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> Skopiuj token teraz. Nie pokażemy go ponownie.</div>
                                 <div class="input-group">
                                     <input id="client-token-value" class="form-control bg-dark text-white border-secondary font-monospace" readonly>
-                                    <button class="btn btn-outline-warning" onclick="copyClientToken()" data-i18n="c_copy">Kopiuj</button>
+                                    <button class="btn btn-outline-warning" onclick="copyClientToken()">Kopiuj</button>
                                 </div>
-                                <div class="small text-white-50 mt-2"><span data-i18n="c_siteUrl">Adres strony do wpisania w aplikacji:</span> <code id="client-site-url"></code></div>
+                                <div class="small text-white-50 mt-2">Adres strony do wpisania w aplikacji: <code id="client-site-url"></code></div>
                             </div>
                         </div>
                     </div>
@@ -1124,14 +1082,27 @@
                                             <th data-i18n="driver">Kierowca</th>
                                             <th>E-mail</th>
                                             <th data-i18n="role">Rola</th>
+                                            <th>Ranga</th>
                                             <th>Status</th>
-                                            <th data-i18n="rank">Ranga</th>
                                             <th data-i18n="actions">Akcje</th>
                                         </tr>
                                     </thead>
                                     <tbody id="management-users-list"></tbody>
                                 </table>
                             </div>
+                        </div>
+
+                        <div class="bg-card-bms p-4 mt-4">
+                            <h5 class="fw-bold mb-1 text-warning"><i class="fa-solid fa-file-import me-2"></i>Import historii tras (np. z Trucksbook)</h5>
+                            <p class="text-white-50 small mb-2">Wklej po jednej trasie w wierszu (możesz skopiować z Excela lub Arkuszy Google). Kolumny w tej kolejności, oddzielone średnikiem lub tabulatorem:</p>
+                            <p class="mb-2"><code>kierowca ; data ; skąd ; dokąd ; ładunek ; km ; przychód</code></p>
+                            <p class="text-white-50 small">Przykład: <code>WladekKiero;15.09.2026;Warszawa;Berlin;Mąka;1120;5400</code>. Nazwa kierowcy musi być taka jak jego login na stronie. Pierwszy wiersz z nagłówkiem jest pomijany. Trasy zapisują się jako zatwierdzone, z datą z wiersza i bez plików. Powtórki (ten sam kierowca, dzień, trasa i dystans) są pomijane, więc można bezpiecznie wkleić listę drugi raz.</p>
+                            <textarea id="import-text" rows="8" class="form-control bg-dark text-white border-secondary font-monospace mb-3" placeholder="kierowca;data;skąd;dokąd;ładunek;km;przychód"></textarea>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-warning fw-bold" onclick="importJobs(true)"><i class="fa-solid fa-magnifying-glass me-1"></i> Sprawdź (bez zapisu)</button>
+                                <button class="btn btn-warning fw-bold" onclick="importJobs(false)"><i class="fa-solid fa-file-import me-1"></i> Importuj</button>
+                            </div>
+                            <div id="import-result" class="mt-3 small"></div>
                         </div>
                     </div>
 
@@ -1158,11 +1129,6 @@
         let trucksData = [];
         let trailersData = [];
         let garageType = 'trucks';
-        let isGuest = false;
-        let currentTab = null;
-        let currentUserData = null;
-        const GUEST_TABS = ['company-stats', 'garage', 'about'];
-        const GUEST_HIDDEN_NAV = ['nav-dashboard', 'nav-finances', 'nav-dispatcher', 'nav-documents', 'nav-client', 'admin-tab-btn'];
 
         // =====================================================================
         //  KRAJE dostępne w ETS2 (podstawka + DLC + ProMods + Poland Rebuilding)
@@ -1306,161 +1272,6 @@
                     </div>`;
         }
 
-        // =====================================================================
-        //  RANGI (automatyczne z kilometrów + ręczne od Szefa)
-        // =====================================================================
-        const RANK_STYLE = {
-            recruit:      { c: '#94a3b8', i: 'fa-seedling' },
-            driver:       { c: '#38bdf8', i: 'fa-truck' },
-            experienced:  { c: '#22c55e', i: 'fa-road' },
-            professional: { c: '#f59e0b', i: 'fa-medal' },
-            veteran:      { c: '#a855f7', i: 'fa-shield-halved' },
-            legend:       { c: '#ef4444', i: 'fa-crown' }
-        };
-
-        // both = pokaż rangę ręczną ORAZ automatyczną (pulpit); inaczej ręczna ma pierwszeństwo
-        function rankBadge(autoKey, custom, both) {
-            const s = RANK_STYLE[autoKey] || RANK_STYLE.recruit;
-            const auto = `<span class="rank-badge" style="--rc:${s.c}"><i class="fa-solid ${s.i}"></i> ${t('rank_' + (autoKey || 'recruit'))}</span>`;
-            if (!custom) return auto;
-            const cust = `<span class="rank-badge" style="--rc:#facc15"><i class="fa-solid fa-star"></i> ${escapeHtml(custom)}</span>`;
-            return both ? cust + ' ' + auto : cust;
-        }
-
-        function renderRankUi() {
-            const d = currentUserData;
-            if (!d || isGuest || !d.rank) return;
-
-            const banner = document.getElementById('banner-rank');
-            if (banner) banner.innerHTML = rankBadge(d.rank.key, d.customRank, true);
-            const side = document.getElementById('sidebar-rank');
-            if (side) side.innerHTML = rankBadge(d.rank.key, d.customRank, false);
-
-            const prog = document.getElementById('banner-rank-progress');
-            if (!prog) return;
-            if (d.rank.next) {
-                const span = Math.max(1, d.rank.next.min - d.rank.min);
-                const pct = Math.max(0, Math.min(100, Math.round(((d.totalKm - d.rank.min) / span) * 100)));
-                prog.innerHTML = `
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>${t('rank_next')}: <b>${t('rank_' + d.rank.next.key)}</b></span>
-                        <span>${d.rank.next.remaining.toLocaleString()} km</span>
-                    </div>
-                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.25);">
-                        <div class="progress-bar bg-white" style="width: ${pct}%"></div>
-                    </div>`;
-            } else {
-                prog.innerHTML = `<i class="fa-solid fa-crown me-1"></i> ${t('rank_max')}`;
-            }
-        }
-
-        // =====================================================================
-        //  TRYB GOŚCIA: podgląd garażu, statystyk i "O nas" bez logowania
-        // =====================================================================
-        function setI18n(id, key) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.setAttribute('data-i18n', key);
-            el.innerHTML = t(key);
-        }
-
-        function applyGuestUi(on) {
-            GUEST_HIDDEN_NAV.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                if (on) el.classList.add('d-none');
-                else if (id !== 'admin-tab-btn') el.classList.remove('d-none'); // przycisk Szefa odsłania checkUser
-            });
-            document.getElementById('notif-wrap').classList.toggle('d-none', on);
-            document.getElementById('guest-banner').classList.toggle('d-none', !on);
-            if (on) {
-                document.getElementById('admin-badge').classList.add('d-none');
-                document.getElementById('sidebar-rank').innerHTML = '';
-            }
-            setI18n('logged-as-label', on ? 'guestLabel' : 'loggedInAs');
-            setI18n('logout-label', on ? 'loginBtn' : 'logout');
-            setI18n('budget-card-label', on ? 'activeDrivers' : 'budgetStatus');
-        }
-
-        async function enterGuestMode() {
-            isGuest = true;
-            currentUserRole = 'guest';
-            currentUserId = null;
-            currentUsername = null;
-            currentUserData = null;
-            applyGuestUi(true);
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('dashboard-section').style.display = 'block';
-            document.getElementById('user-display').innerText = t('guestName');
-            await refreshVehicles();
-            switchTab('company-stats');
-        }
-
-        // =====================================================================
-        //  CMR: dodawanie do ISTNIEJĄCEJ trasy (np. zapisanej automatycznie z telemetrii)
-        // =====================================================================
-        let cmrTargetJob = null;
-
-        function cmrButtonsHtml(j) {
-            const isAdmin = currentUserRole === 'admin';
-            const isOwner = j.username === currentUsername;
-            if (!j.cmr_file) {
-                if (!isAdmin && !isOwner) return `<span class="badge bg-secondary align-self-center me-2">${t('cmr_missing')}</span>`;
-                return `<button onclick="pickCmr(${j.id})" class="btn btn-sm btn-warning fw-semibold me-2"><i class="fa-solid fa-camera me-1"></i> ${t('cmr_add')}</button>`;
-            }
-            const canReplace = isAdmin || (isOwner && j.status === 'pending');
-            return canReplace
-                ? `<button onclick="pickCmr(${j.id})" class="btn btn-sm btn-outline-secondary me-2" title="${t('cmr_replace')}"><i class="fa-solid fa-rotate"></i></button>`
-                : '';
-        }
-
-        function pickCmr(jobId) {
-            cmrTargetJob = jobId;
-            const input = document.getElementById('cmr-upload-input');
-            input.value = '';
-            input.click();
-        }
-
-        async function onCmrPicked(input) {
-            const file = input.files[0];
-            const jobId = cmrTargetJob;
-            if (!file || !jobId) return;
-            try {
-                const f = await compressImage(file);
-                const fd = new FormData();
-                fd.append('cmr_file', f, f.name);
-                const res = await fetch(`/api/jobs/${jobId}/cmr`, { method: 'POST', body: fd });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) alert(data.error || t('cmr_error'));
-                else alert(t('cmr_uploaded'));
-            } catch (e) {
-                alert(t('cmr_error'));
-            }
-            cmrTargetJob = null;
-            loadMyJobs();
-            if (currentTab === 'company-stats') loadAllJobs();
-        }
-
-        function renderPublicJobs(jobs) {
-            const c = document.getElementById('all-jobs-container');
-            if (!c) return;
-            if (!jobs.length) { c.innerHTML = '<div class="text-white-50 p-2">-</div>'; return; }
-            c.innerHTML = jobs.map(j => `
-                <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${escapeHtml(j.username)}</span>
-                            <h5 class="fw-bold text-white mb-0">${placeHtml(j.start_city, j.start_country)} <i class="fas fa-arrow-right text-info mx-2"></i> ${placeHtml(j.end_city, j.end_country)}</h5>
-                        </div>
-                        <span class="text-info fw-semibold"><i class="fas fa-road me-1"></i> ${j.distance || 0} km</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 border-top border-secondary pt-2 mt-2">
-                        <span class="badge bg-secondary">${escapeHtml(j.cargo || 'Standard')}</span>
-                        <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> ${escapeHtml(j.formatted_date || '')}</small>
-                    </div>
-                </div>`).join('');
-        }
-
         const i18n = {
             pl: {
                 loginBtn: "Zaloguj się", registerBtn: "Zarejestruj się", exitBtn: "Wyjdź", welcomeBack: "Witaj ponownie!",
@@ -1480,16 +1291,7 @@
                 totalCompanyDeliveries: "Łączna liczba dostaw", budgetStatus: "Stan Budżetu", allCompanyJobs: "Wszystkie Wykonane Trasy w Firmie",
                 driversRanking: "Ranking Kierowców", addExpense: "Zgłoś wydatek", expenseType: "Typ wydatku", submitExpense: "+ Dodaj Wydatek",
                 expensesLog: "Rejestr wydatków firmy", newDispatch: "Nowe Zlecenie w Dyspozytorni", assignDriver: "Przypisz kierowcę",
-                selectTruck: "Zestaw kierowcy", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi / Ładunek", publishDispatch: "Opublikuj zlecenie",
-                pur_title: "Zakupy pojazdów", pur_add: "Dodaj zakup", pur_type: "Rodzaj", pur_truck: "Ciężarówka", pur_trailer: "Naczepa",
-                pur_model: "Model / nazwa", pur_plate: "Tablica rejestracyjna", pur_price: "Cena (€)", pur_date: "Data zakupu", pur_note: "Notatka (opcjonalnie)",
-                pur_addGarage: "Dodaj od razu do garażu", pur_save: "Zapisz zakup", pur_none: "Brak zakupów pojazdów.",
-                pur_garageHint: "Zdjęcia i dane są opcjonalne. Jeśli model jest już w garażu, nowa sztuka przejmie jego zdjęcia i dane.",
-                pur_hint: "Zakupy pojazdów dodaje Szef. Tutaj możesz je tylko przeglądać.",
-                pur_trucks: "Ciężarówki", pur_trailers: "Naczepy", pur_totalSpent: "Łącznie wydano",
-                pur_colDate: "Data", pur_colType: "Rodzaj", pur_colModel: "Model", pur_colPlate: "Tablica", pur_colPrice: "Cena", pur_colBy: "Dodał", pur_colNote: "Notatka",
-                pur_confirmDelete: "Usunąć ten zakup? Kwota wróci do budżetu firmy. Pojazd w garażu NIE zostanie usunięty (usuwa się go w Garażu).",
-                pur_saved: "Zakup zapisany.", pur_budgetNeg: "Uwaga: budżet firmy jest teraz ujemny:", pur_expTruck: "🚚 Zakup ciężarówki", pur_expTrailer: "🚛 Zakup naczepy", availableJobs: "Twoje zlecenia w Dyspozytorni:",
+                selectTruck: "Zestaw kierowcy", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi / Ładunek", publishDispatch: "Opublikuj zlecenie", availableJobs: "Twoje zlecenia w Dyspozytorni:",
                 aboutText: "<strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!",
                 followUs: "Znajdź nas w sieci", joinDiscord: "Dołącz na Discord", followTiktok: "Obserwuj na TikTok",
                 chooseCountry: "— kraj —",
@@ -1502,28 +1304,7 @@
                 g_assignPanel: "Przypisz (Panel Szefa)", g_release: "-- Zwolnij --", g_saveBtn: "Zapisz", g_assigned: "Zaktualizowano przydział!",
                 g_addUnit: "Dodaj kolejną sztukę tego modelu", g_addUnitPh: "np. WRA 1234S", g_addBtn: "Dodaj", g_deleteModel: "Usuń cały model",
                 g_confirmDeleteModel: "Usunąć cały model wraz ze wszystkimi sztukami z garażu?", g_confirmDeleteUnit: "Usunąć tę sztukę z garażu?",
-                g_added: "Dodano do garażu!", g_viewInGarage: "Zobacz w Garażu", g_trailer: "Naczepa", notifNone: "Brak powiadomień", notifMarkAll: "Oznacz wszystkie jako przeczytane", notifMarkOne: "Oznacz jako przeczytane", notifDelete: "Usuń powiadomienie", notifToday: "Dzisiaj",
-                guestBtn: "Wejdź jako gość", guestLabel: "PRZEGLĄDASZ JAKO", guestName: "Gość", activeDrivers: "Aktywni kierowcy",
-                guestBanner: "Przeglądasz stronę jako gość. <a href='#' class='alert-link' onclick='performLogout(); return false;'>Zaloguj się</a>, aby zobaczyć pozostałe zakładki.",
-                g_taken: "zajęty", deliveriesWord: "dostaw", rank: "Ranga",
-                rank_recruit: "Rekrut", rank_driver: "Kierowca", rank_experienced: "Doświadczony", rank_professional: "Zawodowiec", rank_veteran: "Weteran", rank_legend: "Legenda",
-                rank_auto: "Automatyczna", rank_other: "Inna...", rank_next: "Następna ranga", rank_max: "Osiągnąłeś najwyższą rangę!",
-                cmr_add: "Dodaj CMR", cmr_replace: "Zmień CMR", cmr_missing: "Brak CMR", cmr_uploaded: "CMR został dodany!", cmr_error: "Nie udało się wysłać CMR.",
-                cmr_missing_n: "Masz {n} tras bez CMR. Dodaj zdjęcie CMR przy każdej z nich.",
-                navClient: "Aplikacja", c_title: "Aplikacja kierowcy",
-                c_intro: "Aplikacja na Twoim komputerze sama odczytuje trasę z Euro Truck Simulator 2 (miasta, dystans, przychód, uszkodzenia, ślad trasy) i zapisuje ją na stronie. Nie musisz już wpisywać danych ręcznie. Jedyne, co dodajesz sam, to zdjęcie CMR.",
-                c_step1: "Zainstaluj <strong>serwer telemetrii ETS2</strong> (instrukcja od Szefa) i uruchamiaj go razem z grą.",
-                c_step2: "Kliknij <strong>Wygeneruj token</strong> poniżej i skopiuj go.",
-                c_step3: "Uruchom <strong>MazrenClient.exe</strong>. Otworzy się okno konsoli, w którym wklejasz adres strony i token (tylko przy pierwszym uruchomieniu). Zostaw je otwarte na czas grania.",
-                c_step4: "Przyjmij zlecenie w Dyspozytorni, weź w grze pasującą trasę i jedź. Trasa zapisze się sama.",
-                c_step5: "Po dojechaniu dodaj <strong>zdjęcie CMR</strong>: Pulpit → Moje trasy → <strong>Dodaj CMR</strong>. Zdjęcie podsumowania nie jest już potrzebne.",
-                c_generate: "Wygeneruj token", c_revoke: "Odwołaj token", c_tokenWarn: "Skopiuj token teraz. Nie pokażemy go ponownie.", c_copy: "Kopiuj",
-                c_siteUrl: "Adres strony do wpisania w aplikacji:", c_active: "Token aktywny", c_none: "Brak tokenu", c_created: "wygenerowany", c_lastUse: "ostatnie użycie",
-                c_never: "nigdy", c_justNow: "(właśnie wygenerowany)", c_statusErr: "Nie udało się pobrać statusu tokenu.",
-                c_confirmGen: "Wygenerować nowy token? Poprzedni przestanie działać.", c_confirmRevoke: "Odwołać token? Aplikacja przestanie działać do czasu wygenerowania nowego.",
-                r_btn: "Trasa", r_loading: "Ładowanie trasy...", r_error: "Błąd wczytywania trasy.", r_noPoints: "Brak zapisanych punktów trasy.",
-                r_distance: "Dystans", r_time: "Czas jazdy", r_maxSpeed: "Prędkość maks.", r_fuel: "Paliwo", r_damage: "Uszkodzenia", r_cargo: "Ładunek", r_income: "Przychód",
-                r_order: "Zlecenie", r_matched: "zgodne", r_otherRoute: "inna trasa niż w zleceniu", r_noOrder: "bez zlecenia", r_min: "min"
+                g_added: "Dodano do garażu!", g_viewInGarage: "Zobacz w Garażu", g_trailer: "Naczepa", notifNone: "Brak powiadomień", notifMarkAll: "Oznacz wszystkie jako przeczytane", notifMarkOne: "Oznacz jako przeczytane", notifDelete: "Usuń powiadomienie", notifToday: "Dzisiaj"
             },
             en: {
                 loginBtn: "Sign In", registerBtn: "Register", exitBtn: "Exit", welcomeBack: "Welcome Back!",
@@ -1543,16 +1324,7 @@
                 totalCompanyDeliveries: "Total Deliveries", budgetStatus: "Budget Balance", allCompanyJobs: "All Completed Company Routes",
                 driversRanking: "Drivers Leaderboard", addExpense: "Report Expense", expenseType: "Expense Type", submitExpense: "+ Add Expense",
                 expensesLog: "Company Expense Log", newDispatch: "New Dispatch Order", assignDriver: "Assign Driver",
-                selectTruck: "Driver's Truck", fromCity: "From", toCity: "To", notes: "Notes / Cargo", publishDispatch: "Publish Order",
-                pur_title: "Vehicle purchases", pur_add: "Add purchase", pur_type: "Type", pur_truck: "Truck", pur_trailer: "Trailer",
-                pur_model: "Model / name", pur_plate: "License plate", pur_price: "Price (€)", pur_date: "Purchase date", pur_note: "Note (optional)",
-                pur_addGarage: "Add to the garage right away", pur_save: "Save purchase", pur_none: "No vehicle purchases yet.",
-                pur_garageHint: "Photos and details are optional. If the model is already in the garage, the new unit inherits its photos and details.",
-                pur_hint: "Vehicle purchases are added by the Boss. You can only view them here.",
-                pur_trucks: "Trucks", pur_trailers: "Trailers", pur_totalSpent: "Total spent",
-                pur_colDate: "Date", pur_colType: "Type", pur_colModel: "Model", pur_colPlate: "Plate", pur_colPrice: "Price", pur_colBy: "Added by", pur_colNote: "Note",
-                pur_confirmDelete: "Delete this purchase? The amount returns to the company budget. The vehicle in the garage will NOT be removed (remove it in the Garage).",
-                pur_saved: "Purchase saved.", pur_budgetNeg: "Warning: the company budget is now negative:", pur_expTruck: "🚚 Truck purchase", pur_expTrailer: "🚛 Trailer purchase", availableJobs: "Your Dispatch Orders:",
+                selectTruck: "Driver's Truck", fromCity: "From", toCity: "To", notes: "Notes / Cargo", publishDispatch: "Publish Order", availableJobs: "Your Dispatch Orders:",
                 aboutText: "<strong>Mazren Spedition Ltd.</strong> is a virtual trucking company operating in the world of Euro Truck Simulator 2, founded on 20 September 2026. Our goal is to build an active, close-knit community where we drive across Europe together, complete a wide variety of jobs and take part in company convoys and events. The server is intended for everyone over 31 years of age (read it backwards). We focus on realism, a great atmosphere, activity, driving etiquette and, above all, having fun together. Join Mazren Spedition and start your trucking adventure with us!",
                 followUs: "Find us online", joinDiscord: "Join our Discord", followTiktok: "Follow us on TikTok",
                 chooseCountry: "— country —",
@@ -1565,28 +1337,7 @@
                 g_assignPanel: "Assign (Boss Panel)", g_release: "-- Release --", g_saveBtn: "Save", g_assigned: "Assignment updated!",
                 g_addUnit: "Add another unit of this model", g_addUnitPh: "e.g. WRA 1234S", g_addBtn: "Add", g_deleteModel: "Delete whole model",
                 g_confirmDeleteModel: "Delete this whole model with all its units from the garage?", g_confirmDeleteUnit: "Remove this unit from the garage?",
-                g_added: "Added to the garage!", g_viewInGarage: "View in Garage", g_trailer: "Trailer", notifNone: "No notifications", notifMarkAll: "Mark all as read", notifMarkOne: "Mark as read", notifDelete: "Delete notification", notifToday: "Today",
-                guestBtn: "Continue as guest", guestLabel: "BROWSING AS", guestName: "Guest", activeDrivers: "Active drivers",
-                guestBanner: "You are browsing as a guest. <a href='#' class='alert-link' onclick='performLogout(); return false;'>Log in</a> to see the other tabs.",
-                g_taken: "taken", deliveriesWord: "deliveries", rank: "Rank",
-                rank_recruit: "Recruit", rank_driver: "Driver", rank_experienced: "Experienced", rank_professional: "Professional", rank_veteran: "Veteran", rank_legend: "Legend",
-                rank_auto: "Automatic", rank_other: "Other...", rank_next: "Next rank", rank_max: "You have reached the highest rank!",
-                cmr_add: "Add CMR", cmr_replace: "Replace CMR", cmr_missing: "No CMR", cmr_uploaded: "CMR uploaded!", cmr_error: "Could not upload the CMR.",
-                cmr_missing_n: "You have {n} routes without a CMR. Add a CMR photo to each of them.",
-                navClient: "App", c_title: "Driver app",
-                c_intro: "The app on your computer reads your route straight from Euro Truck Simulator 2 (cities, distance, income, damage, route trace) and saves it on the website. You no longer have to enter data by hand. The only thing you add yourself is the CMR photo.",
-                c_step1: "Install the <strong>ETS2 telemetry server</strong> (instructions from the Boss) and run it together with the game.",
-                c_step2: "Click <strong>Generate token</strong> below and copy it.",
-                c_step3: "Run <strong>MazrenClient.exe</strong>. A console window opens where you paste the website address and the token (first launch only). Keep it open while you play.",
-                c_step4: "Accept an order in Dispatch, pick the matching job in the game and drive. The route is saved automatically.",
-                c_step5: "After delivery, add the <strong>CMR photo</strong>: Dashboard → My routes → <strong>Add CMR</strong>. The summary photo is no longer needed.",
-                c_generate: "Generate token", c_revoke: "Revoke token", c_tokenWarn: "Copy the token now. It will not be shown again.", c_copy: "Copy",
-                c_siteUrl: "Website address to enter in the app:", c_active: "Token active", c_none: "No token", c_created: "created", c_lastUse: "last used",
-                c_never: "never", c_justNow: "(just generated)", c_statusErr: "Could not load the token status.",
-                c_confirmGen: "Generate a new token? The previous one will stop working.", c_confirmRevoke: "Revoke the token? The app will stop working until you generate a new one.",
-                r_btn: "Route", r_loading: "Loading route...", r_error: "Could not load the route.", r_noPoints: "No route points saved.",
-                r_distance: "Distance", r_time: "Driving time", r_maxSpeed: "Top speed", r_fuel: "Fuel", r_damage: "Damage", r_cargo: "Cargo", r_income: "Income",
-                r_order: "Order", r_matched: "matches", r_otherRoute: "different route than ordered", r_noOrder: "no order", r_min: "min"
+                g_added: "Added to the garage!", g_viewInGarage: "View in Garage", g_trailer: "Trailer", notifNone: "No notifications", notifMarkAll: "Mark all as read", notifMarkOne: "Mark as read", notifDelete: "Delete notification", notifToday: "Today"
             }
         };
 
@@ -1606,12 +1357,6 @@
                 closeVehicleDetail();
             }
             if (typeof updateClock === 'function') updateClock();
-            renderRankUi();
-            if (currentTab === 'company-stats') loadCompanyStatsFull();
-            else if (currentTab === 'client') loadClientTab();
-            else if (currentTab === 'dashboard' && currentUserId) loadMyJobs();
-            else if (currentTab === 'management') loadManagementUsers();
-            else if (currentTab === 'finances') renderPurchases();
         }
 
         function updateClock() {
@@ -1637,9 +1382,7 @@
         }
 
         function switchTab(tab) {
-            if (isGuest && !GUEST_TABS.includes(tab)) tab = 'company-stats';
             if (tab === 'management' && currentUserRole !== 'admin') tab = 'dashboard';
-            currentTab = tab;
             ['dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById(t === 'management' ? 'admin-tab-btn' : 'nav-' + t);
@@ -1648,7 +1391,7 @@
             });
             if (tab === 'company-stats') loadCompanyStatsFull();
             else if (tab === 'dispatcher') loadDispatches();
-            else if (tab === 'finances') { loadExpenses(); loadPurchases(); }
+            else if (tab === 'finances') loadExpenses();
             else if (tab === 'client') loadClientTab();
             else if (tab === 'garage') loadGarage();
             else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
@@ -1699,9 +1442,6 @@
                     currentUserId = data.id;
                     currentUserRole = data.role;
                     currentUsername = data.username;
-                    currentUserData = data;
-                    isGuest = false;
-                    applyGuestUi(false);
 
                     document.getElementById('auth-section').style.display = 'none';
                     document.getElementById('dashboard-section').style.display = 'block';
@@ -1713,11 +1453,11 @@
                     document.getElementById('my-monthly-km').innerText = `${data.monthlyKm || 0} km`;
                     document.getElementById('my-monthly-deliveries').innerText = data.monthlyDeliveries || 0;
 
-                    const isBossUser = data.role === 'admin';
-                    document.getElementById('admin-badge').classList.toggle('d-none', !isBossUser);
-                    document.getElementById('admin-tab-btn').classList.toggle('d-none', !isBossUser);
-                    document.getElementById('dispatcher-admin-form').style.display = isBossUser ? 'block' : 'none';
-                    renderRankUi();
+                    if (data.role === 'admin') {
+                        document.getElementById('admin-badge').classList.remove('d-none');
+                        document.getElementById('admin-tab-btn').classList.remove('d-none');
+                        document.getElementById('dispatcher-admin-form').style.display = 'block';
+                    }
 
                     renderAssignedTruckOnDashboard(data);
                     loadNotifications();
@@ -1729,14 +1469,8 @@
                     switchTab('dashboard');
                     loadCompanyStats();
                     loadMyJobs();
-                } else { onNoSession(); }
-            } catch (e) { onNoSession(); }
-        }
-
-        // brak sesji: link z #guest (lub #gosc) otwiera od razu podgląd dla gości
-        function onNoSession() {
-            if (location.hash === '#guest' || location.hash === '#gosc') enterGuestMode();
-            else showLogin();
+                } else { showLogin(); }
+            } catch (e) { showLogin(); }
         }
 
         function renderAssignedTruckOnDashboard(data) {
@@ -1846,9 +1580,6 @@
             if (notifId) fetch(`/api/notifications/${notifId}/read`, { method: 'PUT' }).then(loadNotifications).catch(() => {});
             if (tab === 'management' && currentUserRole === 'admin') return switchTab('management');
             if (tab === 'garage') return switchTab('garage');
-            if (tab === 'finances') return switchTab('finances');
-            if (tab === 'dispatcher') return switchTab('dispatcher');
-            if (tab === 'jobs') return switchTab(currentUserRole === 'admin' ? 'company-stats' : 'dashboard');
             if (jobId && jobId !== 'null') switchTab('dispatcher');
         }
 
@@ -1910,18 +1641,13 @@
         }
 
         async function performLogout() {
-            if (isGuest) {
-                isGuest = false;
-                applyGuestUi(false);
-                showLogin();
-                return;
-            }
             localStorage.removeItem('vtc_logged_user');
             await fetch('/api/logout', { method: 'POST' });
             showLogin();
         }
 
         async function loadCompanyStats() {
+            loadMyRank();
             const res = await fetch('/api/company-stats');
             if (res.ok) {
                 const data = await res.json();
@@ -1931,27 +1657,26 @@
         }
 
         async function loadCompanyStatsFull() {
-            const res = await fetch(isGuest ? '/api/public/stats' : '/api/company-stats');
-            if (!res.ok) return;
-            const data = await res.json();
+            const res = await fetch('/api/company-stats');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('company-total-km-full').textContent = (data.totalCompanyKm || 0) + ' km';
+                document.getElementById('company-total-deliveries-full').textContent = data.totalDeliveries || 0;
+                document.getElementById('company-budget-full').textContent = (data.totalCompanyBudget || 0).toLocaleString() + ' €';
 
-            document.getElementById('company-total-km-full').textContent = (data.totalCompanyKm || 0) + ' km';
-            document.getElementById('company-total-deliveries-full').textContent = data.totalDeliveries || 0;
-            // goście nie widzą finansów firmy - w tym miejscu pokazujemy liczbę aktywnych kierowców
-            document.getElementById('company-budget-full').textContent = isGuest
-                ? (data.activeDrivers || 0)
-                : (data.totalCompanyBudget || 0).toLocaleString() + ' €';
-
-            const rankContainer = document.getElementById('ranking-container');
-            rankContainer.innerHTML = (data.driversRanking || []).map((d, idx) => `
-                <div class="pill-row">
-                    <div class="fw-bold text-white">${idx + 1}. ${escapeHtml(d.username)} ${rankBadge(d.auto_rank, d.custom_rank, false)}</div>
-                    <div class="text-light">${d.deliveries} ${t('deliveriesWord')}</div>
-                    <div class="fw-bold text-white">${d.km} km</div>
-                </div>`).join('');
-
-            if (isGuest) renderPublicJobs(data.recentJobs || []);
-            else loadAllJobs();
+                const rankContainer = document.getElementById('ranking-container');
+                rankContainer.innerHTML = '';
+                (data.driversRanking || []).forEach((d, idx) => {
+                    rankContainer.innerHTML += `
+                        <div class="pill-row">
+                            <div class="fw-bold text-white">${idx + 1}. ${escapeHtml(d.username)} ${d.rank ? rankBadgeHtml(d.rank) : ''}</div>
+                            <div class="text-light">${d.deliveries} dostaw</div>
+                            <div class="fw-bold text-white">${d.km} km</div>
+                        </div>
+                    `;
+                });
+                loadAllJobs();
+            }
         }
 
         async function loadMyJobs() {
@@ -1959,17 +1684,12 @@
                 const res = await fetch('/api/jobs');
                 if (!res.ok) return;
                 const jobs = await res.json();
+                cacheJobs(jobs);
                 const myJobs = jobs.filter(j => j.username === currentUsername);
                 const container = document.getElementById('my-jobs-container');
                 
                 if (!container) return;
                 container.innerHTML = myJobs.length === 0 ? '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>' : '';
-
-                // przypomnienie tylko dla tras z telemetrii (te powstają bez CMR)
-                const missingCmr = myJobs.filter(j => j.has_trip && !j.cmr_file).length;
-                if (missingCmr > 0) {
-                    container.innerHTML = `<div class="alert alert-warning py-2 small mb-3"><i class="fa-solid fa-triangle-exclamation me-1"></i>${t('cmr_missing_n').replace('{n}', missingCmr)}</div>`;
-                }
                 
                 myJobs.forEach(j => {
                     let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
@@ -1978,8 +1698,8 @@
                     let filesHtml = '';
                     if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
                     if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
-                    if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> ${t('r_btn')}</button>`;
-                    filesHtml += cmrButtonsHtml(j);
+                    if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
+                    if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
 
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
@@ -2011,6 +1731,7 @@
                 const res = await fetch('/api/jobs');
                 if (!res.ok) return;
                 const jobs = await res.json();
+                cacheJobs(jobs);
                 const container = document.getElementById('all-jobs-container');
 
                 if (!container) return;
@@ -2023,8 +1744,8 @@
                     let filesHtml = '';
                     if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
                     if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
-                    if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> ${t('r_btn')}</button>`;
-                    filesHtml += cmrButtonsHtml(j);
+                    if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
+                    if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
                     
                     let adminActionsHtml = '';
                     if (currentUserRole === 'admin') {
@@ -2261,13 +1982,6 @@
         // =====================================================================
         async function refreshVehicles() {
             try {
-                if (isGuest) {
-                    const r = await fetch('/api/public/garage');
-                    const d = r.ok ? await r.json() : { trucks: [], trailers: [] };
-                    trucksData = d.trucks || [];
-                    trailersData = d.trailers || [];
-                    return;
-                }
                 const [a, b] = await Promise.all([fetch('/api/trucks'), fetch('/api/trailers')]);
                 trucksData = a.ok ? await a.json() : [];
                 trailersData = b.ok ? await b.json() : [];
@@ -2435,7 +2149,7 @@
                 <div class="d-flex align-items-center justify-content-between mb-3 text-white fs-6 p-2 rounded bg-dark border border-secondary">
                     <div class="d-flex align-items-center gap-3">${plateHtml(u.plates, true)}</div>
                     <div class="d-flex align-items-center gap-2">
-                        ${isFree(u) ? `<span class="text-muted">- ${t('g_free')}</span>` : (isGuest ? `<span class="text-warning fw-semibold">${t('g_taken')}</span>` : `<span class="text-warning fw-semibold">@${escapeHtml(u.driver_name)}</span>`)}
+                        ${isFree(u) ? `<span class="text-muted">- ${t('g_free')}</span>` : `<span class="text-warning fw-semibold">@${escapeHtml(u.driver_name)}</span>`}
                         ${isAdmin ? `<button class="btn btn-outline-danger btn-sm border-0" onclick="deleteVehicleUnit(${u.id}, '${enc}')"><i class="fa-solid fa-trash"></i></button>` : ''}
                     </div>
                 </div>`).join('');
@@ -2561,6 +2275,7 @@
                     return;
                 }
                 mgmtUsers = await res.json();
+                await ensureRanks();
                 allUsersList = mgmtUsers;
                 populateDispatcherDropdowns();
 
@@ -2590,25 +2305,13 @@
                         if (!isBoss) actions += `<button class="btn btn-sm btn-outline-danger" onclick="mgmtFire(${u.id})"><i class="fa-solid fa-user-slash me-1"></i>Zwolnij</button>`;
                     }
 
-                    // ranga: automatyczna (z km) albo ręczna nadana przez Szefa
-                    let rankCell = '<span class="text-white-50">-</span>';
-                    if (u.status === 'approved') {
-                        const presets = ['Dyspozytor', 'Moderator', 'Instruktor', 'Zastępca Szefa'];
-                        const cur = u.custom_rank || '';
-                        let opts = `<option value="">${t('rank_auto')}: ${t('rank_' + u.auto_rank)} (${(u.total_km || 0).toLocaleString()} km)</option>`;
-                        opts += presets.map(p => `<option value="${escapeHtml(p)}" ${cur === p ? 'selected' : ''}>${escapeHtml(p)}</option>`).join('');
-                        if (cur && !presets.includes(cur)) opts += `<option value="${escapeHtml(cur)}" selected>${escapeHtml(cur)}</option>`;
-                        opts += `<option value="__custom">✎ ${t('rank_other')}</option>`;
-                        rankCell = `<select class="form-select form-select-sm bg-dark text-white border-secondary" style="min-width: 210px;" onchange="mgmtSetRank(${u.id}, this)">${opts}</select>`;
-                    }
-
                     return `
                         <tr>
                             <td class="fw-bold">${escapeHtml(u.username)} ${isMe ? '<span class="text-info small">(Ty)</span>' : ''}</td>
                             <td class="text-white-50">${escapeHtml(u.email || '-')}</td>
                             <td>${roleBadge}</td>
+                            <td>${rankSelectHtml(u)}</td>
                             <td>${statusBadge}</td>
-                            <td>${rankCell}</td>
                             <td>${actions}</td>
                         </tr>`;
                 }).join('');
@@ -2619,17 +2322,6 @@
         }
 
         const mgmtUser = id => mgmtUsers.find(u => u.id === id) || { username: '?' };
-
-        async function mgmtSetRank(id, sel) {
-            let value = sel.value;
-            if (value === '__custom') {
-                const input = prompt('Wpisz nazwę rangi (maks. 40 znaków).\nPuste pole = ranga automatyczna (z kilometrów):');
-                if (input === null) { loadManagementUsers(); return; }
-                value = input.trim();
-            }
-            const r = await apiJson(`/api/users/${id}/rank`, 'PUT', { rank: value });
-            if (r) loadManagementUsers();
-        }
 
         async function mgmtApprove(id) {
             const r = await apiJson(`/api/users/${id}/approve`, 'PUT');
@@ -2663,156 +2355,16 @@
             else alert(`Hasło dla @${u.username} zostało zmienione.`);
         }
 
-        // =====================================================================
-        //  ZAKUPY POJAZDÓW (Finanse): Szef dodaje, kierowcy tylko przeglądają
-        // =====================================================================
-        let purchasesData = [];
-
-        async function loadPurchases() {
-            try {
-                const res = await fetch('/api/purchases');
-                if (!res.ok) return;
-                purchasesData = await res.json();
-            } catch (e) { console.error('Błąd ładowania zakupów:', e); return; }
-            renderPurchases();
-        }
-
-        function renderPurchases() {
-            const addBtn = document.getElementById('purchase-add-btn');
-            const tbody = document.getElementById('purchases-table-body');
-            if (!addBtn || !tbody) return;
-
-            const isAdmin = currentUserRole === 'admin';
-            addBtn.classList.toggle('d-none', !isAdmin);
-            document.getElementById('purchase-hint').classList.toggle('d-none', isAdmin);
-            document.getElementById('purchases-actions-th').classList.toggle('d-none', !isAdmin);
-
-            const locale = currentLang === 'en' ? 'en-GB' : 'pl-PL';
-            const eur = v => (Number(v) || 0).toLocaleString(locale) + ' €';
-            const fmtDate = v => { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}.${m[2]}.${m[1]}` : '-'; };
-            const sum = list => list.reduce((s, p) => s + (Number(p.price) || 0), 0);
-            const trucks = purchasesData.filter(p => p.vehicle_type === 'truck');
-            const trailers = purchasesData.filter(p => p.vehicle_type === 'trailer');
-
-            const box = (icon, label, value, sub) => `
-                <div class="col-12 col-md-4">
-                    <div class="p-3 rounded-3 border border-secondary" style="background:#0b0f19;">
-                        <div class="text-white-50 small"><i class="${icon} me-1"></i>${label}</div>
-                        <div class="fs-5 fw-bold text-white">${value}</div>
-                        <div class="text-white-50 small">${sub || '&nbsp;'}</div>
-                    </div>
-                </div>`;
-            document.getElementById('purchase-summary').innerHTML =
-                box('fa-solid fa-truck', t('pur_trucks'), eur(sum(trucks)), `${trucks.length} ${t('g_units')}`) +
-                box('fa-solid fa-trailer', t('pur_trailers'), eur(sum(trailers)), `${trailers.length} ${t('g_units')}`) +
-                box('fa-solid fa-coins', t('pur_totalSpent'), eur(sum(purchasesData)), `${purchasesData.length} ${t('g_units')}`);
-
-            if (purchasesData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-white-50 py-4">${t('pur_none')}</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = purchasesData.map(p => {
-                const isTruck = p.vehicle_type === 'truck';
-                return `
-                    <tr>
-                        <td>${fmtDate(p.purchase_date)}</td>
-                        <td><span class="badge ${isTruck ? 'bg-primary' : 'bg-info text-dark'}">${isTruck ? t('pur_truck') : t('pur_trailer')}</span></td>
-                        <td class="fw-bold">${escapeHtml(p.model_name)}</td>
-                        <td>${p.plates ? plateHtml(p.plates, true) : '-'}</td>
-                        <td class="fw-bold text-warning">${eur(p.price)}</td>
-                        <td>${escapeHtml(p.added_by_name || '-')}</td>
-                        <td class="text-white-50 small">${escapeHtml(p.note || '')}</td>
-                        ${isAdmin ? `<td class="text-end"><button class="btn btn-outline-danger btn-sm" onclick="deletePurchase(${p.id})"><i class="fa-solid fa-trash"></i></button></td>` : ''}
-                    </tr>`;
-            }).join('');
-        }
-
-        function togglePurchaseForm(show) {
-            const wrap = document.getElementById('purchase-form-wrap');
-            if (!wrap) return;
-            wrap.style.display = show ? 'block' : 'none';
-            if (show) {
-                const d = document.getElementById('pur_date');
-                if (!d.value) d.value = new Date().toISOString().slice(0, 10);
-                onPurchaseTypeChange();
-                onPurchaseGarageToggle();
-            } else {
-                document.getElementById('purchase-form').reset();
-            }
-        }
-
-        function onPurchaseTypeChange() {
-            const isTruck = document.getElementById('pur_type').value === 'truck';
-            document.getElementById('pur-truck-specs').style.display = isTruck ? 'block' : 'none';
-            document.getElementById('pur-trailer-specs').style.display = isTruck ? 'none' : 'block';
-        }
-
-        function onPurchaseGarageToggle() {
-            document.getElementById('pur-garage-block').style.display = document.getElementById('pur_garage').checked ? 'block' : 'none';
-        }
-
-        async function submitPurchase(e) {
-            e.preventDefault();
-            if (currentUserRole !== 'admin') return;
-
-            const btn = document.getElementById('pur-submit-btn');
-            const btnText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>';
-
-            try {
-                const type = document.getElementById('pur_type').value;
-                const addToGarage = document.getElementById('pur_garage').checked;
-
-                const fd = new FormData();
-                fd.append('vehicle_type', type);
-                fd.append('model_name', document.getElementById('pur_model').value);
-                fd.append('plates', document.getElementById('pur_plate').value);
-                fd.append('price', document.getElementById('pur_price').value);
-                fd.append('purchase_date', document.getElementById('pur_date').value);
-                fd.append('note', document.getElementById('pur_note').value);
-                fd.append('add_to_garage', addToGarage ? 'true' : 'false');
-
-                if (addToGarage) {
-                    if (type === 'truck') ['cabin', 'chassis', 'engine', 'gearbox', 'interior'].forEach(k => fd.append(k, document.getElementById('pur_' + k).value));
-                    else fd.append('description', document.getElementById('pur_description').value);
-
-                    const p1 = document.getElementById('pur_photo').files[0];
-                    const p2 = document.getElementById('pur_photo_back').files[0];
-                    if (p1) { const f = await compressImage(p1, 1400); fd.append('photo', f, f.name); }
-                    if (p2) { const f = await compressImage(p2, 1400); fd.append('photo_back', f, f.name); }
-                }
-
-                const res = await fetch('/api/purchases', { method: 'POST', body: fd });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) { alert(data.error || 'Błąd zapisu zakupu.'); return; }
-
-                togglePurchaseForm(false);
-                await loadPurchases();
-                loadExpenses();
-                if (data.added_to_garage) refreshVehicles();
-                alert(t('pur_saved') + (data.budget_after < 0 ? `\n${t('pur_budgetNeg')} ${data.budget_after} €` : ''));
-            } catch (err) {
-                console.error(err);
-                alert('Wystąpił błąd połączenia z serwerem.');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = btnText;
-            }
-        }
-
-        async function deletePurchase(id) {
-            if (!confirm(t('pur_confirmDelete'))) return;
-            const r = await apiJson(`/api/purchases/${id}`, 'DELETE');
-            if (r) { loadPurchases(); loadExpenses(); }
-        }
-
         async function loadExpenses() {
             try {
                 const res = await fetch('/api/expenses');
                 if (!res.ok) return;
                 const expenses = await res.json();
+                const pcard = document.getElementById('purchase-card');
+                if (pcard) pcard.style.display = currentUserRole === 'admin' ? 'block' : 'none';
+                const ptot = document.getElementById('purchase-total');
+                if (ptot) ptot.textContent = expenses.filter(x => x.type === 'purchase').reduce((sum, x) => sum + (x.amount || 0), 0).toLocaleString('pl-PL') + ' €';
+                if (currentUserRole === 'admin') refreshPurchaseBudget();
                 
                 const tbody = document.getElementById('expenses-table-body');
                 if (!tbody) return;
@@ -2825,8 +2377,7 @@
                     else if (e.type === 'tolls') typeName = '🛣️ Opłaty drogowe';
                     else if (e.type === 'service') typeName = '🔧 Serwis';
                     else if (e.type === 'fine') typeName = '🚨 Mandat';
-                    else if (e.type === 'purchase_truck') typeName = t('pur_expTruck');
-                    else if (e.type === 'purchase_trailer') typeName = t('pur_expTrailer');
+                    else if (e.type === 'purchase') typeName = '🚛 Zakup pojazdu';
 
                     let deleteBtn = `<button class="btn btn-outline-danger btn-sm" onclick="deleteExpense(${e.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`;
                     let formattedDate = e.expense_date ? new Date(e.expense_date).toLocaleDateString('pl-PL') : '-';
@@ -2961,8 +2512,6 @@
         checkUser();
     </script>
 
-<input type="file" id="cmr-upload-input" class="d-none" accept="image/*,application/pdf" onchange="onCmrPicked(this)">
-
 <div class="modal fade" id="routeModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark text-white border-secondary">
@@ -2980,29 +2529,28 @@
 async function loadClientTab() {
     const box = document.getElementById('client-token-status');
     document.getElementById('client-token-box').classList.add('d-none');
-    const loc = currentLang === 'en' ? 'en-GB' : 'pl-PL';
     try {
         const r = await fetch('/api/client/token/status');
         const d = await r.json();
-        const fmt = v => v ? new Date(v).toLocaleString(loc) : t('c_never');
+        const fmt = v => v ? new Date(v).toLocaleString('pl-PL') : 'nigdy';
         box.innerHTML = d.has_token
-            ? `<span class="badge bg-success me-2">${t('c_active')}</span> ${t('c_created')}: ${fmt(d.created_at)}, ${t('c_lastUse')}: ${fmt(d.last_used_at)}`
-            : `<span class="badge bg-secondary">${t('c_none')}</span>`;
-    } catch (e) { box.textContent = t('c_statusErr'); }
+            ? `<span class="badge bg-success me-2">Token aktywny</span> wygenerowany: ${fmt(d.created_at)}, ostatnie użycie: ${fmt(d.last_used_at)}`
+            : '<span class="badge bg-secondary">Brak tokenu</span>';
+    } catch (e) { box.textContent = 'Nie udało się pobrać statusu tokenu.'; }
 }
 async function generateClientToken() {
-    if (!confirm(t('c_confirmGen'))) return;
+    if (!confirm('Wygenerować nowy token? Poprzedni przestanie działać.')) return;
     const r = await fetch('/api/client/token', { method: 'POST' });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Error');
+    if (!r.ok) return alert(d.error || 'Błąd');
     document.getElementById('client-token-value').value = d.token;
     document.getElementById('client-site-url').textContent = window.location.origin;
     document.getElementById('client-token-box').classList.remove('d-none');
     const box = document.getElementById('client-token-status');
-    box.innerHTML = `<span class="badge bg-success">${t('c_active')}</span> ${t('c_justNow')}`;
+    box.innerHTML = '<span class="badge bg-success">Token aktywny</span> (właśnie wygenerowany)';
 }
 async function revokeClientToken() {
-    if (!confirm(t('c_confirmRevoke'))) return;
+    if (!confirm('Odwołać token? Aplikacja przestanie działać do czasu wygenerowania nowego.')) return;
     await fetch('/api/client/token', { method: 'DELETE' });
     loadClientTab();
 }
@@ -3012,45 +2560,289 @@ function copyClientToken() {
     navigator.clipboard ? navigator.clipboard.writeText(el.value) : document.execCommand('copy');
 }
 
-/* ===== Podgląd trasy (SVG, bez zewnętrznej mapy) ===== */
+/* ===== Zakup pojazdów (Finanse) ===== */
+async function refreshPurchaseBudget() {
+    try {
+        const r = await fetch('/api/company-stats');
+        if (!r.ok) return null;
+        const d = await r.json();
+        const el = document.getElementById('purchase-budget');
+        if (el) el.textContent = (d.totalCompanyBudget || 0).toLocaleString('pl-PL') + ' €';
+        return d.totalCompanyBudget || 0;
+    } catch (e) { return null; }
+}
+function togglePurchaseType() {
+    const trucks = document.getElementById('buy_kind').value === 'trucks';
+    document.getElementById('buy-plates-wrap').style.display = trucks ? 'block' : 'none';
+    document.getElementById('buy-specs').style.display = trucks ? 'flex' : 'none';
+    document.getElementById('buy-description-wrap').style.display = trucks ? 'none' : 'block';
+}
+async function submitPurchase(e) {
+    e.preventDefault();
+    const kind = document.getElementById('buy_kind').value;
+    const trucks = kind === 'trucks';
+    const model = document.getElementById('buy_model').value.trim();
+    const price = parseInt(document.getElementById('buy_price').value);
+    const date = document.getElementById('buy_date').value || new Date().toISOString().split('T')[0];
+    const plates = trucks ? document.getElementById('buy_plates').value.trim() : '';
+    if (!model) return alert('Podaj model.');
+    if (!(price > 0)) return alert('Podaj cenę większą od 0.');
+
+    const budget = await refreshPurchaseBudget();
+    let msg = `Kupić ${trucks ? 'ciężarówkę' : 'naczepę'} "${model}" za ${price.toLocaleString('pl-PL')} €?`;
+    if (budget !== null) msg += `\nBudżet firmy po zakupie: ${(budget - price).toLocaleString('pl-PL')} €` + (budget - price < 0 ? ' (UJEMNY!)' : '');
+    if (!confirm(msg)) return;
+
+    const btn = document.getElementById('buy-submit-btn');
+    const btnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Zapisywanie...';
+    try {
+        const fd = new FormData();
+        fd.append('model_name', model);
+        if (trucks) {
+            fd.append('plates', plates);
+            ['cabin', 'chassis', 'engine', 'gearbox', 'interior'].forEach(k => fd.append(k, document.getElementById('buy_' + k).value));
+        } else {
+            fd.append('description', document.getElementById('buy_description').value);
+        }
+        const p1 = document.getElementById('buy_photo').files[0];
+        const p2 = document.getElementById('buy_photo_back').files[0];
+        if (p1) { const f = await compressImage(p1, 1400); fd.append('photo', f, f.name); }
+        if (p2) { const f = await compressImage(p2, 1400); fd.append('photo_back', f, f.name); }
+
+        const res = await fetch('/api/' + kind, { method: 'POST', body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { alert(data.error || 'Nie udało się dodać pojazdu do garażu. Nic nie zostało zapisane.'); return; }
+
+        const count = data.added || 1;
+        const desc = `Zakup ${trucks ? 'ciężarówki' : 'naczepy'}: ${model}` + (plates ? ` (${plates.toUpperCase()})` : '') + (count > 1 ? ` x${count}` : '');
+        const er = await fetch('/api/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'purchase', amount: price, description: desc, expense_date: date }) });
+        if (!er.ok) alert('Pojazd został dodany do garażu, ale NIE udało się zapisać wydatku. Dodaj go ręcznie w historii wydatków (typ: zakup), żeby budżet się zgadzał.');
+        else alert('Zakup zapisany. Pojazd jest już w Garażu, a cena została odjęta od budżetu firmy.');
+
+        document.getElementById('purchase-form').reset();
+        togglePurchaseType();
+        if (typeof refreshVehicles === 'function') { try { await refreshVehicles(); if (typeof renderGarage === 'function') renderGarage(); } catch (_) {} }
+        loadExpenses();
+        loadCompanyStats();
+    } catch (err) {
+        console.error(err);
+        alert('Wystąpił błąd połączenia z serwerem.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = btnText;
+    }
+}
+
+/* ===== Rangi ===== */
+let ranksList = [];
+async function ensureRanks() {
+    if (ranksList.length) return;
+    try { const r = await fetch('/api/ranks'); if (r.ok) ranksList = (await r.json()).ranks || []; } catch (e) {}
+}
+function rankBadgeHtml(rank) {
+    if (!rank) return '';
+    return `<span class="rank-badge" style="--rc:${escapeHtml(rank.color)}"><i class="fa-solid ${escapeHtml(rank.icon)}"></i> ${escapeHtml(rank.name)}</span>`;
+}
+async function loadMyRank() {
+    try {
+        const r = await fetch('/api/my-rank');
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('banner-rank').innerHTML = rankBadgeHtml(d);
+        document.getElementById('banner-rank-km').textContent = d.km.toLocaleString('pl-PL') + ' km zatwierdzonych' + (d.manual ? ' (ranga nadana przez Szefa)' : '');
+        let pct = 100, nextTxt = 'Najwyższa ranga automatyczna osiągnięta';
+        if (d.next) {
+            pct = Math.max(0, Math.min(100, Math.round((d.km - d.current_min) / (d.next.minKm - d.current_min) * 100)));
+            nextTxt = `Do rangi "${d.next.name}": ${(d.next.minKm - d.km).toLocaleString('pl-PL')} km`;
+        }
+        document.getElementById('banner-rank-bar').style.width = pct + '%';
+        document.getElementById('banner-rank-next').textContent = nextTxt;
+        document.getElementById('banner-rank-box').classList.remove('d-none');
+    } catch (e) {}
+}
+function rankSelectHtml(u) {
+    if (u.status !== 'approved' || !ranksList.length) return '<span class="text-white-50">-</span>';
+    const manual = u.rank && u.rank.manual;
+    const opts = ranksList.map((r, i) =>
+        `<option value="${i}" ${manual && u.rank.index === i ? 'selected' : ''}>${escapeHtml(r.name)}${r.manual ? ' (ręczna)' : ''}</option>`).join('');
+    return `<select class="form-select form-select-sm bg-dark text-white border-secondary" style="min-width:200px" onchange="mgmtSetRank(${u.id}, this.value)">
+        <option value="auto" ${manual ? '' : 'selected'}>Auto: ${escapeHtml(u.rank ? u.rank.name : '-')}</option>${opts}</select>`;
+}
+async function mgmtSetRank(id, value) {
+    const r = await fetch(`/api/users/${id}/rank`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rank: value }) });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.error || 'Nie udało się zmienić rangi.'); }
+    loadManagementUsers();
+}
+
+/* ===== Import historii tras ===== */
+async function importJobs(dryRun) {
+    const box = document.getElementById('import-result');
+    const lines = document.getElementById('import-text').value.split(/\r?\n/);
+    const rows = [];
+    lines.forEach((raw, i) => {
+        if (!raw.trim()) return;
+        const sep = raw.includes('\t') ? '\t' : ';';
+        const c = raw.split(sep).map(x => x.trim());
+        if (i === 0 && /kierowca|driver|user/i.test(c[0]) && isNaN(parseFloat(c[5]))) return; // nagłówek
+        const num = v => parseFloat(String(v || '').replace(/[^\d.,-]/g, '').replace(',', '.'));
+        rows.push({ line: i + 1, username: c[0], date: c[1], start_city: c[2], end_city: c[3], cargo: c[4], distance: num(c[5]), income: num(c[6]) || 0 });
+    });
+    if (!rows.length) { box.innerHTML = '<span class="text-warning">Wklej najpierw wiersze z trasami.</span>'; return; }
+    if (!dryRun && !confirm(`Zaimportować ${rows.length} wierszy jako zatwierdzone trasy?`)) return;
+    box.innerHTML = '<span class="text-white-50">Przetwarzanie...</span>';
+    try {
+        const r = await fetch('/api/admin/import-jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows, dry_run: dryRun }) });
+        const d = await r.json();
+        if (!r.ok) { box.innerHTML = `<span class="text-danger">${escapeHtml(d.error || 'Błąd importu')}</span>`; return; }
+        let html = `<div class="${d.errors.length ? 'text-warning' : 'text-success'} fw-bold">${dryRun ? 'Sprawdzenie' : 'Import'}: ${d.imported} ${dryRun ? 'do dodania' : 'dodanych'}, ${d.skipped} pominiętych (powtórki), ${d.errors.length} błędów.</div>`;
+        if (d.errors.length) html += '<ul class="mt-2 mb-0 text-warning">' + d.errors.slice(0, 50).map(e => `<li>${escapeHtml(e)}</li>`).join('') + '</ul>';
+        if (!dryRun && d.imported) { html += '<div class="text-white-50 mt-1">Statystyki i rangi zaktualizują się po odświeżeniu strony.</div>'; }
+        box.innerHTML = html;
+    } catch (e) { box.innerHTML = '<span class="text-danger">Błąd połączenia z serwerem.</span>'; }
+}
+
+/* ===== Wirtualny CMR (generowany automatycznie, zamiast skanu) ===== */
+const jobsCache = {};
+function cacheJobs(list) { (list || []).forEach(j => { jobsCache[j.id] = j; }); }
+function openVirtualCmr(jobId) {
+    const j = jobsCache[jobId];
+    if (!j) return alert('Nie znaleziono danych trasy. Odśwież stronę.');
+    const e = escapeHtml;
+    const num = 'MZ/' + (new Date().getFullYear()) + '/' + String(j.id).padStart(5, '0');
+    const box = (n, title, body, extra) => `<div class="b ${extra || ''}"><div class="n">${n}</div><div class="t">${title}</div><div class="v">${body}</div></div>`;
+    const html = `<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><title>CMR ${num}</title>
+<style>
+ body{font-family:Arial,Helvetica,sans-serif;margin:24px;color:#111}
+ h1{font-size:18px;margin:0 0 4px} .sub{font-size:12px;color:#555;margin-bottom:12px}
+ .grid{display:grid;grid-template-columns:1fr 1fr;border:2px solid #111}
+ .b{border:1px solid #111;padding:6px 8px;min-height:62px;position:relative}
+ .b.w{grid-column:1/3} .n{position:absolute;top:4px;right:6px;font-weight:bold;font-size:12px}
+ .t{font-size:10px;text-transform:uppercase;color:#444;margin-bottom:4px} .v{font-size:14px;font-weight:bold}
+ .note{font-size:10px;color:#666;margin-top:10px} .sig{min-height:80px}
+ @media print{body{margin:10mm}}
+</style></head><body>
+<h1>LIST PRZEWOZOWY CMR / CMR CONSIGNMENT NOTE</h1>
+<div class="sub">Nr ${num} &middot; Mazren Spedition Sp. z o.o.</div>
+<div class="grid">
+ ${box(1, 'Nadawca (nazwa, miejscowość)', e(j.start_city))}
+ ${box(16, 'Przewoźnik', 'Mazren Spedition Sp. z o.o.<br><span style="font-weight:normal;font-size:12px">Kierowca: ' + e(j.username) + '</span>')}
+ ${box(2, 'Odbiorca (nazwa, miejscowość)', e(j.end_city))}
+ ${box(4, 'Miejsce i data załadunku', e(j.start_city) + '<br><span style="font-weight:normal;font-size:12px">' + e(j.formatted_date || '') + '</span>')}
+ ${box(3, 'Miejsce przeznaczenia (rozładunek)', e(j.end_city))}
+ ${box(13, 'Przebieg trasy', e(String(j.distance)) + ' km')}
+ ${box('6-12', 'Oznaczenie i rodzaj towaru', e(j.cargo || 'Standard'), 'w')}
+ ${box(17, 'Wartość przewozu (fracht)', e(String(j.income || 0)) + ' EUR')}
+ ${box(21, 'Sporządzono w', e(j.start_city) + ', ' + e((j.formatted_date || '').slice(0, 10)))}
+ ${box(22, 'Podpis i pieczęć nadawcy', '', 'sig')}
+ ${box(23, 'Podpis i pieczęć przewoźnika', '', 'sig')}
+ ${box(24, 'Towar otrzymano (odbiorca)', '', 'sig w')}
+</div>
+<div class="note">Dokument wygenerowany automatycznie na potrzeby gry Euro Truck Simulator 2. Nie jest dokumentem prawnym.</div>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (!w) return alert('Przeglądarka zablokowała nowe okno. Zezwól na wyskakujące okna dla tej strony.');
+    w.document.write(html); w.document.close();
+    setTimeout(() => { try { w.focus(); w.print(); } catch (_) {} }, 400);
+}
+
+/* ===== Podgląd trasy v2 (SVG, kolor = prędkość, bez podkładu mapy) ===== */
 async function showRoute(jobId) {
     const body = document.getElementById('route-body');
-    body.innerHTML = `<div class="text-center text-white-50 py-5">${t('r_loading')}</div>`;
+    body.innerHTML = '<div class="text-center text-white-50 py-5">Ładowanie trasy...</div>';
     bootstrap.Modal.getOrCreateInstance(document.getElementById('routeModal')).show();
     try {
         const r = await fetch('/api/trips/by-job/' + jobId);
         const d = await r.json();
-        if (!r.ok) { body.innerHTML = '<div class="text-danger">' + escapeHtml(d.error || 'Error') + '</div>'; return; }
-        const trip = d.trip, pts = d.points;
-        document.getElementById('route-title').innerHTML = '<i class="fa-solid fa-route me-2 text-warning"></i>' + escapeHtml(trip.start_city) + ' ➔ ' + escapeHtml(trip.end_city);
+        if (!r.ok) { body.innerHTML = '<div class="text-danger">' + escapeHtml(d.error || 'Błąd') + '</div>'; return; }
+        const t = d.trip, pts = d.points;
+        document.getElementById('route-title').innerHTML = '<i class="fa-solid fa-route me-2 text-warning"></i>' + escapeHtml(t.start_city) + ' ➔ ' + escapeHtml(t.end_city);
 
-        let svg = `<div class="text-white-50 py-4 text-center">${t('r_noPoints')}</div>`;
+        let svg = '<div class="text-white-50 py-4 text-center">Brak zapisanych punktów trasy.</div>';
         if (pts.length >= 2) {
-            const W = 760, H = 420, PAD = 24;
+            const W = 800, H = 440, PAD = 46;
             const xs = pts.map(p => p[1]), zs = pts.map(p => p[2]);
             const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
             const sc = Math.min((W - 2 * PAD) / ((maxX - minX) || 1), (H - 2 * PAD) / ((maxZ - minZ) || 1));
-            // ETS2: x rośnie na wschód, z rośnie na południe, więc z idzie wprost na oś Y obrazu (północ u góry)
-            const px = x => PAD + (x - minX) * sc, py = z => PAD + (z - minZ) * sc;
-            const line = pts.map(p => px(p[1]).toFixed(1) + ',' + py(p[2]).toFixed(1)).join(' ');
-            const a = pts[0], b = pts[pts.length - 1];
-            svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;background:#0b0f19;border:1px solid #1e293b;border-radius:12px">
-                <polyline points="${line}" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-                <circle cx="${px(a[1])}" cy="${py(a[2])}" r="7" fill="#22c55e"/>
-                <circle cx="${px(b[1])}" cy="${py(b[2])}" r="7" fill="#ef4444"/>
-                <text x="${W - 12}" y="${H - 10}" text-anchor="end" fill="#64748b" font-size="12">N ↑</text></svg>`;
+            const offX = (W - (maxX - minX) * sc) / 2, offY = (H - (maxZ - minZ) * sc) / 2;
+            // ETS2: x rośnie na wschód, z na południe, więc z idzie wprost na oś Y obrazu (północ u góry)
+            const P = pts.map(p => ({ x: offX + (p[1] - minX) * sc, y: offY + (p[2] - minZ) * sc, v: p[3] || 0 }));
+
+            // wygładzanie (Catmull-Rom): 4 punkty pośrednie na odcinek
+            const dense = [];
+            for (let i = 0; i < P.length - 1; i++) {
+                const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
+                for (let k = 0; k < 4; k++) {
+                    const u = k / 4, u2 = u * u, u3 = u2 * u;
+                    const f = (a, b, c, e) => 0.5 * ((2 * b) + (-a + c) * u + (2 * a - 5 * b + 4 * c - e) * u2 + (-a + 3 * b - 3 * c + e) * u3);
+                    dense.push({ x: f(p0.x, p1.x, p2.x, p3.x), y: f(p0.y, p1.y, p2.y, p3.y), v: p1.v + (p2.v - p1.v) * u });
+                }
+            }
+            dense.push(P[P.length - 1]);
+
+            const COLORS = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'];
+            const bucket = v => v < 15 ? 0 : v < 40 ? 1 : v < 60 ? 2 : v < 80 ? 3 : 4;
+            const runs = []; let cur = null;
+            for (let i = 0; i < dense.length - 1; i++) {
+                const b = bucket((dense[i].v + dense[i + 1].v) / 2);
+                if (!cur || cur.b !== b) { cur = { b, pts: [dense[i]] }; runs.push(cur); }
+                cur.pts.push(dense[i + 1]);
+            }
+            const poly = r => r.pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+            const glow = dense.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+            const lines = runs.map(r => `<polyline points="${poly(r)}" fill="none" stroke="${COLORS[r.b]}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+
+            // strzałki kierunku (6 sztuk wzdłuż trasy)
+            let arrows = '';
+            for (let k = 1; k <= 6; k++) {
+                const i = Math.floor(dense.length * k / 7);
+                const a = dense[i], b = dense[Math.min(dense.length - 1, i + 3)];
+                const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+                arrows += `<path d="M-5,-4 L5,0 L-5,4 Z" fill="#e2e8f0" opacity="0.85" transform="translate(${a.x.toFixed(1)},${a.y.toFixed(1)}) rotate(${ang.toFixed(0)})"/>`;
+            }
+
+            const A = P[0], B = P[P.length - 1];
+            const label = (pt, text, color) => {
+                const right = pt.x > W / 2;
+                const tx = right ? pt.x - 14 : pt.x + 14, anchor = right ? 'end' : 'start';
+                const ty = pt.y < 40 ? pt.y + 22 : pt.y - 12;
+                return `<text x="${tx}" y="${ty}" text-anchor="${anchor}" fill="${color}" font-size="13" font-weight="700" style="paint-order:stroke;stroke:#0b0f19;stroke-width:4px">${escapeHtml(text)}</text>`;
+            };
+            svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;border:1px solid #1e293b;border-radius:14px;background:#0b0f19">
+                <defs>
+                    <pattern id="rt-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1a2333" stroke-width="1"/></pattern>
+                    <radialGradient id="rt-vig" cx="50%" cy="50%" r="75%"><stop offset="55%" stop-color="#0b0f19" stop-opacity="0"/><stop offset="100%" stop-color="#05070c" stop-opacity="0.85"/></radialGradient>
+                    <filter id="rt-blur"><feGaussianBlur stdDeviation="6"/></filter>
+                </defs>
+                <rect width="${W}" height="${H}" fill="url(#rt-grid)"/>
+                <polyline points="${glow}" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#rt-blur)"/>
+                ${lines}${arrows}
+                <circle cx="${A.x}" cy="${A.y}" r="13" fill="#22c55e" fill-opacity="0.25"/><circle cx="${A.x}" cy="${A.y}" r="7" fill="#22c55e" stroke="#0b0f19" stroke-width="2"/>
+                <circle cx="${B.x}" cy="${B.y}" r="13" fill="#ef4444" fill-opacity="0.25"/><circle cx="${B.x}" cy="${B.y}" r="7" fill="#ef4444" stroke="#0b0f19" stroke-width="2"/>
+                ${label(A, 'START: ' + t.start_city, '#86efac')}${label(B, 'META: ' + t.end_city, '#fca5a5')}
+                <rect width="${W}" height="${H}" fill="url(#rt-vig)" pointer-events="none"/>
+                <text x="${W - 14}" y="${H - 12}" text-anchor="end" fill="#64748b" font-size="12">N ↑</text>
+            </svg>
+            <div class="d-flex align-items-center flex-wrap gap-3 small text-white-50 mt-2">
+                <span>Prędkość:</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[0]}"></i> &lt;15</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[1]}"></i> 15-40</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[2]}"></i> 40-60</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[3]}"></i> 60-80</span>
+                <span><i class="fa-solid fa-circle" style="color:${COLORS[4]}"></i> 80+ km/h</span>
+            </div>`;
         }
         let mins = '-';
-        if (pts.length >= 2) mins = Math.round((pts[pts.length - 1][0] - pts[0][0]) / 60000) + ' ' + t('r_min');
+        if (pts.length >= 2) mins = Math.round((pts[pts.length - 1][0] - pts[0][0]) / 60000) + ' min';
         const stat = (l, v) => `<div class="col-6 col-md-3 mb-2"><div class="text-white-50 small">${l}</div><div class="fw-bold">${v}</div></div>`;
-        const orderState = trip.matched ? t('r_matched') : (trip.linked ? `<span class="text-warning">${t('r_otherRoute')}</span>` : `<span class="text-warning">${t('r_noOrder')}</span>`);
         body.innerHTML = svg + '<div class="row mt-3">' +
-            stat(t('r_distance'), (trip.distance || 0) + ' km') + stat(t('r_time'), mins) +
-            stat(t('r_maxSpeed'), (trip.max_speed || 0) + ' km/h') + stat(t('r_fuel'), (trip.fuel_used || 0) + ' l') +
-            stat(t('r_damage'), (trip.damage_pct || 0) + ' %') + stat(t('r_cargo'), escapeHtml(trip.cargo || '-')) +
-            stat(t('r_income'), (trip.income || 0) + ' €') + stat(t('r_order'), orderState) +
+            stat('Dystans', (t.distance || 0) + ' km') + stat('Czas jazdy', mins) +
+            stat('Prędkość maks.', (t.max_speed || 0) + ' km/h') + stat('Paliwo', (t.fuel_used || 0) + ' l') +
+            stat('Uszkodzenia', (t.damage_pct || 0) + ' %') + stat('Ładunek', escapeHtml(t.cargo || '-')) +
+            stat('Przychód', (t.income || 0) + ' €') + stat('Zlecenie', t.matched ? 'zgodne' : (t.linked ? '<span class="text-warning">inna trasa niż w zleceniu</span>' : '<span class="text-warning">bez zlecenia</span>')) +
             '</div>';
-    } catch (e) { body.innerHTML = `<div class="text-danger">${t('r_error')}</div>`; }
+    } catch (e) { body.innerHTML = '<div class="text-danger">Błąd wczytywania trasy.</div>'; }
 }
 </script>
 </body>
