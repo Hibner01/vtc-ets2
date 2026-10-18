@@ -432,6 +432,9 @@
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="showAuthForm('register')">
                     <i class="fa-solid fa-user-plus me-2"></i> <span data-i18n="registerBtn">Zarejestruj się</span>
                 </button>
+                <button class="btn btn-pill-dark w-100 mb-3" onclick="enterGuestMode()">
+                    <i class="fa-solid fa-eye me-2"></i> <span>Wejdź jako gość</span>
+                </button>
                 <button class="btn btn-pill-dark w-100 mb-3" onclick="exitApp()">
                     <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> <span data-i18n="exitBtn">Wyjdź</span>
                 </button>
@@ -514,12 +517,16 @@
                 </div>
 
                 <div class="sidebar-user">
-                    <div class="text-secondary small fw-semibold" data-i18n="loggedInAs">ZALOGOWANY JAKO</div>
+                    <div class="text-secondary small fw-semibold" id="sidebar-user-label" data-i18n="loggedInAs">ZALOGOWANY JAKO</div>
                     <div class="fw-bold text-white fs-6" id="user-display">WladekKiero</div>
                     <span id="admin-badge" class="badge bg-danger mt-1 d-none" data-i18n="bossRole">SZEF / WŁAŚCICIEL</span>
+                    <button id="guest-login-btn" class="btn btn-sm btn-info fw-bold mt-2 w-100 d-none" onclick="leaveGuestMode('login')"><i class="fa-solid fa-right-to-bracket me-1"></i> Zaloguj się / Zarejestruj</button>
                 </div>
 
                 <nav class="nav-sidebar">
+                    <a id="nav-guest" class="nav-item-bms d-none" onclick="switchTab('guest')">
+                        <i class="fa-solid fa-house"></i> <span>Strona główna</span>
+                    </a>
                     <a id="nav-dashboard" class="nav-item-bms active" onclick="switchTab('dashboard')">
                         <i class="fa-solid fa-border-all"></i> <span data-i18n="navDashboard">Pulpit</span>
                     </a>
@@ -549,7 +556,7 @@
                     </a>
                 </nav>
 
-                <div class="p-3 border-top border-dark">
+                <div class="p-3 border-top border-dark" id="sidebar-logout">
                     <button class="nav-item-bms text-danger w-100 border-0 bg-transparent" onclick="performLogout()">
                         <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="logout">Wyloguj się</span>
                     </button>
@@ -571,7 +578,7 @@
                     </div>
 
                     <div class="d-flex align-items-center gap-3">
-                        <div class="dropdown">
+                        <div class="dropdown" id="notif-dropdown-wrap">
                             <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <i class="fa-solid fa-bell"></i>
                                 <span id="notif-count" class="badge bg-danger notif-badge d-none">0</span>
@@ -1056,6 +1063,40 @@
                         </div>
                     </div>
 
+                    <div id="tab-guest" style="display:none;">
+                        <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 20px; padding: 28px 32px;">
+                            <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-eye me-1"></i> Tryb gościa</div>
+                            <h2 class="fw-bold display-6 mb-2">Witaj w Mazren Spedition</h2>
+                            <p class="mb-3 opacity-75" style="max-width: 680px;">Oglądasz stronę jako gość: zobaczysz, jak działa firma, jaką mamy flotę i czego od kierowców wymagamy. Chcesz jeździć z nami? Załóż konto, a Szef je zatwierdzi.</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-light fw-bold" onclick="leaveGuestMode('register')"><i class="fa-solid fa-user-plus me-1"></i> Zarejestruj się</button>
+                                <button class="btn btn-outline-light fw-bold" onclick="leaveGuestMode('login')"><i class="fa-solid fa-right-to-bracket me-1"></i> Zaloguj się</button>
+                                <button class="btn btn-outline-light" onclick="switchTab('about')"><i class="fa-solid fa-clipboard-list me-1"></i> Wymagania</button>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4"><div class="bg-card-bms p-4"><div class="text-white-50 small">Przejechane kilometry</div><div class="fw-bold fs-3 text-white" id="guest-km">-</div></div></div>
+                            <div class="col-md-4"><div class="bg-card-bms p-4"><div class="text-white-50 small">Wykonane dostawy</div><div class="fw-bold fs-3 text-white" id="guest-deliveries">-</div></div></div>
+                            <div class="col-md-4"><div class="bg-card-bms p-4"><div class="text-white-50 small">Kierowców w firmie</div><div class="fw-bold fs-3 text-white" id="guest-drivers">-</div></div></div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-lg-5">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-trophy me-2 text-warning"></i>Najlepsi kierowcy</h5>
+                                    <div id="guest-ranking"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <div class="bg-card-bms p-4">
+                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck me-2 text-info"></i>Nasza flota</h5>
+                                    <div id="guest-fleet"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="tab-client" style="display:none;">
                         <div class="bg-card-bms p-4 mb-4" style="max-width: 900px;">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -1112,71 +1153,14 @@
                         <div class="bg-card-bms p-4 p-md-5 my-4" style="max-width: 900px; margin: 0 auto;">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
                                 <h4 class="fw-bold mb-0 text-white"><i class="fa-solid fa-clipboard-list me-2 text-info"></i>Wymagania do dołączenia</h4>
-                                <span class="badge bg-info text-dark fw-bold px-3 py-2 rounded-pill">GRAMY NA 1.60!!!</span>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-road"></i></div>
-                                        <div><div class="req-title">Wymóg kilometrów miesięcznie</div><div class="req-text">6 000 km</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-clock"></i></div>
-                                        <div><div class="req-title">Godziny w ETS2</div><div class="req-text">250 h</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-gauge-high"></i></div>
-                                        <div><div class="req-title">Jazda rzeczywista</div><div class="req-text">Nie jeździmy wyścigów, tylko realistycznie (90 - 99 km/h)</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-cake-candles"></i></div>
-                                        <div><div class="req-title">Wiek</div><div class="req-text">min. 31 lat (czyt. od tyłu)</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-toolbox"></i></div>
-                                        <div><div class="req-title">Posiadanie</div><div class="req-text">Trucky lub Virtual Speditor</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-user-tie"></i></div>
-                                        <div><div class="req-title">Status</div><div class="req-text">Bezrobotny</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-truck"></i></div>
-                                        <div><div class="req-title">Umiejętność</div><div class="req-text">Odwzorowania zestawu 1:1</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-file-zipper"></i></div>
-                                        <div><div class="req-title">Posiadanie WinRAR-a</div><div class="req-text">i umiejętność wypakowywania modów</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-camera"></i></div>
-                                        <div><div class="req-title">Umiejętność</div><div class="req-text">Wykonywanie zdjęć na średnim/wysokim poziomie</div></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="req-item">
-                                        <div class="req-icon"><i class="fa-solid fa-map"></i></div>
-                                        <div><div class="req-title">Dodatkowo</div><div class="req-text">DLC mapowe i ProMods (lub ProMods + Poland Rebuilding)</div></div>
-                                    </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span id="req-badge" class="badge bg-info text-dark fw-bold px-3 py-2 rounded-pill d-none"></span>
+                                    <button id="req-edit-btn" class="btn btn-sm btn-outline-info d-none" onclick="openRequirementsEditor()"><i class="fa-solid fa-pen me-1"></i> Edytuj</button>
                                 </div>
                             </div>
+                            <div class="row g-3" id="req-grid"><div class="text-white-50">Ładowanie...</div></div>
                         </div>
+
                     </div>
 
                     <div id="tab-management" style="display:none;">
@@ -1223,6 +1207,7 @@
     <script>
         let currentUserId = null;
         let currentUserRole = '';
+        let isGuest = false;
         let currentUsername = '';
         // =====================================================================
         //  >>> TU WKLEJ LINKI FIRMY (zmień tylko tekst w cudzysłowie) <<<
@@ -1489,8 +1474,9 @@
         }
 
         function switchTab(tab) {
+            if (isGuest && tab !== 'about') tab = 'guest';
             if (tab === 'management' && currentUserRole !== 'admin') tab = 'dashboard';
-            ['dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
+            ['guest', 'dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById(t === 'management' ? 'admin-tab-btn' : 'nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
@@ -1500,6 +1486,8 @@
             else if (tab === 'dispatcher') loadDispatches();
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'client') loadClientTab();
+            else if (tab === 'about') loadRequirements();
+            else if (tab === 'guest') loadGuestOverview();
             else if (tab === 'garage') loadGarage();
             else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
         }
@@ -2619,6 +2607,27 @@
         checkUser();
     </script>
 
+<div class="modal fade" id="reqModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="fa-solid fa-clipboard-list me-2 text-info"></i>Edytuj wymagania</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label small text-white-50">Napis na plakietce (puste = bez plakietki)</label>
+                <input id="req-edit-badge" class="form-control bg-dark text-white border-secondary mb-3" maxlength="60">
+                <div id="req-edit-list"></div>
+                <button class="btn btn-outline-info btn-sm mt-2" onclick="reqEditorAdd()"><i class="fa-solid fa-plus me-1"></i> Dodaj wymaganie</button>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button class="btn btn-info fw-bold" onclick="saveRequirements()">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="routeModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content bg-dark text-white border-secondary">
@@ -2766,6 +2775,133 @@ async function submitPurchase(e) {
         btn.innerHTML = btnText;
     }
 }
+
+/* ===== Tryb gościa ===== */
+const GUEST_HIDDEN_NAV = ['nav-dashboard', 'nav-company-stats', 'nav-finances', 'nav-dispatcher', 'nav-garage', 'nav-documents', 'nav-client'];
+function setGuestUi(on) {
+    GUEST_HIDDEN_NAV.forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('d-none', on); });
+    document.getElementById('nav-guest').classList.toggle('d-none', !on);
+    document.getElementById('sidebar-logout').classList.toggle('d-none', on);
+    document.getElementById('guest-login-btn').classList.toggle('d-none', !on);
+    document.getElementById('notif-dropdown-wrap').classList.toggle('d-none', on);
+    document.getElementById('sidebar-user-label').textContent = on ? 'TRYB GOŚCIA' : t('loggedInAs');
+    document.getElementById('user-display').innerText = on ? 'Gość' : (currentUsername || '');
+}
+function enterGuestMode() {
+    isGuest = true;
+    currentUserRole = 'guest'; currentUserId = null; currentUsername = null;
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('dashboard-section').style.display = 'block';
+    setGuestUi(true);
+    switchTab('guest');
+}
+function leaveGuestMode(target) {
+    isGuest = false;
+    currentUserRole = null; currentUserId = null; currentUsername = null;
+    setGuestUi(false);
+    showLogin();
+    if (target) showAuthForm(target);
+}
+async function loadGuestOverview() {
+    try {
+        const r = await fetch('/api/public/overview');
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('guest-km').textContent = (d.totalKm || 0).toLocaleString('pl-PL') + ' km';
+        document.getElementById('guest-deliveries').textContent = (d.totalDeliveries || 0).toLocaleString('pl-PL');
+        document.getElementById('guest-drivers').textContent = (d.drivers || 0).toLocaleString('pl-PL');
+
+        document.getElementById('guest-ranking').innerHTML = (d.ranking || []).length
+            ? d.ranking.map((x, i) => `<div class="d-flex justify-content-between align-items-center py-2 border-bottom border-dark gap-2 flex-wrap">
+                <div class="fw-semibold text-white">${i + 1}. ${escapeHtml(x.username)} ${rankBadgeHtml(x.rank)}</div>
+                <div class="text-white-50 small">${(x.km || 0).toLocaleString('pl-PL')} km</div></div>`).join('')
+            : '<div class="text-white-50 small">Ranking pojawi się, gdy kierowcy zaczną jeździć.</div>';
+
+        const card = (name, photo, line1, line2) => `<div class="col-sm-6"><div class="bg-dark border border-secondary rounded-3 p-2 h-100">
+            ${framedPhoto(photo)}
+            <div class="fw-bold text-white mt-2">${escapeHtml(name)}</div>
+            ${line1 ? `<div class="text-white-50 small">${escapeHtml(line1)}</div>` : ''}
+            ${line2 ? `<div class="text-white-50 small">${escapeHtml(line2)}</div>` : ''}</div></div>`;
+        const trucks = (d.trucks || []).map(x => card(x.model, x.photo, [x.engine, x.gearbox].filter(v => v && v !== 'Standard').join(' · '), x.count > 1 ? x.count + ' szt.' : ''));
+        const trailers = (d.trailers || []).map(x => card(x.model, x.photo, x.description, ''));
+        document.getElementById('guest-fleet').innerHTML =
+            (trucks.length ? '<div class="text-white-50 small fw-semibold text-uppercase mb-2">Ciężarówki</div><div class="row g-3 mb-4">' + trucks.join('') + '</div>' : '') +
+            (trailers.length ? '<div class="text-white-50 small fw-semibold text-uppercase mb-2">Naczepy</div><div class="row g-3">' + trailers.join('') + '</div>' : '') ||
+            '<div class="text-white-50 small">Flota jest w trakcie uzupełniania.</div>';
+    } catch (e) {}
+}
+
+/* ===== Wymagania do dołączenia (edytowalne przez Szefa) ===== */
+let reqData = { badge: '', items: [] };
+let reqEditItems = [];
+const REQ_ICONS = [
+    ['fa-road', 'Droga / kilometry'], ['fa-clock', 'Zegar / godziny'], ['fa-gauge-high', 'Prędkość'], ['fa-cake-candles', 'Wiek'],
+    ['fa-toolbox', 'Narzędzia'], ['fa-user-tie', 'Osoba / status'], ['fa-truck', 'Ciężarówka'], ['fa-file-zipper', 'Archiwum / mody'],
+    ['fa-camera', 'Aparat / zdjęcia'], ['fa-map', 'Mapa'], ['fa-star', 'Gwiazdka'], ['fa-circle-check', 'Ptaszek'],
+    ['fa-id-card', 'Dokument'], ['fa-headset', 'Słuchawki / Discord'], ['fa-language', 'Język'], ['fa-calendar-check', 'Kalendarz'],
+    ['fa-gamepad', 'Gra'], ['fa-handshake', 'Współpraca']
+];
+async function loadRequirements() {
+    try {
+        const r = await fetch('/api/requirements');
+        if (r.ok) reqData = await r.json();
+    } catch (e) {}
+    renderRequirements();
+}
+function renderRequirements() {
+    const grid = document.getElementById('req-grid');
+    if (!grid) return;
+    grid.innerHTML = (reqData.items || []).map(it => `<div class="col-md-6"><div class="req-item">
+        <div class="req-icon"><i class="fa-solid ${escapeHtml(it.icon)}"></i></div>
+        <div><div class="req-title">${escapeHtml(it.title)}</div><div class="req-text">${escapeHtml(it.text)}</div></div>
+    </div></div>`).join('') || '<div class="text-white-50">Brak wymagań.</div>';
+    const badge = document.getElementById('req-badge');
+    badge.textContent = reqData.badge || '';
+    badge.classList.toggle('d-none', !reqData.badge);
+    document.getElementById('req-edit-btn').classList.toggle('d-none', currentUserRole !== 'admin');
+}
+function openRequirementsEditor() {
+    reqEditItems = (reqData.items || []).map(x => ({ icon: x.icon, title: x.title, text: x.text }));
+    document.getElementById('req-edit-badge').value = reqData.badge || '';
+    renderReqEditor();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('reqModal')).show();
+}
+function renderReqEditor() {
+    const list = document.getElementById('req-edit-list');
+    list.innerHTML = reqEditItems.map((it, i) => {
+        const icons = REQ_ICONS.some(x => x[0] === it.icon) ? REQ_ICONS : [[it.icon, it.icon]].concat(REQ_ICONS);
+        return `<div class="border border-secondary rounded-3 p-2 mb-2">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3"><select class="form-select form-select-sm bg-dark text-white border-secondary" onchange="reqEditItems[${i}].icon=this.value">
+                    ${icons.map(x => `<option value="${escapeHtml(x[0])}" ${x[0] === it.icon ? 'selected' : ''}>${escapeHtml(x[1])}</option>`).join('')}</select></div>
+                <div class="col-md-4"><input class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Tytuł (np. Godziny w ETS2)" maxlength="80" value="${escapeHtml(it.title)}" oninput="reqEditItems[${i}].title=this.value"></div>
+                <div class="col-md-5"><input class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Treść (np. 250 h)" maxlength="300" value="${escapeHtml(it.text)}" oninput="reqEditItems[${i}].text=this.value"></div>
+            </div>
+            <div class="d-flex gap-1 justify-content-end mt-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="reqEditorMove(${i},-1)" ${i === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="reqEditorMove(${i},1)" ${i === reqEditItems.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="reqEditorDelete(${i})"><i class="fa-solid fa-trash"></i></button>
+            </div></div>`;
+    }).join('') || '<div class="text-white-50 small">Brak wymagań. Dodaj pierwsze przyciskiem poniżej.</div>';
+}
+function reqEditorAdd() { reqEditItems.push({ icon: 'fa-circle-check', title: '', text: '' }); renderReqEditor(); }
+function reqEditorDelete(i) { if (confirm('Usunąć to wymaganie?')) { reqEditItems.splice(i, 1); renderReqEditor(); } }
+function reqEditorMove(i, d) {
+    const j = i + d;
+    if (j < 0 || j >= reqEditItems.length) return;
+    [reqEditItems[i], reqEditItems[j]] = [reqEditItems[j], reqEditItems[i]];
+    renderReqEditor();
+}
+async function saveRequirements() {
+    const items = reqEditItems.map(x => ({ icon: x.icon, title: (x.title || '').trim(), text: (x.text || '').trim() })).filter(x => x.title || x.text);
+    const badge = document.getElementById('req-edit-badge').value.trim();
+    const r = await fetch('/api/requirements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ badge, items }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) return alert(d.error || 'Nie udało się zapisać wymagań.');
+    bootstrap.Modal.getInstance(document.getElementById('reqModal')).hide();
+    await loadRequirements();
+}
+loadRequirements();
 
 /* ===== Rangi ===== */
 let ranksList = [];
