@@ -186,6 +186,11 @@ async function initDB() {
 
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_override INTEGER;`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS site_settings (
+            key VARCHAR(100) PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS job_id INTEGER DEFAULT NULL;`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
@@ -479,6 +484,132 @@ function rankFor(km, override) {
     const r = RANKS[idx];
     return { index: idx, name: r.name, icon: r.icon, color: r.color, manual };
 }
+
+// =====================================================================
+//  WYMAGANIA DO DOŁĄCZENIA (zakładka "O nas") - edytowalne przez Szefa
+//  Zapis w tabeli site_settings (klucz 'requirements'). GET jest publiczny (to informacja rekrutacyjna).
+// =====================================================================
+const DEFAULT_REQUIREMENTS = {
+    badge: 'GRAMY NA 1.60!!!',
+    items: [
+        { icon: 'fa-road',         title: 'Wymóg kilometrów miesięcznie', text: '6 000 km' },
+        { icon: 'fa-clock',        title: 'Godziny w ETS2', text: '250 h' },
+        { icon: 'fa-gauge-high',   title: 'Jazda rzeczywista', text: 'Nie jeździmy wyścigów, tylko realistycznie (90 - 99 km/h)' },
+        { icon: 'fa-cake-candles', title: 'Wiek', text: 'min. 31 lat (czyt. od tyłu)' },
+        { icon: 'fa-toolbox',      title: 'Posiadanie', text: 'Trucky lub Virtual Speditor' },
+        { icon: 'fa-user-tie',     title: 'Status', text: 'Bezrobotny' },
+        { icon: 'fa-truck',        title: 'Umiejętność', text: 'Odwzorowania zestawu 1:1' },
+        { icon: 'fa-file-zipper',  title: 'Posiadanie WinRAR-a', text: 'i umiejętność wypakowywania modów' },
+        { icon: 'fa-camera',       title: 'Umiejętność', text: 'Wykonywanie zdjęć na średnim/wysokim poziomie' },
+        { icon: 'fa-map',          title: 'Dodatkowo', text: 'DLC mapowe i ProMods (lub ProMods + Poland Rebuilding)' }
+    ]
+};
+
+app.get('/api/requirements', async (req, res) => {
+    try {
+        const r = await pool.query("SELECT value FROM site_settings WHERE key = 'requirements'");
+        if (r.rows.length > 0) return res.json(JSON.parse(r.rows[0].value));
+    } catch (e) { /* brak tabeli / uszkodzony zapis: pokazujemy domyślne */ }
+    res.json(DEFAULT_REQUIREMENTS);
+});
+
+app.put('/api/requirements', requireAdmin, async (req, res) => {
+    const badge = String(req.body.badge || '').trim().slice(0, 60);
+    const items = Array.isArray(req.body.items) ? req.body.items.slice(0, 40) : null;
+    if (!items) return res.status(400).json({ error: 'Nieprawidłowe dane.' });
+    const clean = [];
+    for (const it of items) {
+        const icon = /^fa-[a-z0-9-]{1,40}$/.test(String((it && it.icon) || '')) ? it.icon : 'fa-circle-check';
+        const title = String((it && it.title) || '').trim().slice(0, 80);
+        const text = String((it && it.text) || '').trim().slice(0, 300);
+        if (!title && !text) continue;
+        clean.push({ icon, title, text });
+    }
+    try {
+        await pool.query(
+            `INSERT INTO site_settings (key, value, updated_at) VALUES ('requirements', $1, NOW())
+             ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+            [JSON.stringify({ badge, items: clean })]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Błąd zapisu wymagań:', e.message);
+        res.status(500).json({ error: 'Błąd zapisu wymagań.' });
+    }
+});
+
+// =====================================================================
+//  TRYB GOŚCIA - publiczny, tylko do odczytu podgląd firmy (bez logowania).
+//  Gość widzi: łączne kilometry i dostawy (tylko zatwierdzone), liczbę kierowców, ranking (top 10),
+//  flotę (modele, zdjęcia, dane techniczne) oraz wymagania. NIE widzi: pieniędzy, wydatków, tras,
+//  dokumentów, tablic rejestracyjnych ani przydziałów kierowców.
+//  PUBLIC_SHOW_RANKING = false ukrywa nicki kierowców przed gośćmi.
+// =====================================================================
+const PUBLIC_SHOW_RANKING = true;
+let publicOverviewCache = { t: 0, data: null };
+
+function toPublicPhoto(p) {
+    const m = /^\/api\/files\/(\d+)$/.exec(String(p || ''));
+    if (m) return '/api/public/photo/' + m[1];
+    return null;
+}
+
+app.get('/api/public/overview', async (req, res) => {
+    if (publicOverviewCache.data && Date.now() - publicOverviewCache.t < 60 * 1000) return res.json(publicOverviewCache.data);
+    try {
+        const jobs = await pool.query("SELECT COALESCE(SUM(distance), 0) AS km, COUNT(*) AS n FROM jobs WHERE status = 'approved'");
+        const drivers = await pool.query("SELECT COUNT(*) AS n FROM users WHERE status = 'approved'");
+        let ranking = [];
+        if (PUBLIC_SHOW_RANKING) {
+            const r = await pool.query(
+                `SELECT u.username, u.rank_override, SUM(j.distance) AS km, COUNT(j.id) AS deliveries
+                 FROM jobs j JOIN users u ON u.id = j.user_id
+                 WHERE j.status = 'approved'
+                 GROUP BY u.username, u.rank_override ORDER BY km DESC LIMIT 10`);
+            ranking = r.rows.map(d => {
+                const km = parseInt(d.km) || 0;
+                return { username: d.username, km, deliveries: parseInt(d.deliveries) || 0, rank: rankFor(km, d.rank_override) };
+            });
+        }
+        const trucks = await pool.query(
+            `SELECT truck_model AS model, MIN(photo) AS photo, MAX(cabin) AS cabin, MAX(engine) AS engine,
+                    MAX(gearbox) AS gearbox, COUNT(*) AS count
+             FROM trucks GROUP BY truck_model ORDER BY LOWER(truck_model)`);
+        const trailers = await pool.query(
+            `SELECT trailer_model AS model, MIN(photo) AS photo, MAX(description) AS description
+             FROM trailers GROUP BY trailer_model ORDER BY LOWER(trailer_model)`);
+        const data = {
+            totalKm: parseInt(jobs.rows[0].km) || 0,
+            totalDeliveries: parseInt(jobs.rows[0].n) || 0,
+            drivers: parseInt(drivers.rows[0].n) || 0,
+            ranking,
+            trucks: trucks.rows.map(t => ({ model: t.model, photo: toPublicPhoto(t.photo), cabin: t.cabin, engine: t.engine, gearbox: t.gearbox, count: parseInt(t.count) || 1 })),
+            trailers: trailers.rows.map(t => ({ model: t.model, photo: toPublicPhoto(t.photo), description: t.description || '' }))
+        };
+        publicOverviewCache = { t: Date.now(), data };
+        res.json(data);
+    } catch (e) {
+        console.error('Błąd podglądu publicznego:', e.message);
+        res.status(500).json({ error: 'Błąd pobierania danych' });
+    }
+});
+
+// Zdjęcia pojazdów dla gości: wyłącznie pliki, które faktycznie są zdjęciami ciężarówek/naczep
+// (pozostałe pliki, np. CMR i zrzuty tras, nadal wymagają logowania).
+app.get('/api/public/photo/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!Number.isInteger(id)) return res.status(404).send('Nie znaleziono');
+        const r = await pool.query(
+            `SELECT mime, data FROM files WHERE id = $1 AND ('/api/files/' || id::text) IN (
+                SELECT photo FROM trucks UNION SELECT photo_back FROM trucks
+                UNION SELECT photo FROM trailers UNION SELECT photo_back FROM trailers)`, [id]);
+        if (r.rows.length === 0) return res.status(404).send('Nie znaleziono');
+        res.set('Content-Type', r.rows[0].mime);
+        res.set('X-Content-Type-Options', 'nosniff');
+        res.set('Cache-Control', 'public, max-age=86400');
+        res.send(r.rows[0].data);
+    } catch (e) { res.status(500).send('Błąd pobierania zdjęcia'); }
+});
 
 app.get('/api/ranks', requireLogin, (req, res) => {
     res.json({ ranks: RANKS.map(r => ({ name: r.name, minKm: r.minKm || 0, manual: !!r.manual, icon: r.icon, color: r.color })) });
