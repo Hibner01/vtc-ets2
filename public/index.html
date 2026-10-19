@@ -2866,8 +2866,8 @@ async function loadGuestOverview() {
                 ${line1 ? `<div class="text-white-50 small">${escapeHtml(line1)}</div>` : ''}
                 ${line2 ? `<div class="text-white-50 small">${escapeHtml(line2)}</div>` : ''}</div></div>`;
         };
-        const trucks = (d.trucks || []).map(x => card(x.model, x.photos, [x.engine, x.gearbox].filter(v => v && v !== 'Standard').join(' · '), x.count > 1 ? x.count + ' szt.' : ''));
-        const trailers = (d.trailers || []).map(x => card(x.model, x.photos, x.description, ''));
+        const trucks = (d.trucks || []).map(x => card(x.model, (x.photos || (x.photo ? [x.photo] : [])), [x.engine, x.gearbox].filter(v => v && v !== 'Standard').join(' · '), x.count > 1 ? x.count + ' szt.' : ''));
+        const trailers = (d.trailers || []).map(x => card(x.model, (x.photos || (x.photo ? [x.photo] : [])), x.description, ''));
         document.getElementById('guest-fleet').innerHTML =
             (trucks.length ? '<div class="text-white-50 small fw-semibold text-uppercase mb-2">Ciężarówki</div><div class="row g-3 mb-4">' + trucks.join('') + '</div>' : '') +
             (trailers.length ? '<div class="text-white-50 small fw-semibold text-uppercase mb-2">Naczepy</div><div class="row g-3">' + trailers.join('') + '</div>' : '') ||
