@@ -594,6 +594,8 @@ function toPublicPhoto(p) {
     const m = /(?:^|\/)api\/files\/(\d+)$/.exec(str);
     if (m) return '/api/public/photo/' + m[1];                                   // plik w bazie (publiczna, ograniczona trasa)
     if (/^\/uploads\/[\w.\-%() ]+$/.test(str) && !str.includes('..')) return str;  // starszy plik statyczny
+    // zdjęcia startowej floty leżą jako pliki statyczne w folderze public (np. /scaniarprzod.jpg) - są i tak publiczne
+    if (/^\/(?:[\w.\-%() ]+\/)?[\w.\-%() ]+\.(?:jpe?g|png|webp|gif|avif)$/i.test(str) && !str.includes('..')) return str;
     if (/^https?:\/\/[^\s"'<>]+$/i.test(str)) return str;                         // pełny adres
     return null;
 }
