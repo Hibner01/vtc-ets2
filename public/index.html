@@ -180,10 +180,21 @@
             filter: blur(22px) brightness(0.55) saturate(1.2);
         }
         .photo-frame img {
+            position: relative;
+            z-index: 1;
             width: 100%;
             height: 100%;
             object-fit: contain;
             display: block;
+        }
+        .photo-ph {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #334155;
+            font-size: 2.6rem;
         }
         .photo-frame.photo-frame-lg { border-radius: 18px; box-shadow: 0 6px 20px rgba(0,0,0,0.55); }
 
@@ -206,6 +217,9 @@
             color: #cbd5e1;
         }
         .set-chip b { color: #fff; font-weight: 600; }
+
+        .guest-thumbs img { width: 58px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid #1e293b; cursor: pointer; opacity: 0.75; }
+        .guest-thumbs img:hover { opacity: 1; border-color: #38bdf8; }
 
         .req-item {
             display: flex;
@@ -524,8 +538,11 @@
                 </div>
 
                 <nav class="nav-sidebar">
-                    <a id="nav-guest" class="nav-item-bms d-none" onclick="switchTab('guest')">
-                        <i class="fa-solid fa-house"></i> <span>Strona główna</span>
+                    <a id="nav-guest-stats" class="nav-item-bms d-none" onclick="switchTab('guest-stats')">
+                        <i class="fa-solid fa-chart-line"></i> <span>Statystyki Firmy</span>
+                    </a>
+                    <a id="nav-guest-garage" class="nav-item-bms d-none" onclick="switchTab('guest-garage')">
+                        <i class="fa-solid fa-truck"></i> <span>Garaż</span>
                     </a>
                     <a id="nav-dashboard" class="nav-item-bms active" onclick="switchTab('dashboard')">
                         <i class="fa-solid fa-border-all"></i> <span data-i18n="navDashboard">Pulpit</span>
@@ -1063,14 +1080,15 @@
                         </div>
                     </div>
 
-                    <div id="tab-guest" style="display:none;">
+                    <div id="tab-guest-stats" style="display:none;">
                         <div class="welcome-banner text-white mb-4 shadow" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); border-radius: 20px; padding: 28px 32px;">
                             <div class="small fw-bold text-uppercase opacity-75"><i class="fa-solid fa-eye me-1"></i> Tryb gościa</div>
                             <h2 class="fw-bold display-6 mb-2">Witaj w Mazren Spedition</h2>
-                            <p class="mb-3 opacity-75" style="max-width: 680px;">Oglądasz stronę jako gość: zobaczysz, jak działa firma, jaką mamy flotę i czego od kierowców wymagamy. Chcesz jeździć z nami? Załóż konto, a Szef je zatwierdzi.</p>
+                            <p class="mb-3 opacity-75" style="max-width: 680px;">Oglądasz stronę jako gość: zobaczysz statystyki firmy, naszą flotę i wymagania wobec kierowców. Chcesz jeździć z nami? Załóż konto, a Szef je zatwierdzi.</p>
                             <div class="d-flex gap-2 flex-wrap">
                                 <button class="btn btn-light fw-bold" onclick="leaveGuestMode('register')"><i class="fa-solid fa-user-plus me-1"></i> Zarejestruj się</button>
                                 <button class="btn btn-outline-light fw-bold" onclick="leaveGuestMode('login')"><i class="fa-solid fa-right-to-bracket me-1"></i> Zaloguj się</button>
+                                <button class="btn btn-outline-light" onclick="switchTab('guest-garage')"><i class="fa-solid fa-truck me-1"></i> Garaż</button>
                                 <button class="btn btn-outline-light" onclick="switchTab('about')"><i class="fa-solid fa-clipboard-list me-1"></i> Wymagania</button>
                             </div>
                         </div>
@@ -1081,19 +1099,16 @@
                             <div class="col-md-4"><div class="bg-card-bms p-4"><div class="text-white-50 small">Kierowców w firmie</div><div class="fw-bold fs-3 text-white" id="guest-drivers">-</div></div></div>
                         </div>
 
-                        <div class="row g-4">
-                            <div class="col-lg-5">
-                                <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-trophy me-2 text-warning"></i>Najlepsi kierowcy</h5>
-                                    <div id="guest-ranking"></div>
-                                </div>
-                            </div>
-                            <div class="col-lg-7">
-                                <div class="bg-card-bms p-4">
-                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck me-2 text-info"></i>Nasza flota</h5>
-                                    <div id="guest-fleet"></div>
-                                </div>
-                            </div>
+                        <div class="bg-card-bms p-4">
+                            <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-trophy me-2 text-warning"></i>Najlepsi kierowcy</h5>
+                            <div id="guest-ranking"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-guest-garage" style="display:none;">
+                        <div class="bg-card-bms p-4">
+                            <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck me-2 text-info"></i>Nasz garaż</h5>
+                            <div id="guest-fleet"></div>
                         </div>
                     </div>
 
@@ -1102,7 +1117,7 @@
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                 <div>
                                     <h4 class="fw-bold mb-1"><i class="fa-solid fa-download me-2 text-success"></i>Pobierz aplikację kierowcy</h4>
-                                    <div class="text-white-50 small">W paczce: aplikacja Mazren, serwer telemetrii ETS2 i instrukcja. Tylko Windows.</div>
+                                    <div class="text-white-50 small">W paczce: aplikacja Mazren z wbudowanym serwerem telemetrii ETS2 i instrukcja. Tylko Windows.</div>
                                 </div>
                                 <div class="text-end">
                                     <a id="client-download-btn" class="btn btn-success fw-bold px-4 disabled" href="#" download><i class="fa-solid fa-download me-1"></i> Pobierz (.zip)</a>
@@ -1117,7 +1132,7 @@
                             <ol class="text-white-50 small mb-4">
                                 <li>Pobierz paczkę przyciskiem wyżej i rozpakuj ją do folderu na dysku (np. na Pulpicie, nie w „Program Files”).</li>
                                 <li>Kliknij <strong>Wygeneruj token</strong> poniżej i skopiuj go.</li>
-                                <li>Uruchom <strong>Uruchom-Mazren.bat</strong> (włącza serwer telemetrii i aplikację). Za pierwszym razem wklej adres strony i token w Ustawieniach aplikacji.</li>
+                                <li>Uruchom <strong>MazrenClient.exe</strong> (sam włącza serwer telemetrii). Za pierwszym razem wklej adres strony i token w Ustawieniach aplikacji.</li>
                                 <li>Włącz ETS2, przyjmij zlecenie w Dyspozytorni i weź w grze pasującą trasę. Reszta dzieje się automatycznie.</li>
                             </ol>
                             <div id="client-token-status" class="mb-3 small"></div>
@@ -1152,13 +1167,13 @@
 
                         <div class="bg-card-bms p-4 p-md-5 my-4" style="max-width: 900px; margin: 0 auto;">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                                <h4 class="fw-bold mb-0 text-white"><i class="fa-solid fa-clipboard-list me-2 text-info"></i>Wymagania do dołączenia</h4>
+                                <h4 class="fw-bold mb-0 text-white"><i class="fa-solid fa-clipboard-list me-2 text-info"></i><span data-i18n="reqTitle">Wymagania do dołączenia</span></h4>
                                 <div class="d-flex align-items-center gap-2">
                                     <span id="req-badge" class="badge bg-info text-dark fw-bold px-3 py-2 rounded-pill d-none"></span>
-                                    <button id="req-edit-btn" class="btn btn-sm btn-outline-info d-none" onclick="openRequirementsEditor()"><i class="fa-solid fa-pen me-1"></i> Edytuj</button>
+                                    <button id="req-edit-btn" class="btn btn-sm btn-outline-info d-none" onclick="openRequirementsEditor()"><i class="fa-solid fa-pen me-1"></i> <span data-i18n="reqEdit">Edytuj</span></button>
                                 </div>
                             </div>
-                            <div class="row g-3" id="req-grid"><div class="text-white-50">Ładowanie...</div></div>
+                            <div class="row g-3" id="req-grid"><div class="text-white-50" data-i18n="reqLoading">Ładowanie...</div></div>
                         </div>
 
                     </div>
@@ -1207,6 +1222,8 @@
     <script>
         let currentUserId = null;
         let currentUserRole = '';
+        function isStaffRole(r) { return r === 'admin' || r === 'manager'; }   // Szef lub Kierownik (te same uprawnienia)
+        function isStaff() { return isStaffRole(currentUserRole); }
         let isGuest = false;
         let currentUsername = '';
         // =====================================================================
@@ -1357,10 +1374,12 @@
         }
 
         function framedPhoto(src, extraClass) {
-            const raw = src || '/logo.png';
-            const css = encodeURI(raw).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
-            return `<div class="photo-frame ${extraClass || ''}" style="--bg:url('${escapeHtml(css)}')">
-                        <img src="${escapeHtml(raw)}" loading="lazy" onerror="this.src='/logo.png'">
+            // Brak zdjęcia (albo uszkodzony plik) = czytelny symbol ciężarówki, a nie logo firmy udające zdjęcie.
+            const ph = '<div class="photo-ph"><i class="fa-solid fa-truck"></i></div>';
+            if (!src) return `<div class="photo-frame ${extraClass || ''}">${ph}</div>`;
+            const css = encodeURI(src).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
+            return `<div class="photo-frame ${extraClass || ''}" style="--bg:url('${escapeHtml(css)}')">${ph}
+                        <img src="${escapeHtml(src)}" loading="lazy" onerror="this.parentNode.style.removeProperty('--bg'); this.remove()">
                     </div>`;
         }
 
@@ -1384,6 +1403,7 @@
                 driversRanking: "Ranking Kierowców", addExpense: "Zgłoś wydatek", expenseType: "Typ wydatku", submitExpense: "+ Dodaj Wydatek",
                 expensesLog: "Rejestr wydatków firmy", newDispatch: "Nowe Zlecenie w Dyspozytorni", assignDriver: "Przypisz kierowcę",
                 selectTruck: "Zestaw kierowcy", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi / Ładunek", publishDispatch: "Opublikuj zlecenie", availableJobs: "Twoje zlecenia w Dyspozytorni:",
+                reqTitle: "Wymagania do dołączenia", reqEdit: "Edytuj", reqLoading: "Ładowanie...", reqNone: "Brak wymagań.",
                 aboutText: "<strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!",
                 followUs: "Znajdź nas w sieci", joinDiscord: "Dołącz na Discord", followTiktok: "Obserwuj na TikTok",
                 chooseCountry: "— kraj —",
@@ -1417,6 +1437,7 @@
                 driversRanking: "Drivers Leaderboard", addExpense: "Report Expense", expenseType: "Expense Type", submitExpense: "+ Add Expense",
                 expensesLog: "Company Expense Log", newDispatch: "New Dispatch Order", assignDriver: "Assign Driver",
                 selectTruck: "Driver's Truck", fromCity: "From", toCity: "To", notes: "Notes / Cargo", publishDispatch: "Publish Order", availableJobs: "Your Dispatch Orders:",
+                reqTitle: "Requirements to join", reqEdit: "Edit", reqLoading: "Loading...", reqNone: "No requirements.",
                 aboutText: "<strong>Mazren Spedition Ltd.</strong> is a virtual trucking company operating in the world of Euro Truck Simulator 2, founded on 20 September 2026. Our goal is to build an active, close-knit community where we drive across Europe together, complete a wide variety of jobs and take part in company convoys and events. The server is intended for everyone over 31 years of age (read it backwards). We focus on realism, a great atmosphere, activity, driving etiquette and, above all, having fun together. Join Mazren Spedition and start your trucking adventure with us!",
                 followUs: "Find us online", joinDiscord: "Join our Discord", followTiktok: "Follow us on TikTok",
                 chooseCountry: "— country —",
@@ -1448,6 +1469,7 @@
                 renderGarage();
                 closeVehicleDetail();
             }
+            if (typeof renderRequirements === 'function') renderRequirements();
             if (typeof updateClock === 'function') updateClock();
         }
 
@@ -1474,9 +1496,9 @@
         }
 
         function switchTab(tab) {
-            if (isGuest && tab !== 'about') tab = 'guest';
-            if (tab === 'management' && currentUserRole !== 'admin') tab = 'dashboard';
-            ['guest', 'dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
+            if (isGuest && !['about', 'guest-stats', 'guest-garage'].includes(tab)) tab = 'guest-stats';
+            if (tab === 'management' && !isStaff()) tab = 'dashboard';
+            ['guest-stats', 'guest-garage', 'dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById(t === 'management' ? 'admin-tab-btn' : 'nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
@@ -1487,9 +1509,9 @@
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'client') loadClientTab();
             else if (tab === 'about') loadRequirements();
-            else if (tab === 'guest') loadGuestOverview();
+            else if (tab === 'guest-stats' || tab === 'guest-garage') loadGuestOverview();
             else if (tab === 'garage') loadGarage();
-            else if (tab === 'management' && currentUserRole === 'admin') loadManagementUsers();
+            else if (tab === 'management' && isStaff()) loadManagementUsers();
         }
 
         async function fetchDriversList() {
@@ -1543,13 +1565,14 @@
                     
                     document.getElementById('user-display').innerText = data.username;
                     document.getElementById('banner-username').innerText = data.username;
-                    document.getElementById('banner-role').innerText = data.role === 'admin' ? (currentLang === 'pl' ? 'Szef / Właściciel' : 'Boss / Owner') : (currentLang === 'pl' ? 'Kierowca' : 'Driver');
+                    document.getElementById('banner-role').innerText = data.role === 'admin' ? (currentLang === 'pl' ? 'Szef / Właściciel' : 'Boss / Owner') : data.role === 'manager' ? (currentLang === 'pl' ? 'Kierownik' : 'Manager') : (currentLang === 'pl' ? 'Kierowca' : 'Driver');
 
                     document.getElementById('my-monthly-km').innerText = `${data.monthlyKm || 0} km`;
                     document.getElementById('my-monthly-deliveries').innerText = data.monthlyDeliveries || 0;
 
-                    if (data.role === 'admin') {
+                    if (isStaffRole(data.role)) {
                         document.getElementById('admin-badge').classList.remove('d-none');
+                        if (data.role === 'manager') { const ab = document.getElementById('admin-badge'); ab.removeAttribute('data-i18n'); ab.textContent = 'KIEROWNIK'; }
                         document.getElementById('admin-tab-btn').classList.remove('d-none');
                         document.getElementById('dispatcher-admin-form').style.display = 'block';
                     }
@@ -1557,7 +1580,7 @@
                     renderAssignedTruckOnDashboard(data);
                     loadNotifications();
 
-                    if (data.role === 'admin') await migrateLegacyAssignments();
+                    if (isStaffRole(data.role)) await migrateLegacyAssignments();
                     await refreshVehicles();
                     await fetchDriversList();
                     populateCountrySelects();
@@ -1673,7 +1696,7 @@
 
         function handleNotificationClick(jobId, tab, notifId) {
             if (notifId) fetch(`/api/notifications/${notifId}/read`, { method: 'PUT' }).then(loadNotifications).catch(() => {});
-            if (tab === 'management' && currentUserRole === 'admin') return switchTab('management');
+            if (tab === 'management' && isStaff()) return switchTab('management');
             if (tab === 'garage') return switchTab('garage');
             if (jobId && jobId !== 'null') switchTab('dispatcher');
         }
@@ -1843,7 +1866,7 @@
                     if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
                     
                     let adminActionsHtml = '';
-                    if (currentUserRole === 'admin') {
+                    if (isStaff()) {
                         if (j.status === 'pending') {
                             adminActionsHtml += `<button onclick="approveJob(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fas fa-check"></i> Zatwierdź</button>`;
                         }
@@ -1933,7 +1956,7 @@
                 
                 container.innerHTML = '';
                 
-                let visibleDispatches = dispatches.filter(d => currentUserRole === 'admin' || d.assigned_to === currentUsername || d.assigned_to === 'Wszyscy');
+                let visibleDispatches = dispatches.filter(d => isStaff() || d.assigned_to === currentUsername || d.assigned_to === 'Wszyscy');
 
                 if (visibleDispatches.length === 0) {
                     container.innerHTML = `<div class="text-white-50 col-12 text-center py-3">Brak dostępnych zleceń w dyspozytorni.</div>`;
@@ -1943,18 +1966,18 @@
                 visibleDispatches.forEach(d => {
                     let actionBtn = '';
                     if (d.status === 'W wolnym obiegu') {
-                        if (currentUserRole !== 'admin' && d.assigned_to !== currentUsername && d.assigned_to !== 'Wszyscy') {
+                        if (!isStaff() && d.assigned_to !== currentUsername && d.assigned_to !== 'Wszyscy') {
                             actionBtn = `<span class="badge bg-secondary">Przypisane do innego kierowcy</span>`;
                         } else {
                             actionBtn = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
                         }
-                    } else if (d.status === 'W trakcie' && (d.accepted_by_username === currentUsername || currentUserRole === 'admin')) {
+                    } else if (d.status === 'W trakcie' && (d.accepted_by_username === currentUsername || isStaff())) {
                         actionBtn = `<button class="btn btn-success btn-sm fw-bold" onclick="openJobReportForm(${d.id}, '${d.start_city}', '${d.end_city}')"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
                     } else {
                         actionBtn = `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username || 'Kierowca'})</span>`;
                     }
 
-                    let deleteDispatchBtn = currentUserRole === 'admin' 
+                    let deleteDispatchBtn = isStaff() 
                         ? `<button class="btn btn-outline-danger btn-sm" onclick="deleteDispatch(${d.id})" title="Usuń zlecenie"><i class="fa-solid fa-trash"></i></button>` 
                         : '';
 
@@ -2134,7 +2157,7 @@
             document.getElementById('gtab-trailers').className = 'btn btn-sm ' + (garageType === 'trailers' ? 'btn-pill-white' : 'btn-pill-dark');
 
             const addBtn = document.getElementById('garage-add-btn');
-            addBtn.classList.toggle('d-none', currentUserRole !== 'admin');
+            addBtn.classList.toggle('d-none', !isStaff());
             addBtn.innerHTML = `<i class="fa-solid fa-plus me-1"></i> ${t(garageType === 'trucks' ? 'g_addTruck' : 'g_addTrailer')}`;
 
             const grid = document.getElementById('garage-grid');
@@ -2236,7 +2259,7 @@
             document.getElementById('garage-main-view').style.display = 'none';
             document.getElementById('garage-detail-view').style.display = 'block';
 
-            const isAdmin = currentUserRole === 'admin';
+            const isAdmin = isStaff();
             const enc = encodeURIComponent(g.model);
             const activeCount = g.units.filter(u => !isFree(u)).length;
 
@@ -2382,11 +2405,16 @@
                 tbody.innerHTML = mgmtUsers.map(u => {
                     const isMe = u.id === currentUserId;
                     const isBoss = u.role === 'admin';
+                    const viewerIsOwner = currentUserRole === 'admin';
+                    const canManage = u.role === 'driver' || (u.role === 'manager' && viewerIsOwner);   // jak na serwerze
 
                     const statusBadge = u.status === 'pending' ? '<span class="badge bg-warning text-dark">Oczekuje</span>'
                         : u.status === 'fired' ? '<span class="badge bg-danger">Zwolniony</span>'
                         : '<span class="badge bg-success">Aktywny</span>';
-                    const roleBadge = isBoss ? '<span class="badge bg-danger">Szef</span>' : '<span class="badge bg-secondary">Kierowca</span>';
+                    const roleBadge = u.role === 'admin' ? '<span class="badge bg-danger">Szef</span>'
+                        : u.role === 'manager' ? '<span class="badge bg-warning text-dark">Kierownik</span>'
+                        : '<span class="badge bg-secondary">Kierowca</span>';
+                    const roleCell = (viewerIsOwner && !isMe && u.status === 'approved') ? roleSelectHtml(u) : roleBadge;
 
                     let actions = '';
                     if (u.status === 'pending') {
@@ -2396,15 +2424,15 @@
                         actions += `<button class="btn btn-sm btn-outline-success me-1" onclick="mgmtApprove(${u.id})"><i class="fa-solid fa-rotate-left me-1"></i>Przywróć</button>`;
                         actions += `<button class="btn btn-sm btn-outline-danger" onclick="mgmtDelete(${u.id})"><i class="fa-solid fa-trash me-1"></i>Usuń na stałe</button>`;
                     } else {
-                        actions += `<button class="btn btn-sm btn-outline-warning me-1" onclick="mgmtResetPassword(${u.id})"><i class="fa-solid fa-key me-1"></i>Zmień hasło</button>`;
-                        if (!isBoss) actions += `<button class="btn btn-sm btn-outline-danger" onclick="mgmtFire(${u.id})"><i class="fa-solid fa-user-slash me-1"></i>Zwolnij</button>`;
+                        if (canManage || isMe) actions += `<button class="btn btn-sm btn-outline-warning me-1" onclick="mgmtResetPassword(${u.id})"><i class="fa-solid fa-key me-1"></i>Zmień hasło</button>`;
+                        if (canManage) actions += `<button class="btn btn-sm btn-outline-danger" onclick="mgmtFire(${u.id})"><i class="fa-solid fa-user-slash me-1"></i>Zwolnij</button>`;
                     }
 
                     return `
                         <tr>
                             <td class="fw-bold">${escapeHtml(u.username)} ${isMe ? '<span class="text-info small">(Ty)</span>' : ''}</td>
                             <td class="text-white-50">${escapeHtml(u.email || '-')}</td>
-                            <td>${roleBadge}</td>
+                            <td>${roleCell}</td>
                             <td>${rankSelectHtml(u)}</td>
                             <td>${statusBadge}</td>
                             <td>${actions}</td>
@@ -2456,10 +2484,10 @@
                 if (!res.ok) return;
                 const expenses = await res.json();
                 const pcard = document.getElementById('purchase-card');
-                if (pcard) pcard.style.display = currentUserRole === 'admin' ? 'block' : 'none';
+                if (pcard) pcard.style.display = isStaff() ? 'block' : 'none';
                 const ptot = document.getElementById('purchase-total');
                 if (ptot) ptot.textContent = expenses.filter(x => x.type === 'purchase').reduce((sum, x) => sum + (x.amount || 0), 0).toLocaleString('pl-PL') + ' €';
-                if (currentUserRole === 'admin') refreshPurchaseBudget();
+                if (isStaff()) refreshPurchaseBudget();
                 
                 const tbody = document.getElementById('expenses-table-body');
                 if (!tbody) return;
@@ -2616,7 +2644,11 @@
             </div>
             <div class="modal-body">
                 <label class="form-label small text-white-50">Napis na plakietce (puste = bez plakietki)</label>
-                <input id="req-edit-badge" class="form-control bg-dark text-white border-secondary mb-3" maxlength="60">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6"><input id="req-edit-badge" class="form-control bg-dark text-white border-secondary" maxlength="60" placeholder="🇵🇱 np. GRAMY NA 1.60!!!"></div>
+                    <div class="col-md-6"><input id="req-edit-badge-en" class="form-control bg-dark text-white border-secondary" maxlength="60" placeholder="🇬🇧 e.g. WE PLAY ON 1.60!!!"></div>
+                </div>
+                <div class="small text-white-50 mb-2">Każde wymaganie ma wersję polską i angielską. Gdy angielska jest pusta, odwiedzający zobaczą polską.</div>
                 <div id="req-edit-list"></div>
                 <button class="btn btn-outline-info btn-sm mt-2" onclick="reqEditorAdd()"><i class="fa-solid fa-plus me-1"></i> Dodaj wymaganie</button>
             </div>
@@ -2780,7 +2812,8 @@ async function submitPurchase(e) {
 const GUEST_HIDDEN_NAV = ['nav-dashboard', 'nav-company-stats', 'nav-finances', 'nav-dispatcher', 'nav-garage', 'nav-documents', 'nav-client'];
 function setGuestUi(on) {
     GUEST_HIDDEN_NAV.forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('d-none', on); });
-    document.getElementById('nav-guest').classList.toggle('d-none', !on);
+    document.getElementById('nav-guest-stats').classList.toggle('d-none', !on);
+    document.getElementById('nav-guest-garage').classList.toggle('d-none', !on);
     document.getElementById('sidebar-logout').classList.toggle('d-none', on);
     document.getElementById('guest-login-btn').classList.toggle('d-none', !on);
     document.getElementById('notif-dropdown-wrap').classList.toggle('d-none', on);
@@ -2793,7 +2826,7 @@ function enterGuestMode() {
     document.getElementById('auth-section').style.display = 'none';
     document.getElementById('dashboard-section').style.display = 'block';
     setGuestUi(true);
-    switchTab('guest');
+    switchTab('guest-stats');
 }
 function leaveGuestMode(target) {
     isGuest = false;
@@ -2801,6 +2834,12 @@ function leaveGuestMode(target) {
     setGuestUi(false);
     showLogin();
     if (target) showAuthForm(target);
+}
+function guestShowPhoto(img) {
+    const frame = img.closest('.guest-card').querySelector('.photo-frame');
+    const src = img.dataset.full;
+    frame.style.setProperty('--bg', `url('${src}')`);
+    frame.querySelector('img').src = src;
 }
 async function loadGuestOverview() {
     try {
@@ -2817,13 +2856,18 @@ async function loadGuestOverview() {
                 <div class="text-white-50 small">${(x.km || 0).toLocaleString('pl-PL')} km</div></div>`).join('')
             : '<div class="text-white-50 small">Ranking pojawi się, gdy kierowcy zaczną jeździć.</div>';
 
-        const card = (name, photo, line1, line2) => `<div class="col-sm-6"><div class="bg-dark border border-secondary rounded-3 p-2 h-100">
-            ${framedPhoto(photo)}
-            <div class="fw-bold text-white mt-2">${escapeHtml(name)}</div>
-            ${line1 ? `<div class="text-white-50 small">${escapeHtml(line1)}</div>` : ''}
-            ${line2 ? `<div class="text-white-50 small">${escapeHtml(line2)}</div>` : ''}</div></div>`;
-        const trucks = (d.trucks || []).map(x => card(x.model, x.photo, [x.engine, x.gearbox].filter(v => v && v !== 'Standard').join(' · '), x.count > 1 ? x.count + ' szt.' : ''));
-        const trailers = (d.trailers || []).map(x => card(x.model, x.photo, x.description, ''));
+        const card = (name, photos, line1, line2) => {
+            const list = photos || [];
+            const thumbs = list.length > 1
+                ? `<div class="guest-thumbs d-flex gap-2 mt-2 flex-wrap">${list.map(p => `<img src="${escapeHtml(p)}" data-full="${escapeHtml(p)}" loading="lazy" onclick="guestShowPhoto(this)">`).join('')}</div>` : '';
+            return `<div class="col-sm-6"><div class="guest-card bg-dark border border-secondary rounded-3 p-2 h-100">
+                ${framedPhoto(list[0] || null)}${thumbs}
+                <div class="fw-bold text-white mt-2">${escapeHtml(name)}</div>
+                ${line1 ? `<div class="text-white-50 small">${escapeHtml(line1)}</div>` : ''}
+                ${line2 ? `<div class="text-white-50 small">${escapeHtml(line2)}</div>` : ''}</div></div>`;
+        };
+        const trucks = (d.trucks || []).map(x => card(x.model, x.photos, [x.engine, x.gearbox].filter(v => v && v !== 'Standard').join(' · '), x.count > 1 ? x.count + ' szt.' : ''));
+        const trailers = (d.trailers || []).map(x => card(x.model, x.photos, x.description, ''));
         document.getElementById('guest-fleet').innerHTML =
             (trucks.length ? '<div class="text-white-50 small fw-semibold text-uppercase mb-2">Ciężarówki</div><div class="row g-3 mb-4">' + trucks.join('') + '</div>' : '') +
             (trailers.length ? '<div class="text-white-50 small fw-semibold text-uppercase mb-2">Naczepy</div><div class="row g-3">' + trailers.join('') + '</div>' : '') ||
@@ -2831,8 +2875,8 @@ async function loadGuestOverview() {
     } catch (e) {}
 }
 
-/* ===== Wymagania do dołączenia (edytowalne przez Szefa) ===== */
-let reqData = { badge: '', items: [] };
+/* ===== Wymagania do dołączenia (edytowalne przez Szefa, PL + EN) ===== */
+let reqData = { badge: '', badge_en: '', items: [] };
 let reqEditItems = [];
 const REQ_ICONS = [
     ['fa-road', 'Droga / kilometry'], ['fa-clock', 'Zegar / godziny'], ['fa-gauge-high', 'Prędkość'], ['fa-cake-candles', 'Wiek'],
@@ -2848,34 +2892,45 @@ async function loadRequirements() {
     } catch (e) {}
     renderRequirements();
 }
+function reqPick(it, field) {   // wybór wersji językowej; gdy brak angielskiej, pokazujemy polską
+    return (currentLang === 'en' && it[field + '_en']) ? it[field + '_en'] : (it[field] || '');
+}
 function renderRequirements() {
     const grid = document.getElementById('req-grid');
     if (!grid) return;
     grid.innerHTML = (reqData.items || []).map(it => `<div class="col-md-6"><div class="req-item">
         <div class="req-icon"><i class="fa-solid ${escapeHtml(it.icon)}"></i></div>
-        <div><div class="req-title">${escapeHtml(it.title)}</div><div class="req-text">${escapeHtml(it.text)}</div></div>
-    </div></div>`).join('') || '<div class="text-white-50">Brak wymagań.</div>';
+        <div><div class="req-title">${escapeHtml(reqPick(it, 'title'))}</div><div class="req-text">${escapeHtml(reqPick(it, 'text'))}</div></div>
+    </div></div>`).join('') || `<div class="text-white-50">${t('reqNone')}</div>`;
     const badge = document.getElementById('req-badge');
-    badge.textContent = reqData.badge || '';
-    badge.classList.toggle('d-none', !reqData.badge);
-    document.getElementById('req-edit-btn').classList.toggle('d-none', currentUserRole !== 'admin');
+    const badgeText = (currentLang === 'en' && reqData.badge_en) ? reqData.badge_en : (reqData.badge || '');
+    badge.textContent = badgeText;
+    badge.classList.toggle('d-none', !badgeText);
+    document.getElementById('req-edit-btn').classList.toggle('d-none', !isStaff());
 }
 function openRequirementsEditor() {
-    reqEditItems = (reqData.items || []).map(x => ({ icon: x.icon, title: x.title, text: x.text }));
+    reqEditItems = (reqData.items || []).map(x => ({ icon: x.icon, title: x.title || '', text: x.text || '', title_en: x.title_en || '', text_en: x.text_en || '' }));
     document.getElementById('req-edit-badge').value = reqData.badge || '';
+    document.getElementById('req-edit-badge-en').value = reqData.badge_en || '';
     renderReqEditor();
     bootstrap.Modal.getOrCreateInstance(document.getElementById('reqModal')).show();
 }
 function renderReqEditor() {
     const list = document.getElementById('req-edit-list');
+    const inp = 'form-control form-control-sm bg-dark text-white border-secondary';
     list.innerHTML = reqEditItems.map((it, i) => {
         const icons = REQ_ICONS.some(x => x[0] === it.icon) ? REQ_ICONS : [[it.icon, it.icon]].concat(REQ_ICONS);
         return `<div class="border border-secondary rounded-3 p-2 mb-2">
-            <div class="row g-2 align-items-center">
+            <div class="row g-2 align-items-center mb-2">
                 <div class="col-md-3"><select class="form-select form-select-sm bg-dark text-white border-secondary" onchange="reqEditItems[${i}].icon=this.value">
                     ${icons.map(x => `<option value="${escapeHtml(x[0])}" ${x[0] === it.icon ? 'selected' : ''}>${escapeHtml(x[1])}</option>`).join('')}</select></div>
-                <div class="col-md-4"><input class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Tytuł (np. Godziny w ETS2)" maxlength="80" value="${escapeHtml(it.title)}" oninput="reqEditItems[${i}].title=this.value"></div>
-                <div class="col-md-5"><input class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Treść (np. 250 h)" maxlength="300" value="${escapeHtml(it.text)}" oninput="reqEditItems[${i}].text=this.value"></div>
+                <div class="col-md-4"><input class="${inp}" placeholder="🇵🇱 Tytuł (np. Godziny w ETS2)" maxlength="80" value="${escapeHtml(it.title)}" oninput="reqEditItems[${i}].title=this.value"></div>
+                <div class="col-md-5"><input class="${inp}" placeholder="🇵🇱 Treść (np. 250 h)" maxlength="300" value="${escapeHtml(it.text)}" oninput="reqEditItems[${i}].text=this.value"></div>
+            </div>
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3 text-white-50 small text-end pe-3">English</div>
+                <div class="col-md-4"><input class="${inp}" placeholder="🇬🇧 Title (e.g. Hours in ETS2)" maxlength="80" value="${escapeHtml(it.title_en)}" oninput="reqEditItems[${i}].title_en=this.value"></div>
+                <div class="col-md-5"><input class="${inp}" placeholder="🇬🇧 Text (e.g. 250 h)" maxlength="300" value="${escapeHtml(it.text_en)}" oninput="reqEditItems[${i}].text_en=this.value"></div>
             </div>
             <div class="d-flex gap-1 justify-content-end mt-2">
                 <button class="btn btn-sm btn-outline-secondary" onclick="reqEditorMove(${i},-1)" ${i === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button>
@@ -2884,7 +2939,7 @@ function renderReqEditor() {
             </div></div>`;
     }).join('') || '<div class="text-white-50 small">Brak wymagań. Dodaj pierwsze przyciskiem poniżej.</div>';
 }
-function reqEditorAdd() { reqEditItems.push({ icon: 'fa-circle-check', title: '', text: '' }); renderReqEditor(); }
+function reqEditorAdd() { reqEditItems.push({ icon: 'fa-circle-check', title: '', text: '', title_en: '', text_en: '' }); renderReqEditor(); }
 function reqEditorDelete(i) { if (confirm('Usunąć to wymaganie?')) { reqEditItems.splice(i, 1); renderReqEditor(); } }
 function reqEditorMove(i, d) {
     const j = i + d;
@@ -2893,15 +2948,34 @@ function reqEditorMove(i, d) {
     renderReqEditor();
 }
 async function saveRequirements() {
-    const items = reqEditItems.map(x => ({ icon: x.icon, title: (x.title || '').trim(), text: (x.text || '').trim() })).filter(x => x.title || x.text);
+    const items = reqEditItems.map(x => ({
+        icon: x.icon, title: (x.title || '').trim(), text: (x.text || '').trim(),
+        title_en: (x.title_en || '').trim(), text_en: (x.text_en || '').trim()
+    })).filter(x => x.title || x.text || x.title_en || x.text_en);
     const badge = document.getElementById('req-edit-badge').value.trim();
-    const r = await fetch('/api/requirements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ badge, items }) });
+    const badge_en = document.getElementById('req-edit-badge-en').value.trim();
+    const r = await fetch('/api/requirements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ badge, badge_en, items }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) return alert(d.error || 'Nie udało się zapisać wymagań.');
     bootstrap.Modal.getInstance(document.getElementById('reqModal')).hide();
     await loadRequirements();
 }
 loadRequirements();
+
+/* ===== Role (Szef / Kierownik / Kierowca) ===== */
+function roleSelectHtml(u) {
+    const opts = [['driver', 'Kierowca'], ['manager', 'Kierownik'], ['admin', 'Szef']];
+    return `<select class="form-select form-select-sm bg-dark text-white border-secondary" style="min-width:130px" onchange="mgmtSetRole(${u.id}, this.value)">
+        ${opts.map(([v, l]) => `<option value="${v}" ${u.role === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+}
+async function mgmtSetRole(id, role) {
+    const names = { driver: 'Kierowca', manager: 'Kierownik', admin: 'Szef' };
+    const u = (typeof mgmtUser === 'function' ? mgmtUser(id) : null) || { username: '?' };
+    if (!confirm(`Zmienić rolę użytkownika ${u.username} na: ${names[role]}?\nUżytkownik zostanie wylogowany i zaloguje się już z nową rolą.`)) { loadManagementUsers(); return; }
+    const r = await fetch(`/api/users/${id}/role`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); alert(e.error || 'Nie udało się zmienić roli.'); }
+    loadManagementUsers();
+}
 
 /* ===== Rangi ===== */
 let ranksList = [];
