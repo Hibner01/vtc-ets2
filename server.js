@@ -276,8 +276,18 @@ function requireLogin(req, res, next) {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     next();
 }
+// Role: 'admin' (Szef), 'manager' (Kierownik: te same uprawnienia co Szef, z dwoma wyjątkami poniżej), 'driver' (Kierowca).
+// Wyjątki: role nadaje tylko Szef, a kont Szefa i Kierowników (zwolnienie, usunięcie, zmiana hasła) nie rusza Kierownik.
+const STAFF_ROLES = ['admin', 'manager'];
+function isStaff(role) { return STAFF_ROLES.includes(role); }
+function canManageUser(actorRole, targetRole) {
+    if (targetRole === 'admin') return false;                  // konta Szefa nie ruszamy
+    if (targetRole === 'manager') return actorRole === 'admin'; // Kierownika zarządza tylko Szef
+    return isStaff(actorRole);
+}
+
 function requireAdmin(req, res, next) {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     next();
 }
 async function killUserSessions(userId, exceptSid) {
@@ -319,7 +329,7 @@ app.post('/api/register', async (req, res) => {
         await pool.query('INSERT INTO users (username, email, password, role, status) VALUES ($1, $2, $3, $4, $5)', [username, email.toLowerCase().trim(), hashedPassword, role, status]);
         
         if (status === 'pending') {
-            const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
+            const admins = await pool.query("SELECT id FROM users WHERE role IN ('admin','manager')");
             for (let adm of admins.rows) {
                 await addNotification(adm.id, 'Nowy Kierowca', `Kierowca @${username} (${email}) zarejestrował się i oczekuje na zatwierdzenie konta.`, null, 'management');
             }
@@ -491,30 +501,58 @@ function rankFor(km, override) {
 // =====================================================================
 const DEFAULT_REQUIREMENTS = {
     badge: 'GRAMY NA 1.60!!!',
+    badge_en: 'WE PLAY ON 1.60!!!',
     items: [
-        { icon: 'fa-road',         title: 'Wymóg kilometrów miesięcznie', text: '6 000 km' },
-        { icon: 'fa-clock',        title: 'Godziny w ETS2', text: '250 h' },
-        { icon: 'fa-gauge-high',   title: 'Jazda rzeczywista', text: 'Nie jeździmy wyścigów, tylko realistycznie (90 - 99 km/h)' },
-        { icon: 'fa-cake-candles', title: 'Wiek', text: 'min. 31 lat (czyt. od tyłu)' },
-        { icon: 'fa-toolbox',      title: 'Posiadanie', text: 'Trucky lub Virtual Speditor' },
-        { icon: 'fa-user-tie',     title: 'Status', text: 'Bezrobotny' },
-        { icon: 'fa-truck',        title: 'Umiejętność', text: 'Odwzorowania zestawu 1:1' },
-        { icon: 'fa-file-zipper',  title: 'Posiadanie WinRAR-a', text: 'i umiejętność wypakowywania modów' },
-        { icon: 'fa-camera',       title: 'Umiejętność', text: 'Wykonywanie zdjęć na średnim/wysokim poziomie' },
-        { icon: 'fa-map',          title: 'Dodatkowo', text: 'DLC mapowe i ProMods (lub ProMods + Poland Rebuilding)' }
+        { icon: 'fa-road',         title: 'Wymóg kilometrów miesięcznie', text: '6 000 km',
+          title_en: 'Monthly distance requirement', text_en: '6,000 km' },
+        { icon: 'fa-clock',        title: 'Godziny w ETS2', text: '250 h',
+          title_en: 'Hours in ETS2', text_en: '250 h' },
+        { icon: 'fa-gauge-high',   title: 'Jazda rzeczywista', text: 'Nie jeździmy wyścigów, tylko realistycznie (90 - 99 km/h)',
+          title_en: 'Realistic driving', text_en: 'No racing, we drive realistically (90 - 99 km/h)' },
+        { icon: 'fa-cake-candles', title: 'Wiek', text: 'min. 31 lat (czyt. od tyłu)',
+          title_en: 'Age', text_en: 'min. 31 years old (read it backwards)' },
+        { icon: 'fa-toolbox',      title: 'Posiadanie', text: 'Trucky lub Virtual Speditor',
+          title_en: 'You need to have', text_en: 'Trucky or Virtual Speditor' },
+        { icon: 'fa-user-tie',     title: 'Status', text: 'Bezrobotny',
+          title_en: 'Status', text_en: 'Unemployed' },
+        { icon: 'fa-truck',        title: 'Umiejętność', text: 'Odwzorowania zestawu 1:1',
+          title_en: 'Skill', text_en: 'Recreating the truck and trailer set 1:1' },
+        { icon: 'fa-file-zipper',  title: 'Posiadanie WinRAR-a', text: 'i umiejętność wypakowywania modów',
+          title_en: 'You need WinRAR', text_en: 'and the ability to unpack mods' },
+        { icon: 'fa-camera',       title: 'Umiejętność', text: 'Wykonywanie zdjęć na średnim/wysokim poziomie',
+          title_en: 'Skill', text_en: 'Taking medium/high quality screenshots' },
+        { icon: 'fa-map',          title: 'Dodatkowo', text: 'DLC mapowe i ProMods (lub ProMods + Poland Rebuilding)',
+          title_en: 'Additionally', text_en: 'Map DLCs and ProMods (or ProMods + Poland Rebuilding)' }
     ]
 };
+
+// Zapisane wcześniej wymagania bez angielskiego: jeśli pasują do domyślnych, dopełniamy tłumaczenie.
+function withEnglishFallback(data) {
+    const defs = DEFAULT_REQUIREMENTS.items;
+    const out = { badge: data.badge || '', badge_en: data.badge_en || '', items: [] };
+    if (!out.badge_en && out.badge === DEFAULT_REQUIREMENTS.badge) out.badge_en = DEFAULT_REQUIREMENTS.badge_en;
+    for (const it of (data.items || [])) {
+        const copy = { ...it };
+        if (!copy.title_en && !copy.text_en) {
+            const d = defs.find(x => x.title === it.title && x.text === it.text);
+            if (d) { copy.title_en = d.title_en; copy.text_en = d.text_en; }
+        }
+        out.items.push(copy);
+    }
+    return out;
+}
 
 app.get('/api/requirements', async (req, res) => {
     try {
         const r = await pool.query("SELECT value FROM site_settings WHERE key = 'requirements'");
-        if (r.rows.length > 0) return res.json(JSON.parse(r.rows[0].value));
+        if (r.rows.length > 0) return res.json(withEnglishFallback(JSON.parse(r.rows[0].value)));
     } catch (e) { /* brak tabeli / uszkodzony zapis: pokazujemy domyślne */ }
     res.json(DEFAULT_REQUIREMENTS);
 });
 
 app.put('/api/requirements', requireAdmin, async (req, res) => {
     const badge = String(req.body.badge || '').trim().slice(0, 60);
+    const badgeEn = String(req.body.badge_en || '').trim().slice(0, 60);
     const items = Array.isArray(req.body.items) ? req.body.items.slice(0, 40) : null;
     if (!items) return res.status(400).json({ error: 'Nieprawidłowe dane.' });
     const clean = [];
@@ -522,14 +560,16 @@ app.put('/api/requirements', requireAdmin, async (req, res) => {
         const icon = /^fa-[a-z0-9-]{1,40}$/.test(String((it && it.icon) || '')) ? it.icon : 'fa-circle-check';
         const title = String((it && it.title) || '').trim().slice(0, 80);
         const text = String((it && it.text) || '').trim().slice(0, 300);
-        if (!title && !text) continue;
-        clean.push({ icon, title, text });
+        const titleEn = String((it && it.title_en) || '').trim().slice(0, 80);
+        const textEn = String((it && it.text_en) || '').trim().slice(0, 300);
+        if (!title && !text && !titleEn && !textEn) continue;
+        clean.push({ icon, title, text, title_en: titleEn, text_en: textEn });
     }
     try {
         await pool.query(
             `INSERT INTO site_settings (key, value, updated_at) VALUES ('requirements', $1, NOW())
              ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
-            [JSON.stringify({ badge, items: clean })]);
+            [JSON.stringify({ badge, badge_en: badgeEn, items: clean })]);
         res.json({ success: true });
     } catch (e) {
         console.error('Błąd zapisu wymagań:', e.message);
@@ -571,19 +611,36 @@ app.get('/api/public/overview', async (req, res) => {
             });
         }
         const trucks = await pool.query(
-            `SELECT truck_model AS model, MIN(photo) AS photo, MAX(cabin) AS cabin, MAX(engine) AS engine,
-                    MAX(gearbox) AS gearbox, COUNT(*) AS count
+            `SELECT truck_model AS model, MAX(NULLIF(cabin, '')) AS cabin, MAX(NULLIF(engine, '')) AS engine,
+                    MAX(NULLIF(gearbox, '')) AS gearbox, COUNT(*) AS count
              FROM trucks GROUP BY truck_model ORDER BY LOWER(truck_model)`);
+        const truckPhotos = await pool.query(
+            `SELECT truck_model AS model, photo AS p FROM trucks WHERE photo IS NOT NULL AND photo <> ''
+             UNION ALL SELECT truck_model, photo_back FROM trucks WHERE photo_back IS NOT NULL AND photo_back <> ''`);
         const trailers = await pool.query(
-            `SELECT trailer_model AS model, MIN(photo) AS photo, MAX(description) AS description
+            `SELECT trailer_model AS model, MAX(NULLIF(description, '')) AS description
              FROM trailers GROUP BY trailer_model ORDER BY LOWER(trailer_model)`);
+        const trailerPhotos = await pool.query(
+            `SELECT trailer_model AS model, photo AS p FROM trailers WHERE photo IS NOT NULL AND photo <> ''
+             UNION ALL SELECT trailer_model, photo_back FROM trailers WHERE photo_back IS NOT NULL AND photo_back <> ''`);
+        const photosOf = rows => {
+            const m = new Map();
+            for (const r of rows) {
+                const u = toPublicPhoto(r.p);
+                if (!u) continue;
+                if (!m.has(r.model)) m.set(r.model, []);
+                if (!m.get(r.model).includes(u)) m.get(r.model).push(u);
+            }
+            return m;
+        };
+        const tp = photosOf(truckPhotos.rows), rp = photosOf(trailerPhotos.rows);
         const data = {
             totalKm: parseInt(jobs.rows[0].km) || 0,
             totalDeliveries: parseInt(jobs.rows[0].n) || 0,
             drivers: parseInt(drivers.rows[0].n) || 0,
             ranking,
-            trucks: trucks.rows.map(t => ({ model: t.model, photo: toPublicPhoto(t.photo), cabin: t.cabin, engine: t.engine, gearbox: t.gearbox, count: parseInt(t.count) || 1 })),
-            trailers: trailers.rows.map(t => ({ model: t.model, photo: toPublicPhoto(t.photo), description: t.description || '' }))
+            trucks: trucks.rows.map(t => ({ model: t.model, photos: tp.get(t.model) || [], cabin: t.cabin, engine: t.engine, gearbox: t.gearbox, count: parseInt(t.count) || 1 })),
+            trailers: trailers.rows.map(t => ({ model: t.model, photos: rp.get(t.model) || [], description: t.description || '' }))
         };
         publicOverviewCache = { t: Date.now(), data };
         res.json(data);
@@ -630,7 +687,7 @@ app.get('/api/my-rank', requireLogin, async (req, res) => {
 });
 
 app.get('/api/users', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         const result = await pool.query(
             `SELECT u.id, u.username, u.email, u.role, u.status, u.rank_override,
@@ -725,8 +782,36 @@ app.post('/api/admin/import-jobs', requireAdmin, async (req, res) => {
     } finally { client.release(); }
 });
 
+// Nadawanie ról: tylko Szef. Zmiana wylogowuje użytkownika, żeby nowa rola zadziałała od razu po ponownym logowaniu.
+const ROLE_LABELS = { driver: 'Kierowca', manager: 'Kierownik', admin: 'Szef' };
+app.put('/api/users/:id/role', requireLogin, async (req, res) => {
+    if (req.session.role !== 'admin') return res.status(403).json({ error: 'Role może nadawać tylko Szef.' });
+    const role = String(req.body.role || '');
+    const id = parseInt(req.params.id);
+    if (!ROLE_LABELS[role]) return res.status(400).json({ error: 'Nieprawidłowa rola.' });
+    if (id === req.session.userId) return res.status(400).json({ error: 'Nie możesz zmienić własnej roli.' });
+    try {
+        const u = await pool.query('SELECT id, username, role, status FROM users WHERE id = $1', [id]);
+        if (u.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono użytkownika.' });
+        const target = u.rows[0];
+        if (target.status !== 'approved') return res.status(400).json({ error: 'Rolę można nadać tylko aktywnemu (zatwierdzonemu) kontu.' });
+        if (target.role === role) return res.json({ success: true });
+        if (target.role === 'admin' && role !== 'admin') {
+            const others = await pool.query("SELECT COUNT(*) AS n FROM users WHERE role = 'admin' AND status = 'approved' AND id <> $1", [id]);
+            if (parseInt(others.rows[0].n) === 0) return res.status(400).json({ error: 'W firmie musi zostać przynajmniej jeden Szef.' });
+        }
+        await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);
+        await addNotification(id, 'Zmiana roli', `Twoja rola w firmie to teraz: ${ROLE_LABELS[role]}. Zaloguj się ponownie, żeby zmiana zadziałała.`, null, 'jobs');
+        await killUserSessions(id);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Błąd zmiany roli:', e.message);
+        res.status(500).json({ error: 'Błąd zmiany roli.' });
+    }
+});
+
 app.put('/api/users/:id/approve', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
         await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!', null, 'jobs');
@@ -749,6 +834,7 @@ app.put('/api/users/:id/fire', requireAdmin, async (req, res) => {
         const u = await pool.query('SELECT id, username, role FROM users WHERE id = $1', [id]);
         if (u.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono użytkownika' });
         if (u.rows[0].role === 'admin') return res.status(400).json({ error: 'Nie można zwolnić konta Szefa.' });
+        if (!canManageUser(req.session.role, u.rows[0].role)) return res.status(403).json({ error: 'Kierownika może zwolnić tylko Szef.' });
 
         const username = u.rows[0].username;
         await pool.query("UPDATE users SET status = 'fired' WHERE id = $1", [id]);
@@ -775,8 +861,11 @@ app.put('/api/users/:id/password', requireAdmin, async (req, res) => {
     if (pw.length < 6) return res.status(400).json({ error: 'Hasło musi mieć minimum 6 znaków.' });
 
     try {
-        const u = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+        const u = await pool.query('SELECT id, role FROM users WHERE id = $1', [id]);
         if (u.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono użytkownika' });
+        if (id !== req.session.userId && !canManageUser(req.session.role, u.rows[0].role)) {
+            return res.status(403).json({ error: 'Hasło Szefa lub Kierownika może zmienić tylko Szef (albo on sam).' });
+        }
 
         const hashed = await bcrypt.hash(pw, 10);
         await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, id]);
@@ -797,6 +886,7 @@ app.delete('/api/users/:id', requireAdmin, async (req, res) => {
         const u = await pool.query('SELECT role, status FROM users WHERE id = $1', [id]);
         if (u.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono użytkownika' });
         if (u.rows[0].role === 'admin') return res.status(400).json({ error: 'Nie można usunąć konta Szefa.' });
+        if (!canManageUser(req.session.role, u.rows[0].role)) return res.status(403).json({ error: 'Kierownika może usunąć tylko Szef.' });
         if (u.rows[0].status === 'approved') return res.status(400).json({ error: 'Najpierw zwolnij kierowcę, potem możesz usunąć konto na stałe.' });
 
         await killUserSessions(id);
@@ -813,7 +903,7 @@ app.get('/api/documents', requireLogin, async (req, res) => {
 });
 
 app.post('/api/documents', upload.single('doc_file'), async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     const { title, category, content } = req.body;
     let fileUrl = null;
 
@@ -828,7 +918,7 @@ app.post('/api/documents', upload.single('doc_file'), async (req, res) => {
 });
 
 app.delete('/api/documents/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('DELETE FROM documents WHERE id = $1', [req.params.id]);
         res.json({ success: true });
@@ -841,7 +931,7 @@ app.get('/api/dispatches', async (req, res) => {
         let query = '';
         let params = [];
 
-        if (req.session.role === 'admin') {
+        if (isStaff(req.session.role)) {
             query = 'SELECT * FROM dispatches ORDER BY id DESC';
         } else {
             query = 'SELECT * FROM dispatches WHERE assigned_to = $1 OR assigned_to = $2 OR accepted_by_id = $3 ORDER BY id DESC';
@@ -854,7 +944,7 @@ app.get('/api/dispatches', async (req, res) => {
 });
 
 app.post('/api/dispatches', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     const { assigned_to, start_city, end_city, truck_name, notes, start_country, end_country } = req.body;
     try {
         const newDispatch = await pool.query(
@@ -885,7 +975,7 @@ app.post('/api/dispatches', async (req, res) => {
 });
 
 app.put('/api/dispatches/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     const { assigned_to, start_city, end_city, truck_name, notes, start_country, end_country } = req.body;
     try {
         await pool.query(
@@ -897,7 +987,7 @@ app.put('/api/dispatches/:id', async (req, res) => {
 });
 
 app.delete('/api/dispatches/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
         res.json({ success: true });
@@ -944,7 +1034,7 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
         if (dispRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono zlecenia' });
         const disp = dispRes.rows[0];
 
-        if (req.session.role !== 'admin' && disp.accepted_by_id !== req.session.userId) {
+        if (!isStaff(req.session.role) && disp.accepted_by_id !== req.session.userId) {
             return res.status(403).json({ error: 'To zlecenie nie zostało przyjęte przez Ciebie.' });
         }
 
@@ -959,7 +1049,7 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
 
         await pool.query('DELETE FROM dispatches WHERE id = $1', [req.params.id]);
 
-        const admins = await pool.query("SELECT id FROM users WHERE role = 'admin'");
+        const admins = await pool.query("SELECT id FROM users WHERE role IN ('admin','manager')");
         for (let adm of admins.rows) {
             await addNotification(adm.id, 'Nowy Raport Trasy', `Kierowca @${req.session.username} przesłał raport trasy do weryfikacji.`, null, 'jobs');
         }
@@ -982,7 +1072,7 @@ app.post('/api/expenses', async (req, res) => {
     const { type, amount, description, expense_date, liters } = req.body;
     const parsedAmount = parseInt(amount) || 0;
     if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
-    if (type === 'purchase' && req.session.role !== 'admin') return res.status(403).json({ error: 'Zakupy pojazdów może zapisywać tylko Szef.' });
+    if (type === 'purchase' && !isStaff(req.session.role)) return res.status(403).json({ error: 'Zakupy pojazdów może zapisywać tylko Szef.' });
 
     try {
         await pool.query(
@@ -1006,7 +1096,7 @@ app.put('/api/expenses/:id', async (req, res) => {
         const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
         if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
 
-        if (req.session.role !== 'admin' && expCheck.rows[0].user_id !== req.session.userId) {
+        if (!isStaff(req.session.role) && expCheck.rows[0].user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Możesz edytować tylko własne wydatki!' });
         }
 
@@ -1028,7 +1118,7 @@ app.delete('/api/expenses/:id', async (req, res) => {
         if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
 
         const isOwner = expCheck.rows[0].user_id === req.session.userId;
-        const isAdmin = userRole === 'admin';
+        const isAdmin = isStaff(userRole);
 
         if (!isAdmin && !isOwner) {
             return res.status(403).json({ error: 'Możesz usuwać tylko własne wydatki lub musisz być szefem!' });
@@ -1162,7 +1252,7 @@ app.get('/api/jobs', requireLogin, async (req, res) => {
 });
 
 app.put('/api/jobs/:id/approve', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     try {
         const jobRes = await pool.query('SELECT user_id, start_city, end_city FROM jobs WHERE id = $1', [req.params.id]);
         if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono trasy' });
@@ -1186,7 +1276,7 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
 });
 
 app.delete('/api/jobs/:id', async (req, res) => {
-    if (!req.session.userId || req.session.role !== 'admin') return res.status(403).json({ error: 'Brak uprawnień' });
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     const { reason } = req.body;
     try {
         const jobRes = await pool.query('SELECT user_id, start_city, end_city FROM jobs WHERE id = $1', [req.params.id]);
