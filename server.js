@@ -587,9 +587,14 @@ app.put('/api/requirements', requireAdmin, async (req, res) => {
 const PUBLIC_SHOW_RANKING = true;
 let publicOverviewCache = { t: 0, data: null };
 
+// Zdjęcia pojazdów zapisane różnymi metodami: w bazie (/api/files/ID), starsze w folderze /uploads/ albo jako pełny adres.
 function toPublicPhoto(p) {
-    const m = /^\/api\/files\/(\d+)$/.exec(String(p || ''));
-    if (m) return '/api/public/photo/' + m[1];
+    const str = String(p || '').trim();
+    if (!str) return null;
+    const m = /(?:^|\/)api\/files\/(\d+)$/.exec(str);
+    if (m) return '/api/public/photo/' + m[1];                                   // plik w bazie (publiczna, ograniczona trasa)
+    if (/^\/uploads\/[\w.\-%() ]+$/.test(str) && !str.includes('..')) return str;  // starszy plik statyczny
+    if (/^https?:\/\/[^\s"'<>]+$/i.test(str)) return str;                         // pełny adres
     return null;
 }
 
@@ -639,8 +644,8 @@ app.get('/api/public/overview', async (req, res) => {
             totalDeliveries: parseInt(jobs.rows[0].n) || 0,
             drivers: parseInt(drivers.rows[0].n) || 0,
             ranking,
-            trucks: trucks.rows.map(t => ({ model: t.model, photos: tp.get(t.model) || [], cabin: t.cabin, engine: t.engine, gearbox: t.gearbox, count: parseInt(t.count) || 1 })),
-            trailers: trailers.rows.map(t => ({ model: t.model, photos: rp.get(t.model) || [], description: t.description || '' }))
+            trucks: trucks.rows.map(t => ({ model: t.model, photo: (tp.get(t.model) || [])[0] || null, photos: tp.get(t.model) || [], cabin: t.cabin, engine: t.engine, gearbox: t.gearbox, count: parseInt(t.count) || 1 })),
+            trailers: trailers.rows.map(t => ({ model: t.model, photo: (rp.get(t.model) || [])[0] || null, photos: rp.get(t.model) || [], description: t.description || '' }))
         };
         publicOverviewCache = { t: Date.now(), data };
         res.json(data);
@@ -657,9 +662,9 @@ app.get('/api/public/photo/:id', async (req, res) => {
         const id = parseInt(req.params.id);
         if (!Number.isInteger(id)) return res.status(404).send('Nie znaleziono');
         const r = await pool.query(
-            `SELECT mime, data FROM files WHERE id = $1 AND ('/api/files/' || id::text) IN (
-                SELECT photo FROM trucks UNION SELECT photo_back FROM trucks
-                UNION SELECT photo FROM trailers UNION SELECT photo_back FROM trailers)`, [id]);
+            `SELECT f.mime, f.data FROM files f WHERE f.id = $1 AND (
+                EXISTS (SELECT 1 FROM trucks t WHERE t.photo LIKE '%/api/files/' || f.id::text OR t.photo_back LIKE '%/api/files/' || f.id::text)
+                OR EXISTS (SELECT 1 FROM trailers t WHERE t.photo LIKE '%/api/files/' || f.id::text OR t.photo_back LIKE '%/api/files/' || f.id::text))`, [id]);
         if (r.rows.length === 0) return res.status(404).send('Nie znaleziono');
         res.set('Content-Type', r.rows[0].mime);
         res.set('X-Content-Type-Options', 'nosniff');
