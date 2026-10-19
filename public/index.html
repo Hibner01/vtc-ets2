@@ -3046,6 +3046,8 @@ async function importJobs(dryRun) {
 }
 
 /* ===== Wirtualny CMR (generowany automatycznie, zamiast skanu) ===== */
+// Pieczątka firmowa wstawiana w polu 23 (przewoźnik). To ten sam plik, który jest do pobrania w zakładce Dokumenty.
+const CMR_STAMP_URL = '/uploads/pieczatka.jpg';
 const jobsCache = {};
 function cacheJobs(list) { (list || []).forEach(j => { jobsCache[j.id] = j; }); }
 function openVirtualCmr(jobId) {
@@ -3053,6 +3055,7 @@ function openVirtualCmr(jobId) {
     if (!j) return alert('Nie znaleziono danych trasy. Odśwież stronę.');
     const e = escapeHtml;
     const num = 'MZ/' + (new Date().getFullYear()) + '/' + String(j.id).padStart(5, '0');
+    const stampUrl = window.location.origin + CMR_STAMP_URL;
     const box = (n, title, body, extra) => `<div class="b ${extra || ''}"><div class="n">${n}</div><div class="t">${title}</div><div class="v">${body}</div></div>`;
     const html = `<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><title>CMR ${num}</title>
 <style>
@@ -3062,7 +3065,9 @@ function openVirtualCmr(jobId) {
  .b{border:1px solid #111;padding:6px 8px;min-height:62px;position:relative}
  .b.w{grid-column:1/3} .n{position:absolute;top:4px;right:6px;font-weight:bold;font-size:12px}
  .t{font-size:10px;text-transform:uppercase;color:#444;margin-bottom:4px} .v{font-size:14px;font-weight:bold}
- .note{font-size:10px;color:#666;margin-top:10px} .sig{min-height:80px}
+ .note{font-size:10px;color:#666;margin-top:10px} .sig{min-height:110px}
+  .stamp{display:block;max-width:75%;max-height:96px;margin:4px auto 0;mix-blend-mode:multiply;transform:rotate(-4deg)}
+  img{-webkit-print-color-adjust:exact;print-color-adjust:exact}
  @media print{body{margin:10mm}}
 </style></head><body>
 <h1>LIST PRZEWOZOWY CMR / CMR CONSIGNMENT NOTE</h1>
@@ -3078,15 +3083,15 @@ function openVirtualCmr(jobId) {
  ${box(17, 'Wartość przewozu (fracht)', e(String(j.income || 0)) + ' EUR')}
  ${box(21, 'Sporządzono w', e(j.start_city) + ', ' + e((j.formatted_date || '').slice(0, 10)))}
  ${box(22, 'Podpis i pieczęć nadawcy', '', 'sig')}
- ${box(23, 'Podpis i pieczęć przewoźnika', '', 'sig')}
+ ${box(23, 'Podpis i pieczęć przewoźnika', '<img class="stamp" src="' + stampUrl + '" alt="Pieczątka Mazren Spedition" onerror="this.style.display=\'none\'">', 'sig')}
  ${box(24, 'Towar otrzymano (odbiorca)', '', 'sig w')}
 </div>
 <div class="note">Dokument wygenerowany automatycznie na potrzeby gry Euro Truck Simulator 2. Nie jest dokumentem prawnym.</div>
+<script>window.addEventListener('load', function () { setTimeout(function () { try { window.focus(); window.print(); } catch (e) {} }, 250); });<\/script>
 </body></html>`;
     const w = window.open('', '_blank');
     if (!w) return alert('Przeglądarka zablokowała nowe okno. Zezwól na wyskakujące okna dla tej strony.');
     w.document.write(html); w.document.close();
-    setTimeout(() => { try { w.focus(); w.print(); } catch (_) {} }, 400);
 }
 
 /* ===== Podgląd trasy v2 (SVG, kolor = prędkość, bez podkładu mapy) ===== */
