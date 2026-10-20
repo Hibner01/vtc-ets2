@@ -185,6 +185,13 @@ async function initDB() {
         `);
 
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token_hash CHAR(64) PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS password_reset_tokens_user_idx ON password_reset_tokens(user_id);`);
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_override INTEGER;`);
         await pool.query(`CREATE TABLE IF NOT EXISTS site_settings (
             key VARCHAR(100) PRIMARY KEY,
@@ -307,6 +314,63 @@ app.get('/api/files/:id', requireLogin, async (req, res) => {
         res.set('Cache-Control', 'private, max-age=31536000, immutable');
         res.send(r.rows[0].data);
     } catch (e) { res.status(500).send('Błąd pobierania pliku'); }
+});
+
+// Reset hasła e-mailem. W bazie zapisujemy tylko skrót jednorazowego tokenu.
+const resetRequests = new Map();
+setInterval(() => { const now = Date.now(); for (const [k, v] of resetRequests) if (v.until <= now) resetRequests.delete(k); }, 10 * 60 * 1000);
+const PASSWORD_RESET_GENERIC = 'Jeśli konto z takim adresem istnieje, wysłaliśmy instrukcję resetu hasła.';
+
+app.post('/api/password/forgot', async (req, res) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    if (!email || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Wpisz poprawny adres e-mail.' });
+    const key = req.ip + '|' + email;
+    const rate = resetRequests.get(key);
+    if (rate && rate.count >= 3 && rate.until > Date.now()) return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
+    if (rate && rate.until > Date.now()) rate.count++;
+    else resetRequests.set(key, { count: 1, until: Date.now() + 15 * 60 * 1000 });
+    try {
+        const found = await pool.query("SELECT id FROM users WHERE LOWER(email) = $1 AND status = 'approved'", [email]);
+        if (!found.rows.length) return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
+        const apiKey = process.env.RESEND_API_KEY, from = process.env.PASSWORD_RESET_FROM;
+        const baseUrl = String(process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
+        if (!apiKey || !from || !/^https:\/\//i.test(baseUrl)) {
+            console.error('Reset hasła wymaga RESEND_API_KEY, PASSWORD_RESET_FROM i PUBLIC_BASE_URL.');
+            return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
+        }
+        const token = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const userId = found.rows[0].id;
+        await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
+        await pool.query("INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 minutes')", [tokenHash, userId]);
+        const link = baseUrl + '/?resetToken=' + encodeURIComponent(token);
+        const sent = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ from, to: [email], subject: 'Reset hasła — Mazren Spedition', html: `<p>Otrzymaliśmy prośbę o zmianę hasła.</p><p><a href="${link}">Ustaw nowe hasło</a></p><p>Link wygaśnie za 30 minut. Jeśli to nie Ty, zignoruj tę wiadomość.</p>` }) });
+        if (!sent.ok) { await pool.query('DELETE FROM password_reset_tokens WHERE token_hash = $1', [tokenHash]); console.error('Wysyłka resetu hasła nie powiodła się:', sent.status); }
+        return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
+    } catch (err) { console.error('Błąd resetu hasła:', err.message); return res.json({ success: true, message: PASSWORD_RESET_GENERIC }); }
+});
+
+app.post('/api/password/reset', async (req, res) => {
+    const token = String(req.body.token || ''), password = String(req.body.password || '');
+    if (!/^[a-f0-9]{64}$/.test(token)) return res.status(400).json({ error: 'Link resetujący jest nieprawidłowy lub wygasł.' });
+    if (password.length < 10 || password.length > 200) return res.status(400).json({ error: 'Hasło musi mieć co najmniej 10 znaków.' });
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex'), client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await client.query('SELECT user_id FROM password_reset_tokens WHERE token_hash = $1 AND expires_at > NOW() FOR UPDATE', [tokenHash]);
+        if (!result.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Link resetujący jest nieprawidłowy lub wygasł.' }); }
+        const userId = result.rows[0].user_id, hash = await bcrypt.hash(password, 12);
+        await client.query('UPDATE users SET password = $1 WHERE id = $2', [hash, userId]);
+        await client.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
+        await client.query("DELETE FROM sessions WHERE (sess->>'userId')::int = $1", [userId]);
+        await client.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);
+        await client.query('COMMIT');
+        return res.json({ success: true, message: 'Hasło zostało zmienione. Zaloguj się nowym hasłem.' });
+    } catch (err) {
+        await client.query('ROLLBACK').catch(() => {});
+        console.error('Błąd ustawiania hasła:', err.message);
+        return res.status(500).json({ error: 'Nie udało się zmienić hasła. Spróbuj ponownie.' });
+    } finally { client.release(); }
 });
 
 app.post('/api/register', async (req, res) => {
