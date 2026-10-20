@@ -1962,6 +1962,9 @@
                 const res = await fetch(`/api/jobs/${jobId}/approve`, { method: 'PUT' });
                 const data = await res.json();
                 if (data.success) {
+                    if (data.discord_sent === false) {
+                        alert('Trasa została zatwierdzona, ale raport nie dotarł na Discorda. Sprawdź zmienną DISCORD_WEBHOOK_URL w Renderze.');
+                    }
                     loadAllJobs();
                 } else {
                     alert(data.error || 'Nie udało się zatwierdzić trasy.');
@@ -2742,7 +2745,7 @@
 // dodaj go jako "Release" na GitHubie i wklej tu pełny adres pliku, np.:
 // 'https://github.com/TWOJ_LOGIN/TWOJE_REPO/releases/download/v1.0/Mazren-Kierowca.zip'
 const CLIENT_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-apps-v1/Mazren-Kierowca.zip';
-const SPEDITOR_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-spedition/Mazren-Speditor.7z';
+const SPEDITOR_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-spedition/Mazren-Speditor.zip';
 async function checkClientDownload() {
     const btn = document.getElementById('client-download-btn');
     const info = document.getElementById('client-download-info');
