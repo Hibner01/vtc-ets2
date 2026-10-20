@@ -66,6 +66,79 @@ class PgSessionStore extends session.Store {
 
 const countryCode = v => (/^[A-Za-z]{2}$/.test(v || '') ? v.toUpperCase() : null);
 
+function countryFlag(code) {
+    const normalized = countryCode(code);
+    if (!normalized) return '';
+    return String.fromCodePoint(...[...normalized].map(ch => 127397 + ch.charCodeAt(0)));
+}
+
+// Publikuje kartę raportu dopiero po zatwierdzeniu trasy przez Szefa.
+// URL webhooka jest sekretem i musi być ustawiony wyłącznie w zmiennych Rendera.
+async function postApprovedJobToDiscord(job, position) {
+    const webhook = String(process.env.DISCORD_WEBHOOK_URL || '').trim();
+    if (!webhook) return false;
+
+    try {
+        const webhookUrl = new URL(webhook);
+        if (webhookUrl.protocol !== 'https:' || !['discord.com', 'discordapp.com'].includes(webhookUrl.hostname)) {
+            console.warn('Discord webhook pominięty: adres musi prowadzić do oficjalnego Discorda.');
+            return false;
+        }
+
+        const publicBaseUrl = String(process.env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+        const logoUrl = publicBaseUrl ? `${publicBaseUrl}/logo.png` : null;
+        const money = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(Number(job.income) || 0);
+        const distance = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(Number(job.distance) || 0);
+        const startFlag = countryFlag(job.start_country);
+        const endFlag = countryFlag(job.end_country);
+        const embed = {
+            title: `Dostawa #${job.id}`,
+            description: `**${job.start_city}** → **${job.end_city}**`,
+            color: 0x2684ff,
+            author: { name: String(job.username || 'Kierowca').slice(0, 256) },
+            fields: [
+                { name: 'Z', value: `${startFlag ? startFlag + ' ' : ''}${job.start_city}`, inline: true },
+                { name: 'Do', value: `${endFlag ? endFlag + ' ' : ''}${job.end_city}`, inline: true },
+                { name: 'Towar', value: String(job.cargo || 'Standard').slice(0, 1024), inline: false },
+                { name: 'Zatwierdzony dystans', value: `${distance} km`, inline: true },
+                { name: 'Przychód', value: `${money} €`, inline: true },
+                { name: 'Pozycja w firmie', value: position ? `#${position}` : '—', inline: true }
+            ],
+            footer: { text: 'Mazren Spedition • Zatwierdzono przez stronę/aplikację', ...(logoUrl ? { icon_url: logoUrl } : {}) },
+            timestamp: new Date().toISOString(),
+            ...(logoUrl ? { thumbnail: { url: logoUrl } } : {})
+        };
+        const payload = {
+            username: 'Mazren Spedition',
+            embeds: [embed],
+            ...(logoUrl ? { avatar_url: logoUrl } : {})
+        };
+
+        webhookUrl.searchParams.set('wait', 'true');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        let response;
+        try {
+            response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
+        if (!response.ok) {
+            console.warn(`Discord webhook nie przyjął trasy #${job.id} (HTTP ${response.status}).`);
+            return false;
+        }
+        return true;
+    } catch (err) {
+        console.warn(`Nie udało się wysłać trasy #${job.id} na Discorda: ${err.message}`);
+        return false;
+    }
+}
+
 // Dotychczasowa flota (wcześniej wpisana na sztywno w index.html) - zasiewana do bazy JEDEN raz.
 const DEFAULT_TRUCKS = [
     { model: "SCANIA R500", cabin: "Highline", chassis: "4x2 type 2", engine: "DC13 165 500 Euro 6", gearbox: "G33CMR", interior: "Exclusive Dark Eu", accessories: "Własne", photo: "/scaniarprzod.jpg", photoBack: "/scaniartyl.jpg", plates: ["WRA 8001S", "WRA 8002S", "WRA 8003S"] },
@@ -1325,12 +1398,38 @@ app.get('/api/jobs', requireLogin, async (req, res) => {
 app.put('/api/jobs/:id/approve', async (req, res) => {
     if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     try {
-        const jobRes = await pool.query('SELECT user_id, start_city, end_city FROM jobs WHERE id = $1', [req.params.id]);
+        const jobRes = await pool.query(
+            `SELECT jobs.*, users.username FROM jobs JOIN users ON users.id = jobs.user_id WHERE jobs.id = $1`,
+            [req.params.id]
+        );
         if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono trasy' });
 
         const job = jobRes.rows[0];
+        if (job.status === 'approved') return res.json({ success: true, already_approved: true });
+
         const kmBefore = parseInt((await pool.query("SELECT COALESCE(SUM(distance),0) AS km FROM jobs WHERE user_id = $1 AND status = 'approved'", [job.user_id])).rows[0].km) || 0;
-        await pool.query("UPDATE jobs SET status = 'approved' WHERE id = $1", [req.params.id]);
+        const approval = await pool.query(
+            "UPDATE jobs SET status = 'approved' WHERE id = $1 AND status <> 'approved' RETURNING id",
+            [req.params.id]
+        );
+        if (approval.rowCount === 0) return res.json({ success: true, already_approved: true });
+
+        // Miejsce w rankingu liczymy po zatwierdzonych kilometrach. Błąd rankingu
+        // nie może zatrzymać publikacji ani samego zatwierdzenia raportu.
+        let position = null;
+        try {
+            const ranking = await pool.query(
+                `SELECT position FROM (
+                    SELECT user_id, RANK() OVER (ORDER BY SUM(distance) DESC) AS position
+                    FROM jobs WHERE status = 'approved' GROUP BY user_id
+                 ) ranked WHERE user_id = $1`,
+                [job.user_id]
+            );
+            position = parseInt(ranking.rows[0] && ranking.rows[0].position, 10) || null;
+        } catch (rankErr) {
+            console.warn('Nie udało się pobrać pozycji kierowcy do raportu Discord:', rankErr.message);
+        }
+        const discordSent = await postApprovedJobToDiscord(job, position);
         
         await addNotification(job.user_id, 'Trasa Zatwierdzona', `Szef zatwierdził Twoją trasę: ${job.start_city} ➔ ${job.end_city}`, null, 'jobs');
 
@@ -1342,7 +1441,7 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
                 await addNotification(job.user_id, 'Awans!', `Gratulacje! Awansowałeś do rangi: ${RANKS[autoRankIndex(kmAfter)].name}`, null, 'jobs');
             }
         }
-        res.json({ success: true });
+        res.json({ success: true, discord_sent: discordSent });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
 });
 
