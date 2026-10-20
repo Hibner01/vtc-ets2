@@ -479,16 +479,15 @@
                 <div class="text-white small"><span data-i18n="noAccount">Nie masz jeszcze konta?</span> <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('register')" data-i18n="registerBtn">Zarejestruj się</a></div>
             </div>
             <div id="auth-forgot-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display:none;width:100%;max-width:460px;border-radius:28px;">
-                <h3 class="fw-bold mb-1 text-white" data-i18n="forgotTitle">Odzyskiwanie hasła</h3><p class="text-light small mb-4" data-i18n="forgotHint">Podaj e-mail przypisany do konta.</p>
-                <div class="mb-3 text-start"><label class="form-label text-white small ms-2 fw-semibold" data-i18n="emailAddress">Adres e-mail</label><input type="email" id="forgot-email" class="form-control" autocomplete="email"></div>
-                <button class="btn btn-pill-white w-100 mb-3" onclick="requestPasswordReset()" data-i18n="sendReset">Wyślij link resetujący</button><div id="forgot-message" class="text-white small mb-3" aria-live="polite"></div>
+                <h3 class="fw-bold mb-1 text-white">Nie pamiętasz hasła?</h3><p class="text-light small mb-4">Podaj login lub e-mail. Szef zobaczy prośbę po zalogowaniu. Dla pewności skontaktuj się z nim też bezpośrednio.</p>
+                <div class="mb-3 text-start"><label class="form-label text-white small ms-2 fw-semibold">Login lub e-mail</label><input type="text" id="forgot-login" class="form-control" autocomplete="username"></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="requestPasswordReset()">Wyślij prośbę do szefa</button><div id="forgot-message" class="text-white small mb-3" aria-live="polite"></div>
                 <a href="#" class="text-white text-decoration-underline" onclick="showAuthForm('login'); return false;" data-i18n="backToLogin">Wróć do logowania</a>
             </div>
-            <div id="auth-reset-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display:none;width:100%;max-width:460px;border-radius:28px;">
-                <h3 class="fw-bold mb-1 text-white" data-i18n="resetTitle">Ustaw nowe hasło</h3><p class="text-light small mb-4" data-i18n="resetHint">Wybierz hasło o długości co najmniej 10 znaków.</p>
-                <input type="password" id="reset-password" class="form-control mb-3" autocomplete="new-password" placeholder="Nowe hasło (min. 10 znaków)"><input type="password" id="reset-password-confirm" class="form-control mb-3" autocomplete="new-password" placeholder="Powtórz nowe hasło">
-                <button class="btn btn-pill-white w-100 mb-3" onclick="submitPasswordReset()" data-i18n="savePassword">Zapisz nowe hasło</button><div id="reset-message" class="text-white small mb-3" aria-live="polite"></div>
-                <a href="#" class="text-white text-decoration-underline" onclick="showAuthForm('login'); return false;" data-i18n="backToLogin">Wróć do logowania</a>
+            <div id="auth-change-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display:none;width:100%;max-width:460px;border-radius:28px;">
+                <h3 class="fw-bold mb-1 text-white">Ustaw własne hasło</h3><p class="text-light small mb-4">Szef zresetował hasło. Ustaw nowe, aby przejść dalej. Minimum 10 znaków.</p>
+                <input type="password" id="change-password" class="form-control mb-3" autocomplete="new-password" placeholder="Nowe hasło (min. 10 znaków)"><input type="password" id="change-password-confirm" class="form-control mb-3" autocomplete="new-password" placeholder="Powtórz nowe hasło">
+                <button class="btn btn-pill-white w-100 mb-3" onclick="submitForcedPasswordChange()">Zapisz i kontynuuj</button><div id="change-password-message" class="text-white small mb-3" aria-live="polite"></div>
             </div>
 
             <div id="auth-register-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
@@ -1196,6 +1195,10 @@
                     <div id="tab-management" style="display:none;">
                         <div class="bg-card-bms p-4">
                             <h4 class="fw-bold mb-3 text-warning" data-i18n="managementHeader">Zarządzanie Kontami Kierowców</h4>
+                            <div class="border border-warning rounded-3 p-3 mb-3">
+                                <h5 class="fw-bold text-warning mb-2"><i class="fa-solid fa-key me-2"></i>Prośby o reset hasła</h5>
+                                <div id="password-reset-requests" class="small text-white-50">Ładowanie…</div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-dark align-middle">
                                     <thead>
@@ -1505,8 +1508,8 @@
             document.getElementById('auth-login-card').style.display = type === 'login' ? 'block' : 'none';
             document.getElementById('auth-register-card').style.display = type === 'register' ? 'block' : 'none';
             document.getElementById('auth-forgot-card').style.display = type === 'forgot' ? 'block' : 'none';
-            document.getElementById('auth-reset-card').style.display = type === 'reset' ? 'block' : 'none';
-            section.className = (type === 'login' || type === 'register' || type === 'forgot' || type === 'reset') ? 'auth-bg-side flex-column justify-content-between align-items-center py-5' : 'auth-bg-main flex-column justify-content-between align-items-center py-5';
+            document.getElementById('auth-change-card').style.display = type === 'change' ? 'block' : 'none';
+            section.className = (type === 'login' || type === 'register' || type === 'forgot' || type === 'change') ? 'auth-bg-side flex-column justify-content-between align-items-center py-5' : 'auth-bg-main flex-column justify-content-between align-items-center py-5';
         }
 
         function exitApp() {
@@ -1571,7 +1574,6 @@
         }
 
         async function checkUser() {
-            if (new URLSearchParams(location.search).has('resetToken')) { showAuthForm('reset'); return; }
             try {
                 const res = await fetch('/api/user');
                 if (res.ok) {
@@ -1579,6 +1581,13 @@
                     currentUserId = data.id;
                     currentUserRole = data.role;
                     currentUsername = data.username;
+
+                    if (data.mustChangePassword) {
+                        document.getElementById('auth-section').style.display = 'flex';
+                        document.getElementById('dashboard-section').style.display = 'none';
+                        showAuthForm('change');
+                        return;
+                    }
 
                     document.getElementById('auth-section').style.display = 'none';
                     document.getElementById('dashboard-section').style.display = 'block';
@@ -1739,19 +1748,20 @@
         }
 
         async function requestPasswordReset() {
-            const email = document.getElementById('forgot-email').value.trim(), box = document.getElementById('forgot-message');
+            const login = document.getElementById('forgot-login').value.trim(), box = document.getElementById('forgot-message');
             box.textContent = '';
-            try { const r = await fetch('/api/password/forgot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) }); const d = await r.json(); box.textContent = d.message || d.error || 'Nie udało się wysłać prośby.'; }
+            if (!login) { box.textContent = 'Wpisz login lub e-mail.'; return; }
+            try { const r = await fetch('/api/password/forgot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ login }) }); const d = await r.json(); box.textContent = d.message || d.error || 'Nie udało się zapisać prośby.'; }
             catch (e) { box.textContent = 'Błąd połączenia. Spróbuj ponownie.'; }
         }
-        async function submitPasswordReset() {
-            const token = new URLSearchParams(location.search).get('resetToken') || '', password = document.getElementById('reset-password').value, confirm = document.getElementById('reset-password-confirm').value, box = document.getElementById('reset-message');
+        async function submitForcedPasswordChange() {
+            const password = document.getElementById('change-password').value, confirmPassword = document.getElementById('change-password-confirm').value, box = document.getElementById('change-password-message');
             box.textContent = '';
-            if (password !== confirm) { box.textContent = 'Hasła nie są identyczne.'; return; }
+            if (password !== confirmPassword) { box.textContent = 'Hasła nie są identyczne.'; return; }
             try {
-                const r = await fetch('/api/password/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }) }); const d = await r.json();
+                const r = await fetch('/api/password/change', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, confirmPassword }) }); const d = await r.json();
                 box.textContent = d.message || d.error || 'Nie udało się zmienić hasła.';
-                if (r.ok) { history.replaceState(null, '', location.pathname); document.getElementById('reset-password').value = ''; document.getElementById('reset-password-confirm').value = ''; }
+                if (r.ok) { document.getElementById('change-password').value = ''; document.getElementById('change-password-confirm').value = ''; setTimeout(() => location.reload(), 600); }
             } catch (e) { box.textContent = 'Błąd połączenia. Spróbuj ponownie.'; }
         }
 
@@ -2430,6 +2440,7 @@
                     return;
                 }
                 mgmtUsers = await res.json();
+                await loadPasswordResetRequests();
                 await ensureRanks();
                 allUsersList = mgmtUsers;
                 populateDispatcherDropdowns();
@@ -2483,6 +2494,21 @@
 
         const mgmtUser = id => mgmtUsers.find(u => u.id === id) || { username: '?' };
 
+        async function loadPasswordResetRequests() {
+            const box = document.getElementById('password-reset-requests');
+            if (!box) return;
+            try {
+                const r = await fetch('/api/password/reset-requests');
+                if (!r.ok) { box.textContent = 'Nie udało się pobrać próśb.'; return; }
+                const requests = await r.json();
+                if (!requests.length) { box.textContent = 'Brak nowych próśb.'; return; }
+                box.innerHTML = '<div class="table-responsive"><table class="table table-dark table-sm align-middle mb-0"><thead><tr><th>Kierowca</th><th>Zgłoszono</th><th>Akcja</th></tr></thead><tbody>' + requests.map(x => {
+                    const when = new Date(x.requested_at).toLocaleString('pl-PL');
+                    return `<tr><td>${escapeHtml(x.username)} <span class="text-white-50">(${escapeHtml(x.email || 'brak e-maila')})</span></td><td>${escapeHtml(when)}</td><td><button class="btn btn-sm btn-warning" onclick="mgmtResetPassword(${Number(x.user_id)})"><i class="fa-solid fa-key me-1"></i>Wygeneruj hasło tymczasowe</button></td></tr>`;
+                }).join('') + '</tbody></table></div>';
+            } catch (e) { box.textContent = 'Błąd połączenia.'; }
+        }
+
         async function mgmtApprove(id) {
             const r = await apiJson(`/api/users/${id}/approve`, 'PUT');
             if (r) loadManagementUsers();
@@ -2513,6 +2539,7 @@
             if (!r) return;
             if (r.password) alert(`Nowe hasło dla @${u.username}:\n\n${r.password}\n\nPrzekaż je kierowcy (np. na Discordzie). Hasło wyświetla się tylko teraz!`);
             else alert(`Hasło dla @${u.username} zostało zmienione.`);
+            loadPasswordResetRequests();
         }
 
         async function loadExpenses() {
@@ -2714,8 +2741,8 @@
 // Plik wgraj do folderu public/download/ w repozytorium. Gdy jest za duży do wgrania przez przeglądarkę GitHuba (limit 25 MB),
 // dodaj go jako "Release" na GitHubie i wklej tu pełny adres pliku, np.:
 // 'https://github.com/TWOJ_LOGIN/TWOJE_REPO/releases/download/v1.0/Mazren-Kierowca.zip'
-const CLIENT_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-apps-v1/Mazren-Kierowca.zip';
-const SPEDITOR_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-spedition/Mazren-Speditor.zip';
+const CLIENT_DOWNLOAD_URL = '/download/Mazren-Kierowca.zip';
+const SPEDITOR_DOWNLOAD_URL = '/download/Mazren-Speditor.zip';
 async function checkClientDownload() {
     const btn = document.getElementById('client-download-btn');
     const info = document.getElementById('client-download-info');
@@ -3241,7 +3268,6 @@ async function showRoute(jobId) {
             '</div>';
     } catch (e) { body.innerHTML = '<div class="text-danger">Błąd wczytywania trasy.</div>'; }
 }
-if (new URLSearchParams(location.search).has('resetToken')) showAuthForm('reset');
 </script>
 </body>
 </html>
