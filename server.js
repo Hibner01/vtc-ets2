@@ -185,13 +185,15 @@ async function initDB() {
         `);
 
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
-        await pool.query(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
-            token_hash CHAR(64) PRIMARY KEY,
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false;`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS password_reset_requests (
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            expires_at TIMESTAMP NOT NULL,
-            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            status VARCHAR(20) NOT NULL DEFAULT 'open'
         );`);
-        await pool.query(`CREATE INDEX IF NOT EXISTS password_reset_tokens_user_idx ON password_reset_tokens(user_id);`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS password_reset_requests_open_idx ON password_reset_requests(status, requested_at);`);
+        await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS password_reset_requests_one_open_idx ON password_reset_requests(user_id) WHERE status = 'open';`);
         await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_override INTEGER;`);
         await pool.query(`CREATE TABLE IF NOT EXISTS site_settings (
             key VARCHAR(100) PRIMARY KEY,
@@ -265,6 +267,15 @@ app.use(session({
     cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: 'auto' }
 }));
 
+// Forced password change gate: only profile check, password update and logout remain available.
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api/') && req.session.userId && req.session.mustChangePassword &&
+        !['/api/user', '/api/password/change', '/api/logout'].includes(req.path)) {
+        return res.status(403).json({ error: 'Najpierw ustaw nowe hasło.', mustChangePassword: true });
+    }
+    next();
+});
+
 // sprzątanie wygasłych sesji co godzinę
 setInterval(() => { pool.query('DELETE FROM sessions WHERE expire < NOW()').catch(() => {}); }, 60 * 60 * 1000);
 
@@ -317,60 +328,46 @@ app.get('/api/files/:id', requireLogin, async (req, res) => {
 });
 
 // Reset hasła e-mailem. W bazie zapisujemy tylko skrót jednorazowego tokenu.
-const resetRequests = new Map();
-setInterval(() => { const now = Date.now(); for (const [k, v] of resetRequests) if (v.until <= now) resetRequests.delete(k); }, 10 * 60 * 1000);
-const PASSWORD_RESET_GENERIC = 'Jeśli konto z takim adresem istnieje, wysłaliśmy instrukcję resetu hasła.';
-
+const resetRequestLimits = new Map();
+setInterval(() => { const now = Date.now(); for (const [k, v] of resetRequestLimits) if (v.until <= now) resetRequestLimits.delete(k); }, 10 * 60 * 1000);
 app.post('/api/password/forgot', async (req, res) => {
-    const email = String(req.body.email || '').trim().toLowerCase();
-    if (!email || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Wpisz poprawny adres e-mail.' });
-    const key = req.ip + '|' + email;
-    const rate = resetRequests.get(key);
-    if (rate && rate.count >= 3 && rate.until > Date.now()) return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
-    if (rate && rate.until > Date.now()) rate.count++;
-    else resetRequests.set(key, { count: 1, until: Date.now() + 15 * 60 * 1000 });
+    const login = String(req.body.login || '').trim().toLowerCase();
+    if (!login || login.length > 255) return res.status(400).json({ error: 'Wpisz swój login lub e-mail.' });
+    const key = req.ip + '|' + login, rate = resetRequestLimits.get(key);
+    if (rate && rate.count >= 3 && rate.until > Date.now()) return res.status(429).json({ error: 'Za dużo próśb. Skontaktuj się bezpośrednio z szefem.' });
+    if (rate && rate.until > Date.now()) rate.count++; else resetRequestLimits.set(key, { count: 1, until: Date.now() + 15 * 60 * 1000 });
     try {
-        const found = await pool.query("SELECT id FROM users WHERE LOWER(email) = $1 AND status = 'approved'", [email]);
-        if (!found.rows.length) return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
-        const apiKey = process.env.RESEND_API_KEY, from = process.env.PASSWORD_RESET_FROM;
-        const baseUrl = String(process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
-        if (!apiKey || !from || !/^https:\/\//i.test(baseUrl)) {
-            console.error('Reset hasła wymaga RESEND_API_KEY, PASSWORD_RESET_FROM i PUBLIC_BASE_URL.');
-            return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
+        const user = await pool.query("SELECT id, username FROM users WHERE (LOWER(username) = $1 OR LOWER(email) = $1) AND status = 'approved'", [login]);
+        if (user.rows.length) {
+            const created = await pool.query("INSERT INTO password_reset_requests (user_id) VALUES ($1) ON CONFLICT (user_id) WHERE status = 'open' DO NOTHING RETURNING id", [user.rows[0].id]);
+            if (created.rows.length) {
+                const admins = await pool.query("SELECT id FROM users WHERE role IN ('admin', 'manager') AND status = 'approved'");
+                for (const admin of admins.rows) await addNotification(admin.id, 'Prośba o reset hasła', `Kierowca @${user.rows[0].username} prosi o reset hasła. Otwórz Zarządzanie.`, null, 'management');
+            }
         }
-        const token = crypto.randomBytes(32).toString('hex');
-        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-        const userId = found.rows[0].id;
-        await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
-        await pool.query("INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 minutes')", [tokenHash, userId]);
-        const link = baseUrl + '/?resetToken=' + encodeURIComponent(token);
-        const sent = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ from, to: [email], subject: 'Reset hasła — Mazren Spedition', html: `<p>Otrzymaliśmy prośbę o zmianę hasła.</p><p><a href="${link}">Ustaw nowe hasło</a></p><p>Link wygaśnie za 30 minut. Jeśli to nie Ty, zignoruj tę wiadomość.</p>` }) });
-        if (!sent.ok) { await pool.query('DELETE FROM password_reset_tokens WHERE token_hash = $1', [tokenHash]); console.error('Wysyłka resetu hasła nie powiodła się:', sent.status); }
-        return res.json({ success: true, message: PASSWORD_RESET_GENERIC });
-    } catch (err) { console.error('Błąd resetu hasła:', err.message); return res.json({ success: true, message: PASSWORD_RESET_GENERIC }); }
+        res.json({ success: true, message: 'Jeśli konto istnieje i jest aktywne, prośba trafiła do szefa. Skontaktuj się z nim też bezpośrednio, aby przyspieszyć reset.' });
+    } catch (err) { console.error('Błąd zgłoszenia resetu hasła:', err.message); res.status(500).json({ error: 'Nie udało się zapisać prośby. Skontaktuj się bezpośrednio z szefem.' }); }
 });
 
-app.post('/api/password/reset', async (req, res) => {
-    const token = String(req.body.token || ''), password = String(req.body.password || '');
-    if (!/^[a-f0-9]{64}$/.test(token)) return res.status(400).json({ error: 'Link resetujący jest nieprawidłowy lub wygasł.' });
-    if (password.length < 10 || password.length > 200) return res.status(400).json({ error: 'Hasło musi mieć co najmniej 10 znaków.' });
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex'), client = await pool.connect();
+app.get('/api/password/reset-requests', requireAdmin, async (req, res) => {
     try {
-        await client.query('BEGIN');
-        const result = await client.query('SELECT user_id FROM password_reset_tokens WHERE token_hash = $1 AND expires_at > NOW() FOR UPDATE', [tokenHash]);
-        if (!result.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Link resetujący jest nieprawidłowy lub wygasł.' }); }
-        const userId = result.rows[0].user_id, hash = await bcrypt.hash(password, 12);
-        await client.query('UPDATE users SET password = $1 WHERE id = $2', [hash, userId]);
-        await client.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
-        await client.query("DELETE FROM sessions WHERE (sess->>'userId')::int = $1", [userId]);
-        await client.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);
-        await client.query('COMMIT');
-        return res.json({ success: true, message: 'Hasło zostało zmienione. Zaloguj się nowym hasłem.' });
-    } catch (err) {
-        await client.query('ROLLBACK').catch(() => {});
-        console.error('Błąd ustawiania hasła:', err.message);
-        return res.status(500).json({ error: 'Nie udało się zmienić hasła. Spróbuj ponownie.' });
-    } finally { client.release(); }
+        const r = await pool.query("SELECT pr.id, pr.user_id, pr.requested_at, u.username, u.email FROM password_reset_requests pr JOIN users u ON u.id = pr.user_id WHERE pr.status = 'open' AND ($1 = 'admin' OR u.role = 'driver') ORDER BY pr.requested_at ASC", [req.session.role]);
+        res.json(r.rows);
+    } catch (err) { res.status(500).json({ error: 'Nie udało się pobrać próśb.' }); }
+});
+
+app.post('/api/password/change', requireLogin, async (req, res) => {
+    const password = String(req.body.password || ''), confirm = String(req.body.confirmPassword || '');
+    if (password.length < 10 || password.length > 200) return res.status(400).json({ error: 'Hasło musi mieć co najmniej 10 znaków.' });
+    if (password !== confirm) return res.status(400).json({ error: 'Hasła nie są identyczne.' });
+    try {
+        const hash = await bcrypt.hash(password, 12);
+        await pool.query('UPDATE users SET password = $1, must_change_password = false WHERE id = $2', [hash, req.session.userId]);
+        await pool.query("DELETE FROM sessions WHERE (sess->>'userId')::int = $1 AND sid <> $2", [req.session.userId, req.sessionID]);
+        await pool.query('DELETE FROM api_tokens WHERE user_id = $1', [req.session.userId]);
+        req.session.mustChangePassword = false;
+        res.json({ success: true, message: 'Hasło zmienione. Możesz korzystać z aplikacji.' });
+    } catch (err) { console.error('Błąd zmiany hasła:', err.message); res.status(500).json({ error: 'Nie udało się zmienić hasła.' }); }
 });
 
 app.post('/api/register', async (req, res) => {
@@ -446,14 +443,15 @@ app.post('/api/login', async (req, res) => {
         req.session.userId = user.id;
         req.session.username = user.username;
         req.session.role = user.role;
-        res.json({ success: true });
+        req.session.mustChangePassword = Boolean(user.must_change_password);
+        res.json({ success: true, mustChangePassword: req.session.mustChangePassword });
     } catch (err) { res.status(500).json({ error: 'Błąd logowania.' }); }
 });
 
 app.get('/api/user', async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const userRes = await pool.query('SELECT id, username, email, role, status FROM users WHERE id = $1', [req.session.userId]);
+        const userRes = await pool.query('SELECT id, username, email, role, status, must_change_password FROM users WHERE id = $1', [req.session.userId]);
         if (userRes.rows.length === 0) return res.status(401).json({ error: 'Użytkownik nie istnieje' });
         
         const user = userRes.rows[0];
@@ -476,6 +474,7 @@ app.get('/api/user', async (req, res) => {
             username: user.username,
             email: user.email,
             role: user.role,
+            mustChangePassword: Boolean(user.must_change_password),
             monthlyKm: parseInt(kmRes.rows[0].total || 0),
             monthlyDeliveries: parseInt(kmRes.rows[0].deliveries || 0),
             limitKm: 6000,
@@ -765,7 +764,7 @@ app.get('/api/users', async (req, res) => {
                     COALESCE((SELECT SUM(distance) FROM jobs j WHERE j.user_id = u.id AND j.status = 'approved'), 0) AS approved_km
              FROM users u ORDER BY u.id DESC`);
         res.json(result.rows.map(u => ({
-            id: u.id, username: u.username, email: u.email, role: u.role, status: u.status,
+                    id: u.id, username: u.username, email: u.email, role: u.role, status: u.status,
             approved_km: parseInt(u.approved_km) || 0,
             rank: rankFor(parseInt(u.approved_km) || 0, u.rank_override)
         })));
@@ -939,7 +938,8 @@ app.put('/api/users/:id/password', requireAdmin, async (req, res) => {
         }
 
         const hashed = await bcrypt.hash(pw, 10);
-        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, id]);
+        await pool.query('UPDATE users SET password = $1, must_change_password = true WHERE id = $2', [hashed, id]);
+        await pool.query("UPDATE password_reset_requests SET status = 'resolved' WHERE user_id = $1 AND status = 'open'", [id]);
         await killUserSessions(id, req.sessionID);
         res.json({ success: true, password: generated ? pw : undefined });
     } catch (err) {
