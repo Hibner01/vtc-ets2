@@ -475,7 +475,20 @@
                 </div>
 
                 <button class="btn btn-pill-white w-100 mb-3" onclick="performLogin()" data-i18n="loginBtn">Zaloguj się</button>
+                <div class="text-white small mb-2"><a href="#" class="text-info text-decoration-underline" onclick="showAuthForm('forgot'); return false;" data-i18n="forgotPassword">Nie pamiętasz hasła?</a></div>
                 <div class="text-white small"><span data-i18n="noAccount">Nie masz jeszcze konta?</span> <a href="#" class="text-white fw-bold text-decoration-underline" onclick="showAuthForm('register')" data-i18n="registerBtn">Zarejestruj się</a></div>
+            </div>
+            <div id="auth-forgot-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display:none;width:100%;max-width:460px;border-radius:28px;">
+                <h3 class="fw-bold mb-1 text-white" data-i18n="forgotTitle">Odzyskiwanie hasła</h3><p class="text-light small mb-4" data-i18n="forgotHint">Podaj e-mail przypisany do konta.</p>
+                <div class="mb-3 text-start"><label class="form-label text-white small ms-2 fw-semibold" data-i18n="emailAddress">Adres e-mail</label><input type="email" id="forgot-email" class="form-control" autocomplete="email"></div>
+                <button class="btn btn-pill-white w-100 mb-3" onclick="requestPasswordReset()" data-i18n="sendReset">Wyślij link resetujący</button><div id="forgot-message" class="text-white small mb-3" aria-live="polite"></div>
+                <a href="#" class="text-white text-decoration-underline" onclick="showAuthForm('login'); return false;" data-i18n="backToLogin">Wróć do logowania</a>
+            </div>
+            <div id="auth-reset-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display:none;width:100%;max-width:460px;border-radius:28px;">
+                <h3 class="fw-bold mb-1 text-white" data-i18n="resetTitle">Ustaw nowe hasło</h3><p class="text-light small mb-4" data-i18n="resetHint">Wybierz hasło o długości co najmniej 10 znaków.</p>
+                <input type="password" id="reset-password" class="form-control mb-3" autocomplete="new-password" placeholder="Nowe hasło (min. 10 znaków)"><input type="password" id="reset-password-confirm" class="form-control mb-3" autocomplete="new-password" placeholder="Powtórz nowe hasło">
+                <button class="btn btn-pill-white w-100 mb-3" onclick="submitPasswordReset()" data-i18n="savePassword">Zapisz nowe hasło</button><div id="reset-message" class="text-white small mb-3" aria-live="polite"></div>
+                <a href="#" class="text-white text-decoration-underline" onclick="showAuthForm('login'); return false;" data-i18n="backToLogin">Wróć do logowania</a>
             </div>
 
             <div id="auth-register-card" class="bg-card-bms p-4 p-md-5 shadow-lg text-center" style="display: none; width: 100%; max-width: 460px; border-radius: 28px;">
@@ -1116,12 +1129,14 @@
                         <div class="bg-card-bms p-4 mb-4" style="max-width: 900px;">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                 <div>
-                                    <h4 class="fw-bold mb-1"><i class="fa-solid fa-download me-2 text-success"></i>Pobierz aplikację kierowcy</h4>
-                                    <div class="text-white-50 small">W paczce: aplikacja Mazren z wbudowanym serwerem telemetrii ETS2 i instrukcja. Tylko Windows.</div>
+                                    <h4 class="fw-bold mb-1"><i class="fa-solid fa-download me-2 text-success"></i>Pobierz aplikacje Mazren</h4>
+                                    <div class="text-white-50 small">Pobierz aplikację kierowcy z telemetrią ETS2 lub Mazren Speditor. Tylko Windows.</div>
                                 </div>
                                 <div class="text-end">
                                     <a id="client-download-btn" class="btn btn-success fw-bold px-4 disabled" href="#" download><i class="fa-solid fa-download me-1"></i> Pobierz (.zip)</a>
                                     <div id="client-download-info" class="small text-white-50 mt-1"></div>
+                                    <a id="speditor-download-btn" class="btn btn-outline-info fw-bold px-4 mt-2 disabled" href="#" download><i class="fa-solid fa-truck-fast me-1"></i> Pobierz Mazren Speditor (.zip)</a>
+                                    <div id="speditor-download-info" class="small text-white-50 mt-1"></div>
                                 </div>
                             </div>
                         </div>
@@ -1387,6 +1402,7 @@
             pl: {
                 loginBtn: "Zaloguj się", registerBtn: "Zarejestruj się", exitBtn: "Wyjdź", welcomeBack: "Witaj ponownie!",
                 loginSubtitle: "Zaloguj się do Mazren Control System", emailOrLogin: "Adres e-mail lub Login", password: "Hasło",
+                forgotPassword: "Nie pamiętasz hasła?", forgotTitle: "Odzyskiwanie hasła", forgotHint: "Podaj e-mail przypisany do konta.", sendReset: "Wyślij link resetujący", backToLogin: "Wróć do logowania", resetTitle: "Ustaw nowe hasło", resetHint: "Wybierz hasło o długości co najmniej 10 znaków.", savePassword: "Zapisz nowe hasło",
                 noAccount: "Nie masz jeszcze konta?", createAccount: "Rejestracja konta", registerSubtitle: "Stwórz konto w Mazren Control System",
                 discordNick: "Nick z Discorda", emailAddress: "Adres e-mail", repeatPassword: "Powtórz hasło", createAccountBtn: "Stwórz konto",
                 hasAccount: "Masz już konto?", loggedInAs: "ZALOGOWANY JAKO", bossRole: "SZEF / WŁAŚCICIEL", navDashboard: "Pulpit",
@@ -1421,6 +1437,7 @@
             en: {
                 loginBtn: "Sign In", registerBtn: "Register", exitBtn: "Exit", welcomeBack: "Welcome Back!",
                 loginSubtitle: "Log in to Mazren Control System", emailOrLogin: "Email or Username", password: "Password",
+                forgotPassword: "Forgot password?", forgotTitle: "Password recovery", forgotHint: "Enter the email linked to your account.", sendReset: "Send reset link", backToLogin: "Back to sign in", resetTitle: "Set a new password", resetHint: "Choose a password with at least 10 characters.", savePassword: "Save new password",
                 noAccount: "Don't have an account?", createAccount: "Account Registration", registerSubtitle: "Create an account",
                 discordNick: "Discord Username", emailAddress: "Email Address", repeatPassword: "Repeat Password", createAccountBtn: "Create Account",
                 hasAccount: "Already have an account?", loggedInAs: "LOGGED IN AS", bossRole: "BOSS / OWNER", navDashboard: "Dashboard",
@@ -1487,7 +1504,9 @@
             document.getElementById('auth-main-card').style.display = 'none';
             document.getElementById('auth-login-card').style.display = type === 'login' ? 'block' : 'none';
             document.getElementById('auth-register-card').style.display = type === 'register' ? 'block' : 'none';
-            section.className = (type === 'login' || type === 'register') ? 'auth-bg-side flex-column justify-content-between align-items-center py-5' : 'auth-bg-main flex-column justify-content-between align-items-center py-5';
+            document.getElementById('auth-forgot-card').style.display = type === 'forgot' ? 'block' : 'none';
+            document.getElementById('auth-reset-card').style.display = type === 'reset' ? 'block' : 'none';
+            section.className = (type === 'login' || type === 'register' || type === 'forgot' || type === 'reset') ? 'auth-bg-side flex-column justify-content-between align-items-center py-5' : 'auth-bg-main flex-column justify-content-between align-items-center py-5';
         }
 
         function exitApp() {
@@ -1552,6 +1571,7 @@
         }
 
         async function checkUser() {
+            if (new URLSearchParams(location.search).has('resetToken')) { showAuthForm('reset'); return; }
             try {
                 const res = await fetch('/api/user');
                 if (res.ok) {
@@ -1716,6 +1736,23 @@
         function showLogin() {
             document.getElementById('auth-section').style.display = 'flex';
             document.getElementById('dashboard-section').style.display = 'none';
+        }
+
+        async function requestPasswordReset() {
+            const email = document.getElementById('forgot-email').value.trim(), box = document.getElementById('forgot-message');
+            box.textContent = '';
+            try { const r = await fetch('/api/password/forgot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) }); const d = await r.json(); box.textContent = d.message || d.error || 'Nie udało się wysłać prośby.'; }
+            catch (e) { box.textContent = 'Błąd połączenia. Spróbuj ponownie.'; }
+        }
+        async function submitPasswordReset() {
+            const token = new URLSearchParams(location.search).get('resetToken') || '', password = document.getElementById('reset-password').value, confirm = document.getElementById('reset-password-confirm').value, box = document.getElementById('reset-message');
+            box.textContent = '';
+            if (password !== confirm) { box.textContent = 'Hasła nie są identyczne.'; return; }
+            try {
+                const r = await fetch('/api/password/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }) }); const d = await r.json();
+                box.textContent = d.message || d.error || 'Nie udało się zmienić hasła.';
+                if (r.ok) { history.replaceState(null, '', location.pathname); document.getElementById('reset-password').value = ''; document.getElementById('reset-password-confirm').value = ''; }
+            } catch (e) { box.textContent = 'Błąd połączenia. Spróbuj ponownie.'; }
         }
 
         async function performLogin() {
@@ -2678,6 +2715,7 @@
 // dodaj go jako "Release" na GitHubie i wklej tu pełny adres pliku, np.:
 // 'https://github.com/TWOJ_LOGIN/TWOJE_REPO/releases/download/v1.0/Mazren-Kierowca.zip'
 const CLIENT_DOWNLOAD_URL = '/download/Mazren-Kierowca.zip';
+const SPEDITOR_DOWNLOAD_URL = '/download/Mazren-Speditor.zip';
 async function checkClientDownload() {
     const btn = document.getElementById('client-download-btn');
     const info = document.getElementById('client-download-info');
@@ -2697,9 +2735,21 @@ async function checkClientDownload() {
     } catch (e) { info.textContent = ''; }
 }
 
+async function checkSpeditorDownload() {
+    const btn = document.getElementById('speditor-download-btn'), info = document.getElementById('speditor-download-info');
+    if (!btn) return;
+    btn.href = SPEDITOR_DOWNLOAD_URL;
+    try {
+        const h = await fetch(SPEDITOR_DOWNLOAD_URL, { method: 'HEAD' });
+        if (h.ok) { btn.classList.remove('disabled'); const len = parseInt(h.headers.get('content-length') || '0'); info.textContent = len ? 'Rozmiar: ' + (len / 1048576).toFixed(1) + ' MB' : ''; }
+        else { btn.classList.add('disabled'); info.textContent = 'Plik jeszcze niedostępny.'; }
+    } catch (e) { info.textContent = ''; }
+}
+
 /* ===== Aplikacja kierowcy: token ===== */
 async function loadClientTab() {
     checkClientDownload();
+    checkSpeditorDownload();
     const box = document.getElementById('client-token-status');
     document.getElementById('client-token-box').classList.add('d-none');
     try {
@@ -3191,6 +3241,7 @@ async function showRoute(jobId) {
             '</div>';
     } catch (e) { body.innerHTML = '<div class="text-danger">Błąd wczytywania trasy.</div>'; }
 }
+if (new URLSearchParams(location.search).has('resetToken')) showAuthForm('reset');
 </script>
 </body>
 </html>
