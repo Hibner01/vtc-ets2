@@ -27,13 +27,21 @@ const MAX_POINTS_PER_TRIP = 20000;
 
 const sha256 = s => crypto.createHash('sha256').update(s).digest('hex');
 
-// "Frankfurt am Main" == "frankfurt-am-main" == "Frankfürt am Main"
+// "Frankfurt am Main" == "frankfurt-am-main" == "Frankfürt am Main".
+// ETS2 telemetry can also return the English city name while the dispatch
+// uses its Polish exonym (for example, Riga vs. Ryga).
+const CITY_ALIASES = new Map([
+    ['riga', 'ryga'],
+    ['ryga', 'ryga'],
+]);
+
 function normCity(s) {
-    return String(s || '')
+    const normalized = String(s || '')
         .toLowerCase()
         .replace(/ł/g, 'l')
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]/g, '');
+    return CITY_ALIASES.get(normalized) || normalized;
 }
 function cityMatch(a, b) {
     const x = normCity(a), y = normCity(b);
@@ -185,8 +193,31 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 "SELECT id, start_city, end_city, cargo, truck_name FROM dispatches WHERE accepted_by_id = $1 AND status = 'W trakcie' ORDER BY id",
                 [req.clientUser.id]
             );
-            const t = await pool.query("SELECT id, start_city, end_city FROM trips WHERE user_id = $1 AND status = 'active'", [req.clientUser.id]);
-            res.json({ username: req.clientUser.username, dispatches: d.rows, active_trip: t.rows[0] || null });
+            const t = await pool.query(
+                `SELECT t.id, t.start_city, t.end_city, t.dispatch_id, t.matched,
+                        d.start_city AS dispatch_start_city, d.end_city AS dispatch_end_city
+                 FROM trips t
+                 LEFT JOIN dispatches d ON d.id = t.dispatch_id
+                     AND d.accepted_by_id = $1 AND d.status = 'W trakcie'
+                 WHERE t.user_id = $1 AND t.status = 'active'`,
+                [req.clientUser.id]
+            );
+            let activeTrip = t.rows[0] || null;
+            if (activeTrip) {
+                const matchesDispatch = activeTrip.dispatch_start_city && activeTrip.dispatch_end_city
+                    && cityMatch(activeTrip.dispatch_start_city, activeTrip.start_city)
+                    && cityMatch(activeTrip.dispatch_end_city, activeTrip.end_city);
+                if (matchesDispatch) {
+                    activeTrip.start_city = activeTrip.dispatch_start_city;
+                    activeTrip.end_city = activeTrip.dispatch_end_city;
+                }
+                activeTrip = {
+                    id: activeTrip.id,
+                    start_city: activeTrip.start_city,
+                    end_city: activeTrip.end_city,
+                };
+            }
+            res.json({ username: req.clientUser.username, dispatches: d.rows, active_trip: activeTrip });
         } catch (e) { res.status(500).json({ error: 'Błąd serwera' }); }
     });
 
@@ -226,8 +257,26 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             if (act.rows.length > 0) {
                 const a = act.rows[0];
                 if (cityMatch(a.start_city, source) && cityMatch(a.end_city, dest)) {
+                    const activeDispatch = dRes.rows.find(d => d.id === a.dispatch_id) || dispatch;
+                    const activeMatched = !!activeDispatch
+                        && cityMatch(activeDispatch.start_city, a.start_city)
+                        && cityMatch(activeDispatch.end_city, a.end_city);
+                    if (activeMatched && !a.matched) {
+                        await client.query(
+                            'UPDATE trips SET start_city = $2, end_city = $3, matched = true WHERE id = $1',
+                            [a.id, activeDispatch.start_city, activeDispatch.end_city]
+                        );
+                    }
                     await client.query('COMMIT');
-                    return res.json({ success: true, trip_id: a.id, resumed: true, matched: !!a.matched, linked: !!a.dispatch_id });
+                    return res.json({
+                        success: true,
+                        trip_id: a.id,
+                        resumed: true,
+                        matched: activeMatched || !!a.matched,
+                        linked: !!a.dispatch_id,
+                        source_city: activeMatched ? activeDispatch.start_city : a.start_city,
+                        destination_city: activeMatched ? activeDispatch.end_city : a.end_city,
+                    });
                 }
                 await client.query("UPDATE trips SET status = 'aborted', finished_at = NOW() WHERE id = $1", [a.id]);
             }
@@ -235,7 +284,14 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             const ins = await client.query(
                 `INSERT INTO trips (user_id, dispatch_id, start_city, end_city, cargo, matched)
                  VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                [uid, dispatch ? dispatch.id : null, source, dest, cargo, exact]
+                [
+                    uid,
+                    dispatch ? dispatch.id : null,
+                    exact ? dispatch.start_city : source,
+                    exact ? dispatch.end_city : dest,
+                    cargo,
+                    exact,
+                ]
             );
             await client.query('COMMIT');
             res.json({ success: true, trip_id: ins.rows[0].id, resumed: false, matched: exact, linked: !!dispatch });
@@ -339,7 +395,13 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 dispatch = d.rows[0] || null;
             }
             const linked = !!dispatch;                 // kurs powiązany z jakimś zleceniem
-            const matched = linked && !!trip.matched;  // ...i trasa w grze jest TA SAMA co w zleceniu
+            // Starsze kursy mogły zostać powiązane lenientnie zanim dodano alias
+            // nazwy miasta (np. Riga/Ryga). Sprawdź trasę ponownie przy zamknięciu.
+            const matched = linked && (
+                !!trip.matched
+                || (cityMatch(dispatch.start_city, trip.start_city)
+                    && cityMatch(dispatch.end_city, trip.end_city))
+            );
 
             // zgodna trasa -> miasta ze zlecenia (z krajami); niezgodna -> to, co naprawdę przejechano (z telemetrii)
             const startCity = matched ? dispatch.start_city : trip.start_city;
