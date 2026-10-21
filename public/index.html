@@ -2,6 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Mazren Spedition - Mazren Control System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -429,6 +430,105 @@
         .social-btn:hover { transform: translateY(-2px); filter: brightness(1.12); color: #ffffff; }
         .social-discord { background-color: #5865F2; }
         .social-tiktok { background-color: #111111; border: 1px solid #fe2c55; }
+
+        #mobile-menu-toggle, .sidebar-backdrop { display: none; }
+
+        @media (max-width: 767.98px) {
+            body.mobile-menu-open { overflow: hidden; }
+
+            .sidebar {
+                width: min(300px, 88vw);
+                height: 100vh;
+                height: 100dvh;
+                min-height: 0;
+                overflow: hidden;
+                transform: translateX(-102%);
+                transition: transform 0.22s ease;
+                z-index: 1050;
+                box-shadow: 12px 0 32px rgba(0, 0, 0, 0.45);
+            }
+
+            .sidebar.is-open { transform: translateX(0); }
+
+            .nav-sidebar {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #sidebar-logout {
+                flex: 0 0 auto;
+                background: #0f172a;
+                padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
+            }
+
+            .sidebar-backdrop {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 1040;
+                background: rgba(2, 6, 23, 0.68);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity 0.22s ease, visibility 0.22s ease;
+            }
+
+            .sidebar-backdrop.is-open {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+
+            .main-wrapper { margin-left: 0; min-width: 0; }
+
+            .topbar {
+                position: sticky;
+                top: 0;
+                z-index: 1020;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 10px 12px;
+            }
+
+            .topbar-left {
+                flex: 1 1 auto;
+                min-width: 0;
+                flex-wrap: wrap;
+                gap: 6px !important;
+            }
+
+            .topbar-actions {
+                flex: 0 0 auto;
+                gap: 8px !important;
+                margin-left: auto;
+            }
+
+            .topbar-clock {
+                padding: 5px 9px;
+                font-size: 0.76rem;
+                gap: 4px;
+            }
+
+            #mobile-menu-toggle {
+                display: inline-flex;
+                width: 42px;
+                height: 42px;
+                flex: 0 0 42px;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+            }
+
+            .main-wrapper > main.container-fluid { padding: 12px !important; }
+            #tab-dashboard .welcome-banner { padding: 20px !important; }
+        }
+
+        @media (max-width: 380px) {
+            .topbar-left .topbar-clock:first-of-type { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -537,7 +637,8 @@
         <!-- PANEL GŁÓWNY -->
         <div id="dashboard-section" style="display:none;">
             
-            <aside class="sidebar">
+            <div id="mobile-sidebar-backdrop" class="sidebar-backdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
+            <aside class="sidebar" id="main-sidebar">
                 <div class="sidebar-brand" onclick="switchTab('dashboard')" title="Strona Główna">
                     <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" loading="eager" onerror="this.style.display='none'">
                 </div>
@@ -595,7 +696,10 @@
             <div class="main-wrapper">
                 
                 <header class="topbar">
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="topbar-left d-flex align-items-center gap-3">
+                        <button id="mobile-menu-toggle" class="btn btn-outline-light" type="button" onclick="toggleMobileMenu()" aria-label="Menu" aria-controls="main-sidebar" aria-expanded="false" title="Menu">
+                            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                        </button>
                         <div class="topbar-clock">
                             <i class="fa-regular fa-calendar me-1"></i>
                             <span id="current-date">Ładowanie daty...</span>
@@ -606,7 +710,7 @@
                         </div>
                     </div>
 
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="topbar-actions d-flex align-items-center gap-3">
                         <div class="dropdown" id="notif-dropdown-wrap">
                             <button class="btn btn-outline-secondary btn-sm rounded-circle position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                 <i class="fa-solid fa-bell"></i>
@@ -1517,7 +1621,41 @@
             document.getElementById('auth-main-card').style.display = 'block';
         }
 
+        function setMobileMenuOpen(open) {
+            const sidebar = document.getElementById('main-sidebar');
+            const backdrop = document.getElementById('mobile-sidebar-backdrop');
+            const toggle = document.getElementById('mobile-menu-toggle');
+            if (!sidebar || !backdrop || !toggle) return;
+
+            const isMobile = window.matchMedia('(max-width: 767.98px)').matches;
+            const shouldOpen = Boolean(open) && isMobile;
+            sidebar.classList.toggle('is-open', shouldOpen);
+            backdrop.classList.toggle('is-open', shouldOpen);
+            document.body.classList.toggle('mobile-menu-open', shouldOpen);
+            toggle.setAttribute('aria-expanded', String(shouldOpen));
+            toggle.innerHTML = shouldOpen
+                ? '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="visually-hidden">Menu</span>'
+                : '<i class="fa-solid fa-bars" aria-hidden="true"></i><span class="visually-hidden">Menu</span>';
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('main-sidebar');
+            setMobileMenuOpen(!sidebar?.classList.contains('is-open'));
+        }
+
+        function closeMobileMenu() {
+            setMobileMenuOpen(false);
+        }
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeMobileMenu();
+        });
+        window.addEventListener('resize', () => {
+            if (!window.matchMedia('(max-width: 767.98px)').matches) closeMobileMenu();
+        });
+
         function switchTab(tab) {
+            closeMobileMenu();
             if (isGuest && !['about', 'guest-stats', 'guest-garage'].includes(tab)) tab = 'guest-stats';
             if (tab === 'management' && !isStaff()) tab = 'dashboard';
             ['guest-stats', 'guest-garage', 'dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
@@ -1743,6 +1881,7 @@
         }
 
         function showLogin() {
+            closeMobileMenu();
             document.getElementById('auth-section').style.display = 'flex';
             document.getElementById('dashboard-section').style.display = 'none';
         }
@@ -1806,8 +1945,15 @@
         }
 
         async function performLogout() {
+            closeMobileMenu();
             localStorage.removeItem('vtc_logged_user');
-            await fetch('/api/logout', { method: 'POST' });
+            try {
+                const res = await fetch('/api/logout', { method: 'POST' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            } catch (err) {
+                console.warn('Nie udało się skontaktować z serwerem podczas wylogowania:', err);
+                alert('Wylogowano z tej strony, ale serwer nie potwierdził zakończenia sesji. Sprawdź połączenie z internetem.');
+            }
             showLogin();
         }
 
@@ -2745,7 +2891,7 @@
 // dodaj go jako "Release" na GitHubie i wklej tu pełny adres pliku, np.:
 // 'https://github.com/TWOJ_LOGIN/TWOJE_REPO/releases/download/v1.0/Mazren-Kierowca.zip'
 const CLIENT_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-apps-v1/Mazren-Kierowca.zip';
-const SPEDITOR_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-spedition/Mazren-Speditor.7z';
+const SPEDITOR_DOWNLOAD_URL = 'https://github.com/Hibner01/vtc-ets2/releases/download/mazren-spedition/Mazren-Speditor.zip';
 async function checkClientDownload() {
     const btn = document.getElementById('client-download-btn');
     const info = document.getElementById('client-download-info');
