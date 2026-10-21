@@ -27,18 +27,25 @@ const MAX_POINTS_PER_TRIP = 20000;
 
 const sha256 = s => crypto.createHash('sha256').update(s).digest('hex');
 
-// "Frankfurt am Main" == "frankfurt-am-main" == "Frankfürt am Main".
-// ETS2 telemetry can also return the English city name while the dispatch
-// uses its Polish exonym (for example, Riga vs. Ryga).
-const CITY_ALIASES = new Map([
-    ['riga', 'ryga'],
-    ['ryga', 'ryga'],
-]);
+// ETS2 telemetry and dispatches can use different localized names for the
+// same city. This table was built from ETS2, ProMods and Poland Rebuilding
+// city definitions and their available translations.
+const CITY_ALIASES = new Map(Object.entries(
+    require('./city-aliases.json').aliases || {}
+));
 
 function normCity(s) {
     const normalized = String(s || '')
         .toLowerCase()
         .replace(/ł/g, 'l')
+        .replace(/ø/g, 'o')
+        .replace(/æ/g, 'ae')
+        .replace(/œ/g, 'oe')
+        .replace(/ß/g, 'ss')
+        .replace(/ð/g, 'd')
+        .replace(/þ/g, 'th')
+        .replace(/đ/g, 'd')
+        .replace(/ı/g, 'i')
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]/g, '');
     return CITY_ALIASES.get(normalized) || normalized;
