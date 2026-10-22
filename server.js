@@ -323,7 +323,15 @@ async function initDB() {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders(res, filePath) {
+        if (path.basename(filePath).toLowerCase() === 'index.html') {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
+}));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 app.set('trust proxy', 1);
@@ -710,6 +718,66 @@ app.put('/api/requirements', requireAdmin, async (req, res) => {
     } catch (e) {
         console.error('Błąd zapisu wymagań:', e.message);
         res.status(500).json({ error: 'Błąd zapisu wymagań.' });
+    }
+});
+
+// =====================================================================
+//  OPIS FIRMY (zakładka "O nas") - edytowalny przez Szefa/Kierownika.
+//  GET jest publiczny, bo opis jest widoczny także dla gości.
+// =====================================================================
+const DEFAULT_ABOUT = {
+    description: 'to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!',
+    description_en: 'is a virtual trucking company operating in the world of Euro Truck Simulator 2, founded on 20 September 2026. Our goal is to build an active, close-knit community where we drive across Europe together, complete a wide variety of jobs and take part in company convoys and events. The server is intended for everyone over 31 years of age (read it backwards). We focus on realism, a great atmosphere, activity, driving etiquette and, above all, having fun together. Join Mazren Spedition and start your trucking adventure with us!',
+    social_title: 'ZNAJDŹ NAS W SIECI',
+    social_title_en: 'FIND US ONLINE',
+    tiktok_url: 'https://www.tiktok.com/@TWOJ_PROFIL',
+    tiktok_label: 'Obserwuj na TikTok',
+    tiktok_label_en: 'Follow us on TikTok'
+};
+
+app.get('/api/about', async (req, res) => {
+    try {
+        const r = await pool.query("SELECT value FROM site_settings WHERE key = 'about'");
+        if (r.rows.length > 0) {
+            const saved = JSON.parse(r.rows[0].value);
+            return res.json({ ...DEFAULT_ABOUT, ...(saved && typeof saved === 'object' ? saved : {}) });
+        }
+    } catch (e) { /* brak tabeli / uszkodzony zapis: pokazujemy domyślne */ }
+    res.json(DEFAULT_ABOUT);
+});
+
+app.put('/api/about', requireAdmin, async (req, res) => {
+    const cleanText = (value, max) => String(value == null ? '' : value).trim().slice(0, max);
+    const about = {
+        description: cleanText(req.body.description, 3000),
+        description_en: cleanText(req.body.description_en, 3000),
+        social_title: cleanText(req.body.social_title, 100),
+        social_title_en: cleanText(req.body.social_title_en, 100),
+        tiktok_url: cleanText(req.body.tiktok_url, 500),
+        tiktok_label: cleanText(req.body.tiktok_label, 80),
+        tiktok_label_en: cleanText(req.body.tiktok_label_en, 80)
+    };
+
+    if (!about.description) return res.status(400).json({ error: 'Opis po polsku nie może być pusty.' });
+    if (about.tiktok_url) {
+        try {
+            const url = new URL(about.tiktok_url);
+            if (url.protocol !== 'https:' || !/(^|\.)tiktok\.com$/i.test(url.hostname) || url.username || url.password) throw new Error('invalid URL');
+        } catch (_) {
+            return res.status(400).json({ error: 'Wklej poprawny link HTTPS prowadzący do domeny TikTok.' });
+        }
+    }
+
+    try {
+        await pool.query(
+            `INSERT INTO site_settings (key, value, updated_at) VALUES ('about', $1, NOW())
+             ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+            [JSON.stringify(about)]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Błąd zapisu opisu firmy:', e.message);
+        res.status(500).json({ error: 'Błąd zapisu opisu firmy.' });
     }
 });
 
