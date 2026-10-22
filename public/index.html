@@ -1238,7 +1238,7 @@
                                 <div class="text-end">
                                     <a id="client-download-btn" class="btn btn-success fw-bold px-4 disabled" href="#" download><i class="fa-solid fa-download me-1"></i> Pobierz (.zip)</a>
                                     <div id="client-download-info" class="small text-white-50 mt-1"></div>
-                                    <a id="speditor-download-btn" class="btn btn-outline-info fw-bold px-4 mt-2 disabled" href="#" download><i class="fa-solid fa-truck-fast me-1"></i> Pobierz Mazren Speditor (.zip)</a>
+                                    <a id="speditor-download-btn" class="btn btn-outline-info fw-bold px-4 mt-2 disabled" href="#" download><i class="fa-solid fa-truck-fast me-1"></i> Pobierz Mazren Speditor (.7z)</a>
                                     <div id="speditor-download-info" class="small text-white-50 mt-1"></div>
                                 </div>
                             </div>
@@ -1271,15 +1271,20 @@
 
                     <div id="tab-about" style="display:none;">
                         <div class="bg-card-bms p-5 text-center my-4" style="max-width: 900px; margin: 0 auto;">
-                            <p class="fs-5 leading-relaxed text-white" data-i18n="aboutText">
-                                <strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 41. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!
+                            <div class="d-flex justify-content-end mb-2">
+                                <button id="about-edit-btn" class="btn btn-sm btn-outline-info d-none" onclick="openAboutEditor()"><i class="fa-solid fa-pen me-1"></i> Edytuj opis</button>
+                            </div>
+                            <p class="fs-5 leading-relaxed text-white" id="about-description" style="white-space:pre-line">
+                                <strong>Mazren Spedition Sp. z o.o.</strong> <span id="about-description-text">Ładowanie opisu...</span>
                             </p>
-                            <hr class="border-secondary my-4">
-                            <div class="text-white-50 small fw-semibold text-uppercase mb-3" data-i18n="followUs">Znajdź nas w sieci</div>
-                            <div class="d-flex justify-content-center flex-wrap gap-3">
-                                <a id="link-tiktok" class="social-btn social-tiktok" href="#" target="_blank" rel="noopener noreferrer">
-                                    <i class="fa-brands fa-tiktok fs-5"></i> <span data-i18n="followTiktok">Obserwuj na TikTok</span>
-                                </a>
+                            <div id="about-social-section">
+                                <hr class="border-secondary my-4">
+                                <div id="about-social-title" class="text-white-50 small fw-semibold text-uppercase mb-3">Znajdź nas w sieci</div>
+                                <div class="d-flex justify-content-center flex-wrap gap-3">
+                                    <a id="link-tiktok" class="social-btn social-tiktok" href="#" target="_blank" rel="noopener noreferrer">
+                                        <i class="fa-brands fa-tiktok fs-5"></i> <span id="about-tiktok-label">Obserwuj na TikTok</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
@@ -1348,11 +1353,6 @@
         function isStaff() { return isStaffRole(currentUserRole); }
         let isGuest = false;
         let currentUsername = '';
-        // =====================================================================
-        //  >>> TU WKLEJ LINKI FIRMY (zmień tylko tekst w cudzysłowie) <<<
-        // =====================================================================
-        const TIKTOK_URL  = 'https://www.tiktok.com/@TWOJ_PROFIL';
-
         let currentLang = localStorage.getItem('vtc_lang') || 'pl';
         let allUsersList = [];
 
@@ -1527,7 +1527,7 @@
                 expensesLog: "Rejestr wydatków firmy", newDispatch: "Nowe Zlecenie w Dyspozytorni", assignDriver: "Przypisz kierowcę",
                 selectTruck: "Zestaw kierowcy", fromCity: "Skąd", toCity: "Dokąd", notes: "Uwagi / Ładunek", publishDispatch: "Opublikuj zlecenie", availableJobs: "Twoje zlecenia w Dyspozytorni:",
                 reqTitle: "Wymagania do dołączenia", reqEdit: "Edytuj", reqLoading: "Ładowanie...", reqNone: "Brak wymagań.",
-                aboutText: "<strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 41. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!",
+                aboutText: "<strong>Mazren Spedition Sp. z o.o.</strong> to wirtualna firma transportowa działająca w świecie Euro Truck Simulator 2, stworzona 20 września 2026 roku. Naszym celem jest stworzenie aktywnej i zgranej społeczności, w której wspólnie przemierzamy europejskie drogi, realizujemy różnorodne zlecenia oraz uczestniczymy w firmowych konwojach i wydarzeniach. Serwer jest przeznaczony dla każdego powyżej 31. (czytaj od tyłu) roku życia. Stawiamy na realistyczność, dobrą atmosferę, aktywność, kulturę jazdy i przede wszystkim wspólną zabawę. Dołącz do Mazren Spedition i rozpocznij swoją przygodę z transportem razem z nami!",
                 followUs: "Znajdź nas w sieci", joinDiscord: "Dołącz na Discord", followTiktok: "Obserwuj na TikTok",
                 chooseCountry: "— kraj —",
                 tabTrucks: "Ciężarówki", tabTrailers: "Naczepy", g_addTruck: "Dodaj ciężarówkę", g_addTrailer: "Dodaj naczepę",
@@ -1594,6 +1594,7 @@
                 closeVehicleDetail();
             }
             if (typeof renderRequirements === 'function') renderRequirements();
+            if (typeof renderAboutContent === 'function') renderAboutContent();
             if (typeof updateClock === 'function') updateClock();
         }
 
@@ -1668,7 +1669,7 @@
             else if (tab === 'dispatcher') loadDispatches();
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'client') loadClientTab();
-            else if (tab === 'about') loadRequirements();
+            else if (tab === 'about') { loadRequirements(); loadAboutContent(); }
             else if (tab === 'guest-stats' || tab === 'guest-garage') loadGuestOverview();
             else if (tab === 'garage') loadGarage();
             else if (tab === 'management' && isStaff()) loadManagementUsers();
@@ -2838,9 +2839,6 @@
             }
         });
 
-        // linki w zakładce "O nas"
-        document.getElementById('link-tiktok').href = TIKTOK_URL;
-
         // przywróć zapamiętany język
         document.getElementById('lang-selector').value = currentLang;
         changeLanguage(currentLang);
@@ -2868,6 +2866,39 @@
             <div class="modal-footer border-secondary">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
                 <button class="btn btn-info fw-bold" onclick="saveRequirements()">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="aboutModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="fa-solid fa-circle-info me-2 text-info"></i>Edytuj sekcję „O nas”</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="small text-white-50 mb-3">Nazwa firmy pozostaje pogrubiona przed opisem. Wersja angielska jest opcjonalna — jeśli zostanie pusta, pokaże się polski tekst.</div>
+                <label for="about-edit-description" class="form-label">Opis po polsku</label>
+                <textarea id="about-edit-description" class="form-control bg-dark text-white border-secondary mb-3" rows="5" maxlength="3000" required></textarea>
+                <label for="about-edit-description-en" class="form-label">Opis po angielsku</label>
+                <textarea id="about-edit-description-en" class="form-control bg-dark text-white border-secondary mb-4" rows="5" maxlength="3000"></textarea>
+
+                <h6 class="text-info fw-bold">Link społecznościowy TikTok</h6>
+                <div class="small text-white-50 mb-3">Pusty link ukryje całą sekcję „Znajdź nas w sieci”. Dozwolone są bezpieczne linki HTTPS.</div>
+                <label for="about-edit-tiktok-url" class="form-label">Adres profilu TikTok</label>
+                <input id="about-edit-tiktok-url" type="url" class="form-control bg-dark text-white border-secondary mb-3" maxlength="500" placeholder="https://www.tiktok.com/@nazwa">
+                <div class="row g-3">
+                    <div class="col-md-6"><label for="about-edit-social-title" class="form-label">Nagłówek sekcji (PL)</label><input id="about-edit-social-title" class="form-control bg-dark text-white border-secondary" maxlength="100"></div>
+                    <div class="col-md-6"><label for="about-edit-social-title-en" class="form-label">Nagłówek sekcji (EN)</label><input id="about-edit-social-title-en" class="form-control bg-dark text-white border-secondary" maxlength="100"></div>
+                    <div class="col-md-6"><label for="about-edit-tiktok-label" class="form-label">Tekst przycisku (PL)</label><input id="about-edit-tiktok-label" class="form-control bg-dark text-white border-secondary" maxlength="80"></div>
+                    <div class="col-md-6"><label for="about-edit-tiktok-label-en" class="form-label">Tekst przycisku (EN)</label><input id="about-edit-tiktok-label-en" class="form-control bg-dark text-white border-secondary" maxlength="80"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button class="btn btn-info fw-bold" onclick="saveAboutContent()"><i class="fa-solid fa-floppy-disk me-1"></i> Zapisz</button>
             </div>
         </div>
     </div>
@@ -3106,6 +3137,68 @@ async function loadGuestOverview() {
 /* ===== Wymagania do dołączenia (edytowalne przez Szefa, PL + EN) ===== */
 let reqData = { badge: '', badge_en: '', items: [] };
 let reqEditItems = [];
+let aboutData = {
+    description: '', description_en: '', social_title: '', social_title_en: '',
+    tiktok_url: '', tiktok_label: '', tiktok_label_en: ''
+};
+async function loadAboutContent() {
+    try {
+        const r = await fetch('/api/about');
+        if (r.ok) aboutData = await r.json();
+    } catch (e) {}
+    renderAboutContent();
+}
+function renderAboutContent() {
+    const description = document.getElementById('about-description-text');
+    const title = document.getElementById('about-social-title');
+    const label = document.getElementById('about-tiktok-label');
+    const link = document.getElementById('link-tiktok');
+    const social = document.getElementById('about-social-section');
+    const edit = document.getElementById('about-edit-btn');
+    if (!description || !link || !social) return;
+    description.textContent = (currentLang === 'en' && aboutData.description_en) ? aboutData.description_en : (aboutData.description || '');
+    if (title) title.textContent = (currentLang === 'en' && aboutData.social_title_en) ? aboutData.social_title_en : (aboutData.social_title || '');
+    if (label) label.textContent = (currentLang === 'en' && aboutData.tiktok_label_en) ? aboutData.tiktok_label_en : (aboutData.tiktok_label || '');
+    const url = String(aboutData.tiktok_url || '').trim();
+    link.href = url || '#';
+    social.classList.toggle('d-none', !url);
+    if (edit) edit.classList.toggle('d-none', !isStaff());
+}
+function openAboutEditor() {
+    document.getElementById('about-edit-description').value = aboutData.description || '';
+    document.getElementById('about-edit-description-en').value = aboutData.description_en || '';
+    document.getElementById('about-edit-social-title').value = aboutData.social_title || '';
+    document.getElementById('about-edit-social-title-en').value = aboutData.social_title_en || '';
+    document.getElementById('about-edit-tiktok-url').value = aboutData.tiktok_url || '';
+    document.getElementById('about-edit-tiktok-label').value = aboutData.tiktok_label || '';
+    document.getElementById('about-edit-tiktok-label-en').value = aboutData.tiktok_label_en || '';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('aboutModal')).show();
+}
+async function saveAboutContent() {
+    const about = {
+        description: document.getElementById('about-edit-description').value,
+        description_en: document.getElementById('about-edit-description-en').value,
+        social_title: document.getElementById('about-edit-social-title').value,
+        social_title_en: document.getElementById('about-edit-social-title-en').value,
+        tiktok_url: document.getElementById('about-edit-tiktok-url').value,
+        tiktok_label: document.getElementById('about-edit-tiktok-label').value,
+        tiktok_label_en: document.getElementById('about-edit-tiktok-label-en').value
+    };
+    let r, d;
+    try {
+        r = await fetch('/api/about', {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(about)
+        });
+        d = await r.json().catch(() => ({}));
+    } catch (e) {
+        return alert('Nie udało się połączyć z serwerem. Spróbuj ponownie.');
+    }
+    if (!r.ok) return alert(d.error || 'Nie udało się zapisać opisu.');
+    aboutData = about;
+    renderAboutContent();
+    bootstrap.Modal.getInstance(document.getElementById('aboutModal')).hide();
+    alert('Opis firmy został zapisany.');
+}
 const REQ_ICONS = [
     ['fa-road', 'Droga / kilometry'], ['fa-clock', 'Zegar / godziny'], ['fa-gauge-high', 'Prędkość'], ['fa-cake-candles', 'Wiek'],
     ['fa-toolbox', 'Narzędzia'], ['fa-user-tie', 'Osoba / status'], ['fa-truck', 'Ciężarówka'], ['fa-file-zipper', 'Archiwum / mody'],
