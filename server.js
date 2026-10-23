@@ -1531,9 +1531,11 @@ app.delete('/api/jobs/:id', async (req, res) => {
 
 app.get('/api/company-stats', requireLogin, async (req, res) => {
     try {
-        const totalKmRes = await pool.query("SELECT SUM(distance) as total FROM jobs");
-        const totalDeliveriesRes = await pool.query("SELECT COUNT(*) as total FROM jobs");
-        const totalIncomeRes = await pool.query("SELECT SUM(income) as total_income FROM jobs");
+        // Statystyki firmy i ranking są narastające od początku działalności,
+        // ale obejmują wyłącznie zatwierdzone trasy.
+        const totalKmRes = await pool.query("SELECT COALESCE(SUM(distance), 0) as total FROM jobs WHERE status = 'approved'");
+        const totalDeliveriesRes = await pool.query("SELECT COUNT(*) as total FROM jobs WHERE status = 'approved'");
+        const totalIncomeRes = await pool.query("SELECT COALESCE(SUM(income), 0) as total_income FROM jobs WHERE status = 'approved'");
         const totalExpensesRes = await pool.query('SELECT SUM(amount) as total_expenses FROM expenses');
         
         const totalCompanyKm = parseInt(totalKmRes.rows[0].total || 0);
@@ -1545,6 +1547,7 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
             SELECT users.username, users.rank_override, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries,
                    COALESCE(SUM(jobs.distance) FILTER (WHERE jobs.status = 'approved'), 0) as approved_km
             FROM jobs JOIN users ON jobs.user_id = users.id 
+            WHERE jobs.status = 'approved'
             GROUP BY users.username, users.rank_override ORDER BY km DESC
         `);
 
