@@ -273,6 +273,19 @@ async function initDB() {
             value TEXT NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS recruitment_applications (
+            id SERIAL PRIMARY KEY,
+            age INTEGER NOT NULL,
+            ets2_hours INTEGER NOT NULL,
+            about TEXT NOT NULL,
+            previous_companies TEXT NOT NULL,
+            source TEXT NOT NULL,
+            dlcs TEXT NOT NULL,
+            steam_url VARCHAR(500) NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'new',
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS recruitment_applications_created_idx ON recruitment_applications(created_at DESC);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS job_id INTEGER DEFAULT NULL;`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
@@ -721,6 +734,110 @@ app.put('/api/requirements', requireAdmin, async (req, res) => {
     }
 });
 
+// Public recruitment applications. The current open/closed state is stored with the other site settings.
+app.get('/api/recruitment/settings', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT value FROM site_settings WHERE key = 'recruitment_open'");
+        const isOpen = result.rows.length === 0 || result.rows[0].value !== 'false';
+        res.json({ isOpen });
+    } catch (e) {
+        console.error('Błąd odczytu statusu rekrutacji:', e.message);
+        res.status(500).json({ error: 'Nie udało się pobrać statusu rekrutacji.' });
+    }
+});
+
+app.put('/api/recruitment/settings', requireAdmin, async (req, res) => {
+    const body = req.body || {};
+    if (typeof body.isOpen !== 'boolean') return res.status(400).json({ error: 'Nieprawidłowy status rekrutacji.' });
+    try {
+        await pool.query(
+            "INSERT INTO site_settings (key, value, updated_at) VALUES ('recruitment_open', $1, NOW()) " +
+            "ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()",
+            [String(body.isOpen)]
+        );
+        res.json({ success: true, isOpen: body.isOpen });
+    } catch (e) {
+        console.error('Błąd zapisu statusu rekrutacji:', e.message);
+        res.status(500).json({ error: 'Nie udało się zapisać statusu rekrutacji.' });
+    }
+});
+
+app.post('/api/recruitment/applications', async (req, res) => {
+    const body = req.body || {};
+    const age = Number(body.age);
+    const hours = Number(body.ets2Hours);
+    const about = String(body.about || '').trim();
+    const previousCompanies = String(body.previousCompanies || '').trim();
+    const source = String(body.source || '').trim();
+    const dlcs = String(body.dlcs || '').trim();
+    const steamUrl = String(body.steamUrl || '').trim();
+    const sentenceCount = (about.match(/[.!?]+(?=\s|$)/g) || []).length;
+
+    if (!Number.isInteger(age) || age < 13 || age > 100) return res.status(400).json({ error: 'Wiek musi być liczbą od 13 do 100.' });
+    if (body.ets2Hours == null || String(body.ets2Hours).trim() === '' || !Number.isInteger(hours) || hours < 0 || hours > 200000) {
+        return res.status(400).json({ error: 'Podaj poprawną liczbę godzin w ETS2.' });
+    }
+    if (about.length < 30 || about.length > 3000 || sentenceCount < 3) return res.status(400).json({ error: 'Opisz siebie w co najmniej 3 zdaniach (maks. 3000 znaków).' });
+    if (!previousCompanies || previousCompanies.length > 3000) return res.status(400).json({ error: 'Opisz poprzednie firmy i powód odejścia (maks. 3000 znaków).' });
+    if (!source || source.length > 1000) return res.status(400).json({ error: 'Napisz, skąd dowiedziałe(-aś) się o firmie (maks. 1000 znaków).' });
+    if (!dlcs || dlcs.length > 1000) return res.status(400).json({ error: 'Wpisz posiadane DLC poza mapowymi (maks. 1000 znaków).' });
+    if (steamUrl.length > 500) return res.status(400).json({ error: 'Link Steam jest za długi.' });
+    try {
+        const url = new URL(steamUrl);
+        const host = url.hostname.toLowerCase();
+        if (url.protocol !== 'https:' || !['steamcommunity.com', 'www.steamcommunity.com', 's.team'].includes(host) || url.username || url.password) throw new Error('invalid URL');
+    } catch (_) {
+        return res.status(400).json({ error: 'Podaj poprawny link HTTPS do profilu Steam.' });
+    }
+
+    try {
+        const settings = await pool.query("SELECT value FROM site_settings WHERE key = 'recruitment_open'");
+        if (settings.rows.length && settings.rows[0].value === 'false') return res.status(403).json({ error: 'Rekrutacja jest obecnie zamknięta.' });
+        const result = await pool.query(
+            "INSERT INTO recruitment_applications (age, ets2_hours, about, previous_companies, source, dlcs, steam_url) " +
+            "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+            [age, hours, about, previousCompanies, source, dlcs, steamUrl]
+        );
+        try {
+            const staff = await pool.query("SELECT id FROM users WHERE role IN ('admin', 'manager') AND status = 'approved'");
+            await Promise.all(staff.rows.map(user => addNotification(user.id, 'Nowe podanie rekrutacyjne', 'Wpłynęło nowe podanie. Otwórz zakładkę Rekrutacja, aby je sprawdzić.', null, 'recruitment')));
+        } catch (notificationError) {
+            console.error('Nie udało się powiadomić kadry o nowym podaniu:', notificationError.message);
+        }
+        res.status(201).json({ success: true, id: result.rows[0].id });
+    } catch (e) {
+        console.error('Błąd zapisu podania rekrutacyjnego:', e.message);
+        res.status(500).json({ error: 'Nie udało się zapisać podania. Spróbuj ponownie później.' });
+    }
+});
+app.get('/api/recruitment/applications', requireAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT id, age, ets2_hours, about, previous_companies, source, dlcs, steam_url, status, created_at " +
+            "FROM recruitment_applications ORDER BY created_at DESC LIMIT 200"
+        );
+        res.json(result.rows);
+    } catch (e) {
+        console.error('Błąd pobierania podań:', e.message);
+        res.status(500).json({ error: 'Nie udało się pobrać podań.' });
+    }
+});
+
+app.put('/api/recruitment/applications/:id/status', requireAdmin, async (req, res) => {
+    const id = Number.parseInt(req.params.id, 10);
+    const status = String((req.body || {}).status || '');
+    if (!Number.isInteger(id) || id < 1 || !['new', 'reviewing', 'accepted', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: 'Nieprawidłowy status podania.' });
+    }
+    try {
+        const result = await pool.query('UPDATE recruitment_applications SET status = $1 WHERE id = $2 RETURNING id', [status, id]);
+        if (!result.rowCount) return res.status(404).json({ error: 'Nie znaleziono podania.' });
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Błąd aktualizacji podania:', e.message);
+        res.status(500).json({ error: 'Nie udało się zmienić statusu podania.' });
+    }
+});
 // =====================================================================
 //  OPIS FIRMY (zakładka "O nas") - edytowalny przez Szefa/Kierownika.
 //  GET jest publiczny, bo opis jest widoczny także dla gości.
