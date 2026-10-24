@@ -132,7 +132,7 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             FROM users u
             JOIN trips t ON t.user_id = u.id
             JOIN trip_points p ON p.trip_id = t.id
-            WHERE u.role = 'driver' AND u.status = 'approved'
+            WHERE u.role IN ('driver', 'manager', 'admin') AND u.status = 'approved'
               AND NOT EXISTS (SELECT 1 FROM driver_positions dp WHERE dp.user_id = u.id)
             ORDER BY u.id, p.t DESC, p.id DESC
             ON CONFLICT (user_id) DO NOTHING
@@ -508,7 +508,7 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             if (me.rows.length === 0) return res.status(403).json({ error: 'Konto nieaktywne.' });
 
             const result = await pool.query(`
-                SELECT u.id, u.username,
+                SELECT u.id, u.username, u.role,
                        dp.x, dp.z, dp.speed, dp.last_seen_at, dp.trip_id AS last_trip_id,
                        active.id AS active_trip_id,
                        COALESCE(active.start_city, last_trip.start_city) AS start_city,
@@ -521,7 +521,7 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 LEFT JOIN driver_positions dp ON dp.user_id = u.id
                 LEFT JOIN trips active ON active.user_id = u.id AND active.status = 'active'
                 LEFT JOIN trips last_trip ON last_trip.id = dp.trip_id
-                WHERE u.status = 'approved' AND u.role = 'driver'
+                WHERE u.status = 'approved' AND u.role IN ('driver', 'manager', 'admin')
                 ORDER BY LOWER(u.username), u.id
             `);
 
@@ -552,6 +552,7 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             const drivers = result.rows.map(d => ({
                 id: d.id,
                 username: d.username,
+                role: d.role,
                 x: d.x == null ? null : Number(d.x),
                 z: d.z == null ? null : Number(d.z),
                 speed: Number(d.speed) || 0,
