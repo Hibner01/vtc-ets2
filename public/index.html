@@ -699,6 +699,9 @@
                     <a id="nav-guest-garage" class="nav-item-bms d-none" onclick="switchTab('guest-garage')">
                         <i class="fa-solid fa-truck"></i> <span>Garaż</span>
                     </a>
+                    <a id="nav-recruitment" class="nav-item-bms" onclick="switchTab('recruitment')">
+                        <i class="fa-solid fa-file-signature"></i> <span data-i18n="navRecruitment">Rekrutacja</span>
+                    </a>
                     <a id="nav-dashboard" class="nav-item-bms active" onclick="switchTab('dashboard')">
                         <i class="fa-solid fa-border-all"></i> <span data-i18n="navDashboard">Pulpit</span>
                     </a>
@@ -796,7 +799,7 @@
                                     <div>
                                         <div class="text-white-50 small" data-i18n="distanceMonth">Dystans (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-km">0 km</div>
-                                        <div class="text-white-50 small" data-i18n="targetKm">Cel: 6 000 km</div>
+                                        <div class="text-white-50 small" data-i18n="targetKm">Cel: 7 000 km</div>
                                     </div>
                                     <div class="fs-2 text-success"><i class="fa-solid fa-route"></i></div>
                                 </div>
@@ -1290,7 +1293,8 @@
                             <div class="d-flex gap-2 flex-wrap">
                                 <button class="btn btn-light fw-bold" onclick="leaveGuestMode('register')"><i class="fa-solid fa-user-plus me-1"></i> Zarejestruj się</button>
                                 <button class="btn btn-outline-light fw-bold" onclick="leaveGuestMode('login')"><i class="fa-solid fa-right-to-bracket me-1"></i> Zaloguj się</button>
-                                <button class="btn btn-outline-light" onclick="switchTab('guest-garage')"><i class="fa-solid fa-truck me-1"></i> Garaż</button>
+                                <button class="btn btn-outline-light fw-bold" onclick="switchTab('recruitment')"><i class="fa-solid fa-file-signature me-1"></i> <span data-i18n="recruitmentApplyNow">Złóż podanie</span></button>
+                <button class="btn btn-outline-light" onclick="switchTab('guest-garage')"><i class="fa-solid fa-truck me-1"></i> Garaż</button>
                                 <button class="btn btn-outline-light" onclick="switchTab('about')"><i class="fa-solid fa-clipboard-list me-1"></i> Wymagania</button>
                             </div>
                         </div>
@@ -1311,6 +1315,75 @@
                         <div class="bg-card-bms p-4">
                             <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck me-2 text-info"></i>Nasz garaż</h5>
                             <div id="guest-fleet"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-recruitment" style="display:none;">
+                        <div class="bg-card-bms p-4 p-md-5 mb-4" style="max-width: 1050px;">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                <div>
+                                    <h3 class="fw-bold text-white mb-2"><i class="fa-solid fa-file-signature me-2 text-info"></i><span data-i18n="recruitmentTitle">Rekrutacja</span></h3>
+                                    <span id="recruitment-status-badge" class="badge rounded-pill px-3 py-2"></span>
+                                    <p id="recruitment-status-message" class="text-white-50 mt-3 mb-0"></p>
+                                </div>
+                                <button id="recruitment-toggle-btn" class="btn btn-outline-warning d-none" type="button" onclick="toggleRecruitmentStatus()"></button>
+                            </div>
+                            <div id="recruitment-settings-message" class="small mt-3" aria-live="polite"></div>
+                        </div>
+
+                        <div id="recruitment-closed-notice" class="bg-card-bms p-4 mb-4 d-none" style="max-width: 1050px;">
+                            <div class="text-white-50" data-i18n="recruitmentClosedNotice">Formularz podań jest obecnie wyłączony. Spróbuj ponownie później.</div>
+                        </div>
+
+                        <form id="recruitment-application-form" class="bg-card-bms p-4 p-md-5 mb-4" style="max-width: 1050px;" onsubmit="submitRecruitmentApplication(event)">
+                            <h4 class="fw-bold text-white mb-1" data-i18n="recruitmentFormTitle">Wzór podania</h4>
+                            <p class="text-white-50 small mb-4" data-i18n="recruitmentFormIntro">Wypełnij wszystkie pola. Podania trafiają bezpośrednio do kadry.</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="recruitment-age" class="form-label text-white" data-i18n="recruitmentAge">Ile masz lat?</label>
+                                    <input id="recruitment-age" name="age" type="number" min="13" max="100" step="1" class="form-control bg-dark text-white border-secondary" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="recruitment-hours" class="form-label text-white" data-i18n="recruitmentHours">Ile masz godzin w ETS2?</label>
+                                    <input id="recruitment-hours" name="ets2Hours" type="number" min="0" max="200000" step="1" class="form-control bg-dark text-white border-secondary" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="recruitment-about" class="form-label text-white" data-i18n="recruitmentAbout">Napisz coś o sobie (minimum 3 zdania).</label>
+                                    <textarea id="recruitment-about" name="about" rows="4" maxlength="3000" class="form-control bg-dark text-white border-secondary" required oninput="updateRecruitmentSentenceCount()"></textarea>
+                                    <div id="recruitment-sentence-count" class="form-text text-white-50" data-i18n="recruitmentSentenceHint">Zdania: 0 / 3 minimum.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="recruitment-companies" class="form-label text-white" data-i18n="recruitmentCompanies">W jakich firmach wcześniej pracowałeś(-aś) i dlaczego odszedłeś(-aś)?</label>
+                                    <textarea id="recruitment-companies" name="previousCompanies" rows="3" maxlength="3000" class="form-control bg-dark text-white border-secondary" required></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="recruitment-source" class="form-label text-white" data-i18n="recruitmentSource">Skąd się o nas dowiedziałeś(-aś)?</label>
+                                    <textarea id="recruitment-source" name="source" rows="2" maxlength="1000" class="form-control bg-dark text-white border-secondary" required></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="recruitment-dlcs" class="form-label text-white" data-i18n="recruitmentDlcs">Jakie masz DLC poza mapowymi?</label>
+                                    <textarea id="recruitment-dlcs" name="dlcs" rows="2" maxlength="1000" class="form-control bg-dark text-white border-secondary" required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="recruitment-steam" class="form-label text-white" data-i18n="recruitmentSteam">Link do profilu Steam</label>
+                                    <input id="recruitment-steam" name="steamUrl" type="url" maxlength="500" class="form-control bg-dark text-white border-secondary" placeholder="https://steamcommunity.com/id/..." required>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 align-items-center mt-4">
+                                <button id="recruitment-submit-btn" type="submit" class="btn btn-info fw-bold px-4"><i class="fa-solid fa-paper-plane me-1"></i><span data-i18n="recruitmentSubmit">Wyślij podanie</span></button>
+                                <div id="recruitment-form-message" class="small" aria-live="polite"></div>
+                            </div>
+                        </form>
+
+                        <div id="recruitment-admin-panel" class="bg-card-bms p-4 p-md-5 d-none" style="max-width: 1050px;">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <div>
+                                    <h4 class="fw-bold text-warning mb-1"><i class="fa-solid fa-inbox me-2"></i><span data-i18n="recruitmentApplications">Otrzymane podania</span></h4>
+                                    <div class="text-white-50 small" data-i18n="recruitmentAdminHint">Widoczne tylko dla kadry.</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-info" type="button" onclick="loadRecruitmentApplications()"><i class="fa-solid fa-rotate me-1"></i><span data-i18n="recruitmentRefresh">Odśwież</span></button>
+                            </div>
+                            <div id="recruitment-applications-list"><div class="text-white-50 small" data-i18n="recruitmentLoadingApplications">Ładowanie podań…</div></div>
                         </div>
                     </div>
 
@@ -1609,12 +1682,12 @@
                 noAccount: "Nie masz jeszcze konta?", createAccount: "Rejestracja konta", registerSubtitle: "Stwórz konto w Mazren Control System",
                 discordNick: "Nick z Discorda", emailAddress: "Adres e-mail", repeatPassword: "Powtórz hasło", createAccountBtn: "Stwórz konto",
                 hasAccount: "Masz już konto?", loggedInAs: "ZALOGOWANY JAKO", bossRole: "SZEF / WŁAŚCICIEL", navDashboard: "Pulpit",
-                navMap: "Mapa kierowców", navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
-                fleetMapTitle: "Mapa kierowców", fleetMapIntro: "Wszyscy zalogowani kierowcy i szefowie widzą te same pozycje.", fleetMapRefresh: "Odśwież", fleetMapFit: "Dopasuj",
+                navMap: "Mapa kierowców", navRecruitment: "Rekrutacja", navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
+                recruitmentTitle: "Rekrutacja", recruitmentApplyNow: "Złóż podanie", recruitmentStatusOpen: "Rekrutacja otwarta", recruitmentStatusClosed: "Rekrutacja zamknięta", recruitmentOpenMessage: "Aktualnie przyjmujemy podania. Wypełnij formularz, a skontaktuje się z Tobą kadra.", recruitmentClosedNotice: "Formularz podań jest obecnie wyłączony. Spróbuj ponownie później.", recruitmentFormTitle: "Wzór podania", recruitmentFormIntro: "Wypełnij wszystkie pola. Podania trafiają bezpośrednio do kadry.", recruitmentAge: "Ile masz lat?", recruitmentHours: "Ile masz godzin w ETS2?", recruitmentAbout: "Napisz coś o sobie (minimum 3 zdania).", recruitmentSentenceHint: "Zdania: 0 / 3 minimum.", recruitmentCompanies: "W jakich firmach wcześniej pracowałeś(-aś) i dlaczego odszedłeś(-aś)?", recruitmentSource: "Skąd się o nas dowiedziałeś(-aś)?", recruitmentDlcs: "Jakie masz DLC poza mapowymi?", recruitmentSteam: "Link do profilu Steam", recruitmentSubmit: "Wyślij podanie", recruitmentApplications: "Otrzymane podania", recruitmentAdminHint: "Widoczne tylko dla kadry.", recruitmentRefresh: "Odśwież", recruitmentLoadingApplications: "Ładowanie podań…", recruitmentNoApplications: "Nie ma jeszcze żadnych podań.", recruitmentLoadError: "Nie udało się pobrać podań.", recruitmentSettingsError: "Nie udało się pobrać statusu rekrutacji.", recruitmentClose: "Zamknij rekrutację", recruitmentOpen: "Otwórz rekrutację", recruitmentSaved: "Status rekrutacji zapisany.", recruitmentSaveError: "Nie udało się zapisać statusu.", recruitmentSent: "Podanie zostało wysłane. Dziękujemy!", recruitmentSendError: "Nie udało się wysłać podania.", recruitmentSentenceError: "Napisz minimum 3 pełne zdania o sobie.", recruitmentAgeLabel: "Wiek", recruitmentHoursLabel: "Godziny ETS2", recruitmentAboutLabel: "O kandydacie", recruitmentCompaniesLabel: "Poprzednie firmy i powód odejścia", recruitmentSourceLabel: "Skąd nas zna", recruitmentDlcsLabel: "DLC poza mapowymi", recruitmentSteamLabel: "Steam", recruitmentStatusLabel: "Status", recruitmentSaveStatus: "Zapisz status", recruitmentStatusNew: "Nowe", recruitmentStatusReviewing: "Rozpatrywane", recruitmentStatusAccepted: "Przyjęte", recruitmentStatusRejected: "Odrzucone", recruitmentSubmittedAt: "Wysłano", recruitmentFormClosed: "Rekrutacja jest zamknięta.", fleetMapTitle: "Mapa kierowców", fleetMapIntro: "Wszyscy zalogowani kierowcy i szefowie widzą te same pozycje.", fleetMapRefresh: "Odśwież", fleetMapFit: "Dopasuj",
                 fleetMapLoading: "Wczytuję pozycje kierowców…", fleetMapDrivers: "Kierowcy firmy", fleetMapNote: "Pozycje pochodzą ze współrzędnych świata ETS2. Telemetria zapisuje je podczas śledzonego kursu; po zakończeniu zostaje ostatni znany punkt. Przeciągnij mapę, użyj kółka lub przycisków +/−; „Dopasuj” pokazuje wszystkich kierowców.",
                 fleetMapNoLocation: "Brak zapisanej lokalizacji", fleetMapWaiting: "Kurs aktywny — czekam na pierwszy punkt GPS", fleetMapLive: "Na żywo", fleetMapLast: "Ostatnia pozycja", fleetMapNoDrivers: "Brak aktywnych kierowców.", fleetMapUpdated: "Odświeżono",
                 navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
-                welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 6 000 km",
+                welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 7 000 km",
                 deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizowanych ładunków", companyBudget: "Budżet Firmy",
                 availableFunds: "Dostępne środki", companyKm: "Kilometry Firmy", totalDistance: "Łączny dystans",
                 completedRoutes: "Wykonane Trasy", yourTruck: "Twój Zestaw", noTruckAssigned: "Brak przypisanego zestawu w garażu.",
@@ -1647,12 +1720,12 @@
                 noAccount: "Don't have an account?", createAccount: "Account Registration", registerSubtitle: "Create an account",
                 discordNick: "Discord Username", emailAddress: "Email Address", repeatPassword: "Repeat Password", createAccountBtn: "Create Account",
                 hasAccount: "Already have an account?", loggedInAs: "LOGGED IN AS", bossRole: "BOSS / OWNER", navDashboard: "Dashboard",
-                navMap: "Driver map", navStats: "Company Stats", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage",
-                fleetMapTitle: "Driver map", fleetMapIntro: "All signed-in drivers and managers share the same positions.", fleetMapRefresh: "Refresh", fleetMapFit: "Fit all",
+                navMap: "Driver map", navRecruitment: "Recruitment", navStats: "Company Stats", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage",
+                recruitmentTitle: "Recruitment", recruitmentApplyNow: "Apply now", recruitmentStatusOpen: "Recruitment open", recruitmentStatusClosed: "Recruitment closed", recruitmentOpenMessage: "We are currently accepting applications. Fill in the form and our staff will contact you.", recruitmentClosedNotice: "Applications are currently closed. Please check back later.", recruitmentFormTitle: "Application form", recruitmentFormIntro: "Complete every field. Applications are sent directly to the company staff.", recruitmentAge: "How old are you?", recruitmentHours: "How many hours have you played ETS2?", recruitmentAbout: "Tell us about yourself (at least 3 sentences).", recruitmentSentenceHint: "Sentences: 0 / 3 minimum.", recruitmentCompanies: "Which companies have you worked for before, and why did you leave?", recruitmentSource: "How did you hear about us?", recruitmentDlcs: "Which DLCs do you own, excluding map DLCs?", recruitmentSteam: "Steam profile link", recruitmentSubmit: "Submit application", recruitmentApplications: "Received applications", recruitmentAdminHint: "Visible to company staff only.", recruitmentRefresh: "Refresh", recruitmentLoadingApplications: "Loading applications…", recruitmentNoApplications: "There are no applications yet.", recruitmentLoadError: "Failed to load applications.", recruitmentSettingsError: "Failed to load recruitment status.", recruitmentClose: "Close recruitment", recruitmentOpen: "Open recruitment", recruitmentSaved: "Recruitment status saved.", recruitmentSaveError: "Could not save the recruitment status.", recruitmentSent: "Your application has been submitted. Thank you!", recruitmentSendError: "Could not submit your application.", recruitmentSentenceError: "Please write at least 3 complete sentences about yourself.", recruitmentAgeLabel: "Age", recruitmentHoursLabel: "ETS2 hours", recruitmentAboutLabel: "About the applicant", recruitmentCompaniesLabel: "Previous companies and reason for leaving", recruitmentSourceLabel: "How they heard about us", recruitmentDlcsLabel: "Non-map DLCs", recruitmentSteamLabel: "Steam", recruitmentStatusLabel: "Status", recruitmentSaveStatus: "Save status", recruitmentStatusNew: "New", recruitmentStatusReviewing: "Under review", recruitmentStatusAccepted: "Accepted", recruitmentStatusRejected: "Rejected", recruitmentSubmittedAt: "Submitted", recruitmentFormClosed: "Recruitment is closed.", fleetMapTitle: "Driver map", fleetMapIntro: "All signed-in drivers and managers share the same positions.", fleetMapRefresh: "Refresh", fleetMapFit: "Fit all",
                 fleetMapLoading: "Loading driver positions…", fleetMapDrivers: "Company drivers", fleetMapNote: "Positions use ETS2 world coordinates. Telemetry records them during a tracked trip; the last known point remains after delivery. Drag the map or use the wheel / + and − buttons; Fit all shows every driver.",
                 fleetMapNoLocation: "No saved location", fleetMapWaiting: "Trip active — waiting for the first GPS point", fleetMapLive: "Live", fleetMapLast: "Last known position", fleetMapNoDrivers: "No active drivers.", fleetMapUpdated: "Updated",
                 navDocuments: "Documents", navAbout: "About Us", navManagement: "Management", logout: "Logout",
-                welcomeBackBanner: "WELCOME BACK", distanceMonth: "Distance (Month)", targetKm: "Goal: 6,000 km",
+                welcomeBackBanner: "WELCOME BACK", distanceMonth: "Distance (Month)", targetKm: "Goal: 7,000 km",
                 deliveriesMonth: "Deliveries (Month)", completedCargo: "Completed Loads", companyBudget: "Company Budget",
                 availableFunds: "Available Funds", companyKm: "Company Distance", totalDistance: "Total Distance",
                 completedRoutes: "Completed Routes", yourTruck: "Your Truck", noTruckAssigned: "No truck assigned in garage.",
@@ -1697,6 +1770,9 @@
             }
             if (typeof renderRequirements === 'function') renderRequirements();
             if (typeof renderAboutContent === 'function') renderAboutContent();
+            if (typeof renderRecruitmentStatus === 'function') renderRecruitmentStatus();
+            if (typeof updateRecruitmentSentenceCount === 'function') updateRecruitmentSentenceCount();
+            if (document.getElementById('tab-recruitment')?.style.display === 'block' && isStaff()) loadRecruitmentApplications();
             if (document.getElementById('tab-map')?.style.display === 'block') renderDriverMap();
             if (typeof updateClock === 'function') updateClock();
         }
@@ -1760,9 +1836,9 @@
 
         function switchTab(tab) {
             closeMobileMenu();
-            if (isGuest && !['about', 'guest-stats', 'guest-garage'].includes(tab)) tab = 'guest-stats';
+            if (isGuest && !['about', 'guest-stats', 'guest-garage', 'recruitment'].includes(tab)) tab = 'guest-stats';
             if (tab === 'management' && !isStaff()) tab = 'dashboard';
-            ['guest-stats', 'guest-garage', 'dashboard', 'map', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
+            ['guest-stats', 'guest-garage', 'dashboard', 'map', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'recruitment', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById(t === 'management' ? 'admin-tab-btn' : 'nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
@@ -1782,6 +1858,7 @@
             else if (tab === 'finances') loadExpenses();
             else if (tab === 'client') loadClientTab();
             else if (tab === 'about') { loadRequirements(); loadAboutContent(); }
+            else if (tab === 'recruitment') loadRecruitment();
             else if (tab === 'guest-stats' || tab === 'guest-garage') loadGuestOverview();
             else if (tab === 'garage') loadGarage();
             else if (tab === 'management' && isStaff()) loadManagementUsers();
@@ -1977,6 +2054,7 @@
         function handleNotificationClick(jobId, tab, notifId) {
             if (notifId) fetch(`/api/notifications/${notifId}/read`, { method: 'PUT' }).then(loadNotifications).catch(() => {});
             if (tab === 'management' && isStaff()) return switchTab('management');
+            if (tab === 'recruitment' && isStaff()) return switchTab('recruitment');
             if (tab === 'garage') return switchTab('garage');
             if (jobId && jobId !== 'null') switchTab('dispatcher');
         }
@@ -3248,6 +3326,184 @@ async function loadGuestOverview() {
             (trailers.length ? '<div class="text-white-50 small fw-semibold text-uppercase mb-2">Naczepy</div><div class="row g-3">' + trailers.join('') + '</div>' : '') ||
             '<div class="text-white-50 small">Flota jest w trakcie uzupełniania.</div>';
     } catch (e) {}
+}
+
+/* ===== Rekrutacja: publiczny formularz podań i panel dla kadry ===== */
+let recruitmentIsOpen = true;
+const recruitmentStatuses = ['new', 'reviewing', 'accepted', 'rejected'];
+function recruitmentStatusName(status) {
+    const keys = { new: 'recruitmentStatusNew', reviewing: 'recruitmentStatusReviewing', accepted: 'recruitmentStatusAccepted', rejected: 'recruitmentStatusRejected' };
+    return t(keys[status] || 'recruitmentStatusNew');
+}
+function renderRecruitmentStatus() {
+    const badge = document.getElementById('recruitment-status-badge');
+    const message = document.getElementById('recruitment-status-message');
+    const form = document.getElementById('recruitment-application-form');
+    const closedNotice = document.getElementById('recruitment-closed-notice');
+    const toggle = document.getElementById('recruitment-toggle-btn');
+    const adminPanel = document.getElementById('recruitment-admin-panel');
+    if (!badge || !form || !closedNotice) return;
+    badge.className = 'badge rounded-pill px-3 py-2 ' + (recruitmentIsOpen ? 'bg-success' : 'bg-danger');
+    badge.textContent = t(recruitmentIsOpen ? 'recruitmentStatusOpen' : 'recruitmentStatusClosed');
+    if (message) message.textContent = t(recruitmentIsOpen ? 'recruitmentOpenMessage' : 'recruitmentFormClosed');
+    form.classList.toggle('d-none', !recruitmentIsOpen);
+    closedNotice.classList.toggle('d-none', recruitmentIsOpen);
+    if (toggle) {
+        toggle.classList.toggle('d-none', !isStaff());
+        toggle.className = 'btn ' + (recruitmentIsOpen ? 'btn-outline-warning' : 'btn-outline-success') + (isStaff() ? '' : ' d-none');
+        toggle.innerHTML = '<i class="fa-solid ' + (recruitmentIsOpen ? 'fa-lock' : 'fa-lock-open') + ' me-1"></i>' + t(recruitmentIsOpen ? 'recruitmentClose' : 'recruitmentOpen');
+    }
+    if (adminPanel) adminPanel.classList.toggle('d-none', !isStaff());
+}
+async function loadRecruitment() {
+    const settingsMessage = document.getElementById('recruitment-settings-message');
+    try {
+        const response = await fetch('/api/recruitment/settings');
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || t('recruitmentSettingsError'));
+        recruitmentIsOpen = Boolean(data.isOpen);
+        if (settingsMessage) {
+            settingsMessage.className = 'small mt-3';
+            settingsMessage.textContent = '';
+        }
+    } catch (error) {
+        recruitmentIsOpen = false;
+        if (settingsMessage) {
+            settingsMessage.className = 'small mt-3 text-danger';
+            settingsMessage.textContent = error.message || t('recruitmentSettingsError');
+        }
+    }
+    renderRecruitmentStatus();
+    if (isStaff()) await loadRecruitmentApplications();
+}
+async function toggleRecruitmentStatus() {
+    const message = document.getElementById('recruitment-settings-message');
+    try {
+        const response = await fetch('/api/recruitment/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isOpen: !recruitmentIsOpen })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || t('recruitmentSaveError'));
+        recruitmentIsOpen = Boolean(data.isOpen);
+        if (message) {
+            message.className = 'small mt-3 text-success';
+            message.textContent = t('recruitmentSaved');
+        }
+        renderRecruitmentStatus();
+    } catch (error) {
+        if (message) {
+            message.className = 'small mt-3 text-danger';
+            message.textContent = error.message || t('recruitmentSaveError');
+        }
+    }
+}
+function updateRecruitmentSentenceCount() {
+    const input = document.getElementById('recruitment-about');
+    const display = document.getElementById('recruitment-sentence-count');
+    if (!input || !display) return 0;
+    const count = (input.value.match(/[.!?]+(?=\s|$)/g) || []).length;
+    display.textContent = (currentLang === 'en' ? 'Sentences: ' : 'Zdania: ') + count + ' / 3 minimum.';
+    display.className = 'form-text ' + (count >= 3 ? 'text-success' : 'text-white-50');
+    return count;
+}
+async function submitRecruitmentApplication(event) {
+    event.preventDefault();
+    const message = document.getElementById('recruitment-form-message');
+    const button = document.getElementById('recruitment-submit-btn');
+    if (updateRecruitmentSentenceCount() < 3) {
+        message.className = 'small text-warning';
+        message.textContent = t('recruitmentSentenceError');
+        return;
+    }
+    const payload = {
+        age: document.getElementById('recruitment-age').value,
+        ets2Hours: document.getElementById('recruitment-hours').value,
+        about: document.getElementById('recruitment-about').value,
+        previousCompanies: document.getElementById('recruitment-companies').value,
+        source: document.getElementById('recruitment-source').value,
+        dlcs: document.getElementById('recruitment-dlcs').value,
+        steamUrl: document.getElementById('recruitment-steam').value
+    };
+    const original = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>' + (currentLang === 'en' ? 'Sending…' : 'Wysyłanie…');
+    try {
+        const response = await fetch('/api/recruitment/applications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || t('recruitmentSendError'));
+        document.getElementById('recruitment-application-form').reset();
+        updateRecruitmentSentenceCount();
+        message.className = 'small text-success';
+        message.textContent = t('recruitmentSent');
+        if (isStaff()) await loadRecruitmentApplications();
+    } catch (error) {
+        message.className = 'small text-danger';
+        message.textContent = error.message || t('recruitmentSendError');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = original;
+    }
+}
+async function loadRecruitmentApplications() {
+    const list = document.getElementById('recruitment-applications-list');
+    if (!list || !isStaff()) return;
+    list.innerHTML = '<div class="text-white-50 small">' + escapeHtml(t('recruitmentLoadingApplications')) + '</div>';
+    try {
+        const response = await fetch('/api/recruitment/applications');
+        const applications = await response.json().catch(() => []);
+        if (!response.ok) throw new Error(applications.error || t('recruitmentLoadError'));
+        if (!applications.length) {
+            list.innerHTML = '<div class="text-white-50 small">' + escapeHtml(t('recruitmentNoApplications')) + '</div>';
+            return;
+        }
+        list.innerHTML = applications.map(application => {
+            const id = Number(application.id);
+            const created = new Date(application.created_at).toLocaleString(currentLang === 'pl' ? 'pl-PL' : 'en-US');
+            return '<details class="border border-secondary rounded-3 p-3 mb-3">' +
+                '<summary class="d-flex flex-wrap align-items-center gap-2 text-white fw-semibold">' +
+                '<span class="text-info">#' + id + '</span><span>' + escapeHtml(application.steam_url) + '</span>' +
+                '<span class="badge bg-dark ms-md-auto">' + escapeHtml(recruitmentStatusName(application.status)) + '</span>' +
+                '<span class="small text-white-50">' + escapeHtml(created) + '</span></summary>' +
+                '<div class="row g-3 mt-2">' +
+                '<div class="col-sm-6"><strong>' + escapeHtml(t('recruitmentAgeLabel')) + ':</strong> ' + Number(application.age) + '</div>' +
+                '<div class="col-sm-6"><strong>' + escapeHtml(t('recruitmentHoursLabel')) + ':</strong> ' + Number(application.ets2_hours).toLocaleString(currentLang === 'pl' ? 'pl-PL' : 'en-US') + '</div>' +
+                '<div class="col-12"><strong>' + escapeHtml(t('recruitmentAboutLabel')) + ':</strong><div class="text-white-50" style="white-space:pre-wrap">' + escapeHtml(application.about) + '</div></div>' +
+                '<div class="col-md-6"><strong>' + escapeHtml(t('recruitmentCompaniesLabel')) + ':</strong><div class="text-white-50" style="white-space:pre-wrap">' + escapeHtml(application.previous_companies) + '</div></div>' +
+                '<div class="col-md-6"><strong>' + escapeHtml(t('recruitmentSourceLabel')) + ':</strong><div class="text-white-50" style="white-space:pre-wrap">' + escapeHtml(application.source) + '</div></div>' +
+                '<div class="col-md-6"><strong>' + escapeHtml(t('recruitmentDlcsLabel')) + ':</strong><div class="text-white-50" style="white-space:pre-wrap">' + escapeHtml(application.dlcs) + '</div></div>' +
+                '<div class="col-md-6"><strong>' + escapeHtml(t('recruitmentSteamLabel')) + ':</strong> <a href="' + escapeHtml(application.steam_url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(application.steam_url) + '</a></div>' +
+                '<div class="col-12 d-flex flex-wrap gap-2 align-items-center">' +
+                '<label class="form-label mb-0" for="recruitment-status-' + id + '">' + escapeHtml(t('recruitmentStatusLabel')) + '</label>' +
+                '<select id="recruitment-status-' + id + '" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width:220px">' +
+                recruitmentStatuses.map(status => '<option value="' + status + '"' + (status === application.status ? ' selected' : '') + '>' + escapeHtml(recruitmentStatusName(status)) + '</option>').join('') +
+                '</select><button class="btn btn-sm btn-outline-warning" type="button" onclick="saveRecruitmentApplicationStatus(' + id + ')">' + escapeHtml(t('recruitmentSaveStatus')) + '</button></div>' +
+                '</div></details>';
+        }).join('');
+    } catch (error) {
+        list.innerHTML = '<div class="text-danger small">' + escapeHtml(error.message || t('recruitmentLoadError')) + '</div>';
+    }
+}
+async function saveRecruitmentApplicationStatus(id) {
+    const select = document.getElementById('recruitment-status-' + Number(id));
+    if (!select || !recruitmentStatuses.includes(select.value)) return;
+    try {
+        const response = await fetch('/api/recruitment/applications/' + Number(id) + '/status', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: select.value })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || t('recruitmentSaveError'));
+        await loadRecruitmentApplications();
+    } catch (error) {
+        alert(error.message || t('recruitmentSaveError'));
+    }
 }
 
 /* ===== Wymagania do dołączenia (edytowalne przez Szefa, PL + EN) ===== */
