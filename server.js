@@ -790,7 +790,7 @@ app.post('/api/recruitment/applications', async (req, res) => {
     const steamUrl = String(body.steamUrl || '').trim();
     const sentenceCount = (about.match(/[.!?]+(?=\s|$)/g) || []).length;
 
-    if (fullName.length < 2 || fullName.length > 150) return res.status(400).json({ error: 'Podaj imię i nazwisko (maks. 150 znaków).' });
+    if (fullName.length < 2 || fullName.length > 150) return res.status(400).json({ error: 'Podaj imię (maks. 150 znaków).' });
     if (discordName.length < 2 || discordName.length > 100) return res.status(400).json({ error: 'Podaj nick Discord (maks. 100 znaków).' });
     if (!Number.isInteger(age) || age < 13 || age > 100) return res.status(400).json({ error: 'Wiek musi być liczbą od 13 do 100.' });
     if (body.ets2Hours == null || String(body.ets2Hours).trim() === '' || !Number.isInteger(hours) || hours < 0 || hours > 200000) {
