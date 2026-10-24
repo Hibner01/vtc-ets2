@@ -112,6 +112,30 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
                 speed REAL DEFAULT 0
             );
             CREATE INDEX IF NOT EXISTS trip_points_trip_idx ON trip_points (trip_id, t);
+
+            CREATE TABLE IF NOT EXISTS driver_positions (
+                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                trip_id INTEGER REFERENCES trips(id) ON DELETE SET NULL,
+                x REAL NOT NULL,
+                z REAL NOT NULL,
+                speed REAL NOT NULL DEFAULT 0,
+                last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS driver_positions_seen_idx ON driver_positions (last_seen_at DESC);
+        `);
+
+        // Uzupełnij ostatnią pozycję ze śladów zapisanych przed wdrożeniem mapy.
+        await pool.query(`
+            INSERT INTO driver_positions (user_id, trip_id, x, z, speed, last_seen_at)
+            SELECT DISTINCT ON (u.id) u.id, t.id, p.x, p.z, p.speed,
+                   TO_TIMESTAMP(p.t / 1000.0) AT TIME ZONE 'UTC'
+            FROM users u
+            JOIN trips t ON t.user_id = u.id
+            JOIN trip_points p ON p.trip_id = t.id
+            WHERE u.role = 'driver' AND u.status = 'approved'
+              AND NOT EXISTS (SELECT 1 FROM driver_positions dp WHERE dp.user_id = u.id)
+            ORDER BY u.id, p.t DESC, p.id DESC
+            ON CONFLICT (user_id) DO NOTHING
         `);
     }
 
@@ -324,9 +348,6 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             if (t.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono kursu.' });
             if (t.rows[0].status !== 'active') return res.status(409).json({ error: 'Kurs nie jest aktywny.' });
 
-            const cnt = await pool.query('SELECT COUNT(*)::int AS n FROM trip_points WHERE trip_id = $1', [tripId]);
-            if (cnt.rows[0].n >= MAX_POINTS_PER_TRIP) return res.json({ success: true, stored: 0, note: 'limit punktów osiągnięty' });
-
             const ts = [], xs = [], zs = [], sp = [];
             for (const p of pts) {
                 const x = Number(p.x), z = Number(p.z), tt = Number(p.t);
@@ -336,12 +357,30 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
             }
             if (ts.length === 0) return res.status(400).json({ error: 'Niepoprawne punkty.' });
 
+            const last = ts.length - 1;
+            await pool.query(
+                `INSERT INTO driver_positions (user_id, trip_id, x, z, speed, last_seen_at)
+                 VALUES ($1, $2, $3, $4, $5, NOW())
+                 ON CONFLICT (user_id) DO UPDATE SET
+                    trip_id = EXCLUDED.trip_id, x = EXCLUDED.x, z = EXCLUDED.z,
+                    speed = EXCLUDED.speed, last_seen_at = EXCLUDED.last_seen_at`,
+                [req.clientUser.id, tripId, xs[last], zs[last], sp[last]]
+            );
+
+            const cnt = await pool.query('SELECT COUNT(*)::int AS n FROM trip_points WHERE trip_id = $1', [tripId]);
+            if (cnt.rows[0].n >= MAX_POINTS_PER_TRIP) {
+                return res.json({ success: true, stored: 0, note: 'limit punktów osiągnięty' });
+            }
+
+            const remaining = MAX_POINTS_PER_TRIP - cnt.rows[0].n;
+            const storeCount = Math.min(ts.length, remaining);
+            const startAt = ts.length - storeCount;
             await pool.query(
                 `INSERT INTO trip_points (trip_id, t, x, z, speed)
                  SELECT $1::int, * FROM unnest($2::bigint[], $3::real[], $4::real[], $5::real[])`,
-                [tripId, ts, xs, zs, sp]
+                [tripId, ts.slice(startAt), xs.slice(startAt), zs.slice(startAt), sp.slice(startAt)]
             );
-            res.json({ success: true, stored: ts.length });
+            res.json({ success: true, stored: storeCount });
         } catch (e) {
             console.error('Błąd zapisu punktów:', e.message);
             res.status(500).json({ error: 'Błąd zapisu punktów' });
@@ -462,6 +501,75 @@ module.exports = function ({ app, pool, requireLogin, addNotification }) {
     // ------------------------------------------------------------------
     //  Podgląd trasy na stronie (zalogowani)
     // ------------------------------------------------------------------
+    app.get('/api/driver-map', requireLogin, async (req, res) => {
+        res.set('Cache-Control', 'no-store');
+        try {
+            const me = await pool.query("SELECT id FROM users WHERE id = $1 AND status = 'approved'", [req.session.userId]);
+            if (me.rows.length === 0) return res.status(403).json({ error: 'Konto nieaktywne.' });
+
+            const result = await pool.query(`
+                SELECT u.id, u.username,
+                       dp.x, dp.z, dp.speed, dp.last_seen_at, dp.trip_id AS last_trip_id,
+                       active.id AS active_trip_id,
+                       COALESCE(active.start_city, last_trip.start_city) AS start_city,
+                       COALESCE(active.end_city, last_trip.end_city) AS end_city,
+                       COALESCE(active.cargo, last_trip.cargo) AS cargo,
+                       (active.id IS NOT NULL) AS trip_active,
+                       (active.id IS NOT NULL AND dp.trip_id = active.id
+                        AND dp.last_seen_at >= NOW() - INTERVAL '90 seconds') AS live
+                FROM users u
+                LEFT JOIN driver_positions dp ON dp.user_id = u.id
+                LEFT JOIN trips active ON active.user_id = u.id AND active.status = 'active'
+                LEFT JOIN trips last_trip ON last_trip.id = dp.trip_id
+                WHERE u.status = 'approved' AND u.role = 'driver'
+                ORDER BY LOWER(u.username), u.id
+            `);
+
+            const activeTripIds = [...new Set(result.rows
+                .filter(d => d.trip_active && d.active_trip_id && Number(d.last_trip_id) === Number(d.active_trip_id))
+                .map(d => Number(d.active_trip_id)))];
+            let trackRows = [];
+            if (activeTripIds.length) {
+                const tracks = await pool.query(`
+                    SELECT selected.trip_id, point.t, point.x, point.z
+                    FROM unnest($1::int[]) AS selected(trip_id)
+                    CROSS JOIN LATERAL (
+                        SELECT t, x, z FROM trip_points
+                        WHERE trip_id = selected.trip_id
+                        ORDER BY t DESC LIMIT 180
+                    ) AS point
+                    ORDER BY selected.trip_id, point.t
+                `, [activeTripIds]);
+                trackRows = tracks.rows;
+            }
+
+            const tracks = {};
+            for (const point of trackRows) {
+                const key = String(point.trip_id);
+                if (!tracks[key]) tracks[key] = [];
+                tracks[key].push([Number(point.x), Number(point.z)]);
+            }
+            const drivers = result.rows.map(d => ({
+                id: d.id,
+                username: d.username,
+                x: d.x == null ? null : Number(d.x),
+                z: d.z == null ? null : Number(d.z),
+                speed: Number(d.speed) || 0,
+                last_seen_at: d.last_seen_at,
+                live: Boolean(d.live),
+                trip_active: Boolean(d.trip_active),
+                trip_id: d.active_trip_id || d.last_trip_id || null,
+                start_city: d.start_city || null,
+                end_city: d.end_city || null,
+                cargo: d.cargo || null
+            }));
+            res.json({ drivers, tracks, updated_at: new Date().toISOString() });
+        } catch (e) {
+            console.error('Błąd pobierania mapy kierowców:', e.message);
+            res.status(500).json({ error: 'Błąd pobierania mapy kierowców.' });
+        }
+    });
+
     app.get('/api/trips/by-job/:jobId', requireLogin, async (req, res) => {
         try {
             const t = await pool.query(
