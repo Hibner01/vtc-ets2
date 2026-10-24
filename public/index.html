@@ -3655,6 +3655,24 @@ function renderDriverMap() {
     const mapImageX = px(mapWorld.x1), mapImageY = py(mapWorld.z1);
     const mapImageWidth = px(mapWorld.x2) - mapImageX;
     const mapImageHeight = py(mapWorld.z2) - mapImageY;
+    const mapImageMarkup = fleetMapCamera.zoom >= 4
+        ? (() => {
+            const parts = [], count = 4;
+            const tileWorldWidth = (mapWorld.x2 - mapWorld.x1) / count;
+            const tileWorldHeight = (mapWorld.z2 - mapWorld.z1) / count;
+            for (let row = 0; row < count; row++) {
+                const z1 = mapWorld.z1 + row * tileWorldHeight, z2 = z1 + tileWorldHeight;
+                if (z2 <= minZ || z1 >= maxZ) continue;
+                for (let col = 0; col < count; col++) {
+                    const x1 = mapWorld.x1 + col * tileWorldWidth, x2 = x1 + tileWorldWidth;
+                    if (x2 <= minX || x1 >= maxX) continue;
+                    const x = px(x1), y = py(z1), width = px(x2) - x, height = py(z2) - y;
+                    parts.push(`<image href="/map/ets2-map-hq-${col}-${row}.png" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none"/>`);
+                }
+            }
+            return parts.join('');
+        })()
+        : `<image href="/map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageWidth}" height="${mapImageHeight}" preserveAspectRatio="none"/>`;
     const palette = ['#38bdf8', '#a78bfa', '#fb923c', '#22c55e', '#f472b6', '#facc15', '#2dd4bf'];
     const routeLines = located.map((driver, i) => {
         const track = fleetMapTracks[String(driver.trip_id)] || [];
@@ -3691,7 +3709,7 @@ function renderDriverMap() {
         </defs>
         <rect width="${W}" height="${H}" fill="#080d16"/>
         <g id="fleet-map-content" clip-path="url(#fleet-map-clip)">
-            <image href="/map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageWidth}" height="${mapImageHeight}" preserveAspectRatio="none"/>
+            ${mapImageMarkup}
             <rect x="${LEFT}" y="${TOP}" width="${RIGHT - LEFT}" height="${BOTTOM - TOP}" fill="#050a12" fill-opacity=".02"/>
             ${routeLines}${markers}
         </g>
