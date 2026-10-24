@@ -91,6 +91,31 @@
             background-color: #1e3a8a;
         }
 
+        .fleet-map-stage {
+            min-height: 420px;
+            overflow: hidden;
+            border: 1px solid #263449;
+            border-radius: 16px;
+            background: #080d16;
+        }
+        .fleet-map-stage svg { display: block; width: 100%; height: min(64vh, 620px); min-height: 420px; }
+        .fleet-map-driver {
+            border: 1px solid #263449;
+            border-radius: 12px;
+            background: rgba(9, 15, 27, 0.72);
+            transition: border-color .18s, background-color .18s;
+            cursor: pointer;
+        }
+        .fleet-map-driver:hover, .fleet-map-driver.is-selected { border-color: #3b82f6; background: rgba(30, 58, 138, 0.22); }
+        .fleet-map-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+        .fleet-map-dot.is-live { background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,.16), 0 0 15px rgba(34,197,94,.7); }
+        .fleet-map-dot.is-last { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.14); }
+        .fleet-map-dot.is-none { background: #64748b; }
+        @media (max-width: 767.98px) {
+            .fleet-map-stage, .fleet-map-stage svg { min-height: 340px; }
+            .fleet-map-stage svg { height: 46vh; }
+        }
+
         .main-wrapper {
             margin-left: 250px;
             display: flex;
@@ -660,6 +685,9 @@
                     <a id="nav-dashboard" class="nav-item-bms active" onclick="switchTab('dashboard')">
                         <i class="fa-solid fa-border-all"></i> <span data-i18n="navDashboard">Pulpit</span>
                     </a>
+                    <a id="nav-map" class="nav-item-bms" onclick="switchTab('map')">
+                        <i class="fa-solid fa-map-location-dot"></i> <span data-i18n="navMap">Mapa kierowców</span>
+                    </a>
                     <a id="nav-company-stats" class="nav-item-bms" onclick="switchTab('company-stats')">
                         <i class="fa-solid fa-chart-line"></i> <span data-i18n="navStats">Statystyki Firmy</span>
                     </a>
@@ -751,7 +779,7 @@
                                     <div>
                                         <div class="text-white-50 small" data-i18n="distanceMonth">Dystans (Miesiąc)</div>
                                         <div class="fw-bold fs-4 text-white" id="my-monthly-km">0 km</div>
-                                        <div class="text-white-50 small" data-i18n="targetKm">Cel: 7 000 km</div>
+                                        <div class="text-white-50 small" data-i18n="targetKm">Cel: 6 000 km</div>
                                     </div>
                                     <div class="fs-2 text-success"><i class="fa-solid fa-route"></i></div>
                                 </div>
@@ -801,6 +829,40 @@
                                     <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-truck-front me-2"></i> <span data-i18n="yourTruck">Twój Zestaw</span></h5>
                                     <div id="my-assigned-truck-box">
                                         <div class="text-white-50 text-center py-4" data-i18n="noTruckAssigned">Brak przypisanego zestawu w garażu.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-map" style="display:none;">
+                        <div class="bg-card-bms p-4 mb-4">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                <div>
+                                    <h3 class="fw-bold text-white mb-1"><i class="fa-solid fa-map-location-dot me-2 text-info"></i><span data-i18n="fleetMapTitle">Mapa kierowców</span></h3>
+                                    <div class="text-white-50 small" data-i18n="fleetMapIntro">Wszyscy zalogowani kierowcy i szefowie widzą te same pozycje.</div>
+                                </div>
+                                <button class="btn btn-outline-info btn-sm" type="button" onclick="loadDriverMap()"><i class="fa-solid fa-rotate me-1"></i><span data-i18n="fleetMapRefresh">Odśwież</span></button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mt-3" id="fleet-map-summary">
+                                <span class="badge rounded-pill text-bg-secondary">Ładowanie…</span>
+                            </div>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-12 col-xxl-8">
+                                <div class="bg-card-bms p-2 p-md-3">
+                                    <div id="fleet-map-canvas" class="fleet-map-stage" aria-live="polite">
+                                        <div class="text-white-50 text-center py-5" data-i18n="fleetMapLoading">Wczytuję pozycje kierowców…</div>
+                                    </div>
+                                    <div class="small text-white-50 px-2 pt-3" data-i18n="fleetMapNote">Pozycje pochodzą ze współrzędnych świata ETS2. Telemetria zapisuje je podczas śledzonego kursu; po zakończeniu zostaje ostatni znany punkt.</div>
+                                    <div id="fleet-map-updated" class="small text-white-50 px-2 pt-2"></div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-xxl-4">
+                                <div class="bg-card-bms p-3 p-md-4 h-100">
+                                    <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-users me-2 text-info"></i><span data-i18n="fleetMapDrivers">Kierowcy firmy</span></h5>
+                                    <div id="fleet-map-driver-list" class="d-flex flex-column gap-2">
+                                        <div class="text-white-50 small" data-i18n="fleetMapLoading">Wczytuję pozycje kierowców…</div>
                                     </div>
                                 </div>
                             </div>
@@ -1355,6 +1417,11 @@
         let currentUsername = '';
         let currentLang = localStorage.getItem('vtc_lang') || 'pl';
         let allUsersList = [];
+        let fleetMapDrivers = [];
+        let fleetMapTracks = {};
+        let fleetMapRefreshTimer = null;
+        let fleetMapSelectedDriver = null;
+        let fleetMapRequestInFlight = false;
 
         // stan garażu (ładowany z bazy danych, nie z localStorage)
         let trucksData = [];
@@ -1513,7 +1580,10 @@
                 noAccount: "Nie masz jeszcze konta?", createAccount: "Rejestracja konta", registerSubtitle: "Stwórz konto w Mazren Control System",
                 discordNick: "Nick z Discorda", emailAddress: "Adres e-mail", repeatPassword: "Powtórz hasło", createAccountBtn: "Stwórz konto",
                 hasAccount: "Masz już konto?", loggedInAs: "ZALOGOWANY JAKO", bossRole: "SZEF / WŁAŚCICIEL", navDashboard: "Pulpit",
-                navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
+                navMap: "Mapa kierowców", navStats: "Statystyki Firmy", navFinances: "Finanse", navDispatcher: "Dyspozytornia", navGarage: "Garaż",
+                fleetMapTitle: "Mapa kierowców", fleetMapIntro: "Wszyscy zalogowani kierowcy i szefowie widzą te same pozycje.", fleetMapRefresh: "Odśwież",
+                fleetMapLoading: "Wczytuję pozycje kierowców…", fleetMapDrivers: "Kierowcy firmy", fleetMapNote: "Pozycje pochodzą ze współrzędnych świata ETS2. Telemetria zapisuje je podczas śledzonego kursu; po zakończeniu zostaje ostatni znany punkt.",
+                fleetMapNoLocation: "Brak zapisanej lokalizacji", fleetMapWaiting: "Kurs aktywny — czekam na pierwszy punkt GPS", fleetMapLive: "Na żywo", fleetMapLast: "Ostatnia pozycja", fleetMapNoDrivers: "Brak aktywnych kierowców.", fleetMapUpdated: "Odświeżono",
                 navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
                 welcomeBackBanner: "WITAJ Z POWROTEM", distanceMonth: "Dystans (Miesiąc)", targetKm: "Cel: 6 000 km",
                 deliveriesMonth: "Dostawy (Miesiąc)", completedCargo: "Zrealizowanych ładunków", companyBudget: "Budżet Firmy",
@@ -1548,7 +1618,10 @@
                 noAccount: "Don't have an account?", createAccount: "Account Registration", registerSubtitle: "Create an account",
                 discordNick: "Discord Username", emailAddress: "Email Address", repeatPassword: "Repeat Password", createAccountBtn: "Create Account",
                 hasAccount: "Already have an account?", loggedInAs: "LOGGED IN AS", bossRole: "BOSS / OWNER", navDashboard: "Dashboard",
-                navStats: "Company Stats", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage",
+                navMap: "Driver map", navStats: "Company Stats", navFinances: "Finances", navDispatcher: "Dispatcher", navGarage: "Garage",
+                fleetMapTitle: "Driver map", fleetMapIntro: "All signed-in drivers and managers share the same positions.", fleetMapRefresh: "Refresh",
+                fleetMapLoading: "Loading driver positions…", fleetMapDrivers: "Company drivers", fleetMapNote: "Positions use ETS2 world coordinates. Telemetry records them during a tracked trip; the last known point remains after delivery.",
+                fleetMapNoLocation: "No saved location", fleetMapWaiting: "Trip active — waiting for the first GPS point", fleetMapLive: "Live", fleetMapLast: "Last known position", fleetMapNoDrivers: "No active drivers.", fleetMapUpdated: "Updated",
                 navDocuments: "Documents", navAbout: "About Us", navManagement: "Management", logout: "Logout",
                 welcomeBackBanner: "WELCOME BACK", distanceMonth: "Distance (Month)", targetKm: "Goal: 6,000 km",
                 deliveriesMonth: "Deliveries (Month)", completedCargo: "Completed Loads", companyBudget: "Company Budget",
@@ -1595,6 +1668,7 @@
             }
             if (typeof renderRequirements === 'function') renderRequirements();
             if (typeof renderAboutContent === 'function') renderAboutContent();
+            if (document.getElementById('tab-map')?.style.display === 'block') renderDriverMap();
             if (typeof updateClock === 'function') updateClock();
         }
 
@@ -1659,12 +1733,21 @@
             closeMobileMenu();
             if (isGuest && !['about', 'guest-stats', 'guest-garage'].includes(tab)) tab = 'guest-stats';
             if (tab === 'management' && !isStaff()) tab = 'dashboard';
-            ['guest-stats', 'guest-garage', 'dashboard', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
+            ['guest-stats', 'guest-garage', 'dashboard', 'map', 'company-stats', 'dispatcher', 'finances', 'garage', 'documents', 'client', 'about', 'management'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById(t === 'management' ? 'admin-tab-btn' : 'nav-' + t);
                 if (el) el.style.display = (tab === t) ? 'block' : 'none';
                 if (nav) nav.classList.toggle('active', tab === t);
             });
+            if (tab === 'map') {
+                loadDriverMap();
+                if (!fleetMapRefreshTimer) fleetMapRefreshTimer = setInterval(() => {
+                    if (document.getElementById('tab-map')?.style.display === 'block') loadDriverMap();
+                }, 15000);
+            } else if (fleetMapRefreshTimer) {
+                clearInterval(fleetMapRefreshTimer);
+                fleetMapRefreshTimer = null;
+            }
             if (tab === 'company-stats') loadCompanyStatsFull();
             else if (tab === 'dispatcher') loadDispatches();
             else if (tab === 'finances') loadExpenses();
@@ -1883,6 +1966,10 @@
 
         function showLogin() {
             closeMobileMenu();
+            if (fleetMapRefreshTimer) {
+                clearInterval(fleetMapRefreshTimer);
+                fleetMapRefreshTimer = null;
+            }
             document.getElementById('auth-section').style.display = 'flex';
             document.getElementById('dashboard-section').style.display = 'none';
         }
@@ -3068,7 +3155,7 @@ async function submitPurchase(e) {
 }
 
 /* ===== Tryb gościa ===== */
-const GUEST_HIDDEN_NAV = ['nav-dashboard', 'nav-company-stats', 'nav-finances', 'nav-dispatcher', 'nav-garage', 'nav-documents', 'nav-client'];
+const GUEST_HIDDEN_NAV = ['nav-dashboard', 'nav-map', 'nav-company-stats', 'nav-finances', 'nav-dispatcher', 'nav-garage', 'nav-documents', 'nav-client'];
 function setGuestUi(on) {
     GUEST_HIDDEN_NAV.forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('d-none', on); });
     document.getElementById('nav-guest-stats').classList.toggle('d-none', !on);
@@ -3413,6 +3500,170 @@ function openVirtualCmr(jobId) {
     const w = window.open('', '_blank');
     if (!w) return alert('Przeglądarka zablokowała nowe okno. Zezwól na wyskakujące okna dla tej strony.');
     w.document.write(html); w.document.close();
+}
+
+/* ===== Wspólna mapa kierowców ===== */
+async function loadDriverMap() {
+    if (fleetMapRequestInFlight) return;
+    fleetMapRequestInFlight = true;
+    try {
+        const r = await fetch('/api/driver-map', { cache: 'no-store' });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'Nie udało się pobrać pozycji.');
+        fleetMapDrivers = Array.isArray(d.drivers) ? d.drivers : [];
+        fleetMapTracks = d.tracks && typeof d.tracks === 'object' ? d.tracks : {};
+        renderDriverMap();
+        const updated = document.getElementById('fleet-map-updated');
+        if (updated) {
+            const stamp = d.updated_at ? new Date(d.updated_at) : new Date();
+            updated.textContent = `${t('fleetMapUpdated')}: ${stamp.toLocaleTimeString(currentLang === 'en' ? 'en-GB' : 'pl-PL')}`;
+        }
+    } catch (e) {
+        const canvas = document.getElementById('fleet-map-canvas');
+        if (canvas && !fleetMapDrivers.length) canvas.innerHTML = `<div class="text-danger text-center py-5">${escapeHtml(e.message || 'Błąd pobierania mapy.')}</div>`;
+    } finally {
+        fleetMapRequestInFlight = false;
+    }
+}
+
+function fleetMapHasPosition(driver) {
+    return driver.x !== null && driver.z !== null && Number.isFinite(Number(driver.x)) && Number.isFinite(Number(driver.z));
+}
+
+function fleetMapRelativeTime(value) {
+    if (!value) return currentLang === 'en' ? 'time unknown' : 'czas nieznany';
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return currentLang === 'en' ? 'time unknown' : 'czas nieznany';
+    const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+    if (seconds < 60) return currentLang === 'en' ? `${seconds}s ago` : `${seconds} s temu`;
+    if (seconds < 3600) return currentLang === 'en' ? `${Math.floor(seconds / 60)} min ago` : `${Math.floor(seconds / 60)} min temu`;
+    if (seconds < 86400) return currentLang === 'en' ? `${Math.floor(seconds / 3600)} hr ago` : `${Math.floor(seconds / 3600)} godz. temu`;
+    return date.toLocaleString(currentLang === 'en' ? 'en-GB' : 'pl-PL');
+}
+
+function renderDriverMap() {
+    const canvas = document.getElementById('fleet-map-canvas');
+    const list = document.getElementById('fleet-map-driver-list');
+    const summary = document.getElementById('fleet-map-summary');
+    if (!canvas || !list || !summary) return;
+
+    const drivers = [...fleetMapDrivers].sort((a, b) =>
+        Number(b.live) - Number(a.live) || Number(fleetMapHasPosition(b)) - Number(fleetMapHasPosition(a)) ||
+        String(a.username || '').localeCompare(String(b.username || ''), currentLang)
+    );
+    const located = drivers.filter(fleetMapHasPosition);
+    const liveCount = drivers.filter(d => d.live).length;
+    const knownCount = located.length;
+    const noPositionCount = drivers.length - knownCount;
+    summary.innerHTML = `
+        <span class="badge rounded-pill text-bg-success"><i class="fa-solid fa-signal me-1"></i>${currentLang === 'en' ? `${liveCount} live` : `${liveCount} na żywo`}</span>
+        <span class="badge rounded-pill text-bg-warning"><i class="fa-solid fa-location-dot me-1"></i>${currentLang === 'en' ? `${knownCount} known positions` : `${knownCount} znanych pozycji`}</span>
+        <span class="badge rounded-pill text-bg-secondary"><i class="fa-solid fa-circle-question me-1"></i>${currentLang === 'en' ? `${noPositionCount} without a point` : `${noPositionCount} bez punktu`}</span>`;
+
+    const labels = {
+        live: t('fleetMapLive'), last: t('fleetMapLast'), none: t('fleetMapNoLocation'), waiting: t('fleetMapWaiting')
+    };
+    list.innerHTML = drivers.length ? drivers.map(driver => {
+        const hasPosition = fleetMapHasPosition(driver);
+        const dotClass = driver.live ? 'is-live' : hasPosition ? 'is-last' : 'is-none';
+        const status = driver.live
+            ? `${labels.live} · ${Math.round(Number(driver.speed) || 0)} km/h`
+            : hasPosition
+                ? `${labels.last} · ${fleetMapRelativeTime(driver.last_seen_at)}`
+                : driver.trip_active ? labels.waiting : labels.none;
+        const route = driver.start_city && driver.end_city ? `${driver.start_city} → ${driver.end_city}` : '';
+        const selected = String(fleetMapSelectedDriver) === String(driver.id);
+        return `<button type="button" class="fleet-map-driver text-start text-white p-3 ${selected ? 'is-selected' : ''}" onclick="selectFleetMapDriver(${Number(driver.id)})" aria-pressed="${selected}">
+            <span class="d-flex align-items-center gap-2">
+                <span class="fleet-map-dot ${dotClass}"></span><span class="fw-bold text-truncate">${escapeHtml(driver.username || '')}</span>
+                <span class="small text-white-50 ms-auto text-nowrap">${escapeHtml(status)}</span>
+            </span>
+            ${route ? `<span class="d-block small text-white-50 mt-2"><i class="fa-solid fa-route me-1"></i>${escapeHtml(route)}</span>` : ''}
+            ${driver.cargo ? `<span class="d-block small text-white-50 mt-1">${escapeHtml(driver.cargo)}</span>` : ''}
+        </button>`;
+    }).join('') : `<div class="text-white-50 small">${escapeHtml(t('fleetMapNoDrivers'))}</div>`;
+
+    const allMapPoints = [];
+    for (const driver of located) {
+        allMapPoints.push([Number(driver.x), Number(driver.z)]);
+        const track = fleetMapTracks[String(driver.trip_id)] || [];
+        for (const point of track) {
+            if (Array.isArray(point) && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1]))) {
+                allMapPoints.push([Number(point[0]), Number(point[1])]);
+            }
+        }
+    }
+
+    const W = 1000, H = 600, LEFT = 64, RIGHT = 936, TOP = 54, BOTTOM = 540;
+    let minX = -15000, maxX = 15000, minZ = -8430, maxZ = 8430;
+    if (allMapPoints.length) {
+        minX = Math.min(...allMapPoints.map(p => p[0])); maxX = Math.max(...allMapPoints.map(p => p[0]));
+        minZ = Math.min(...allMapPoints.map(p => p[1])); maxZ = Math.max(...allMapPoints.map(p => p[1]));
+        let spanX = Math.max(20000, maxX - minX), spanZ = Math.max(12000, maxZ - minZ);
+        const aspect = (RIGHT - LEFT) / (BOTTOM - TOP);
+        if (spanX / spanZ < aspect) spanX = spanZ * aspect;
+        else spanZ = spanX / aspect;
+        const centerX = (minX + maxX) / 2, centerZ = (minZ + maxZ) / 2;
+        minX = centerX - spanX / 2; maxX = centerX + spanX / 2;
+        minZ = centerZ - spanZ / 2; maxZ = centerZ + spanZ / 2;
+    }
+    const px = x => LEFT + ((x - minX) / (maxX - minX)) * (RIGHT - LEFT);
+    const py = z => TOP + ((z - minZ) / (maxZ - minZ)) * (BOTTOM - TOP);
+    const grid = Array.from({ length: 11 }, (_, i) => {
+        const x = LEFT + (RIGHT - LEFT) * i / 10, y = TOP + (BOTTOM - TOP) * i / 10;
+        return `<path d="M${x.toFixed(1)} ${TOP}V${BOTTOM} M${LEFT} ${y.toFixed(1)}H${RIGHT}" stroke="#172235" stroke-width="1"/>`;
+    }).join('');
+    const palette = ['#38bdf8', '#a78bfa', '#fb923c', '#22c55e', '#f472b6', '#facc15', '#2dd4bf'];
+    const routeLines = located.map((driver, i) => {
+        const track = fleetMapTracks[String(driver.trip_id)] || [];
+        if (track.length < 2) return '';
+        const points = [...track, [Number(driver.x), Number(driver.z)]]
+            .map(p => `${px(Number(p[0])).toFixed(1)},${py(Number(p[1])).toFixed(1)}`).join(' ');
+        const color = palette[i % palette.length];
+        return `<polyline points="${points}" fill="none" stroke="${color}" stroke-opacity=".48" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }).join('');
+    const markers = located.map((driver, i) => {
+        const x = px(Number(driver.x)), y = py(Number(driver.z));
+        const live = Boolean(driver.live), color = live ? '#22c55e' : '#f59e0b';
+        const selected = String(fleetMapSelectedDriver) === String(driver.id);
+        const name = String(driver.username || '');
+        const pillWidth = Math.max(92, Math.min(190, name.length * 7.5 + 24));
+        const pillX = Math.max(LEFT, Math.min(RIGHT - pillWidth, x - pillWidth / 2));
+        const pillY = y < TOP + 48 ? y + 17 : y - 36;
+        const title = live
+            ? `${name} · ${Math.round(Number(driver.speed) || 0)} km/h`
+            : `${name} · ${fleetMapRelativeTime(driver.last_seen_at)}`;
+        return `<g class="fleet-map-marker" role="img" aria-label="${escapeHtml(title)}">
+            <title>${escapeHtml(title)}</title>
+            ${selected ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22" fill="none" stroke="#ffffff" stroke-opacity=".8" stroke-width="2"/>` : ''}
+            ${live ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="18" fill="${color}" fill-opacity=".14"/>` : ''}
+            <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8" fill="${color}" stroke="#07101c" stroke-width="3"/>
+            <rect x="${pillX.toFixed(1)}" y="${pillY.toFixed(1)}" width="${pillWidth.toFixed(1)}" height="25" rx="12.5" fill="#111b2b" stroke="${color}" stroke-opacity=".65"/>
+            <text x="${(pillX + pillWidth / 2).toFixed(1)}" y="${(pillY + 16.5).toFixed(1)}" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="700">${escapeHtml(name)}</text>
+        </g>`;
+    }).join('');
+    const emptyLabel = currentLang === 'en' ? 'No saved driver positions yet' : 'Nie zapisano jeszcze pozycji kierowców';
+    const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(t('fleetMapTitle'))}" preserveAspectRatio="xMidYMid meet">
+        <defs>
+            <radialGradient id="fleet-map-vignette"><stop offset="0" stop-color="#101b2d"/><stop offset="1" stop-color="#080d16"/></radialGradient>
+            <filter id="fleet-map-glow"><feGaussianBlur stdDeviation="7"/></filter>
+        </defs>
+        <rect width="${W}" height="${H}" fill="url(#fleet-map-vignette)"/>
+        ${grid}
+        <path d="M${LEFT} ${TOP}H${RIGHT}V${BOTTOM}H${LEFT}Z" fill="none" stroke="#334155" stroke-width="1.5"/>
+        ${routeLines}${markers}
+        ${located.length ? '' : `<text x="500" y="300" text-anchor="middle" fill="#64748b" font-size="19">${escapeHtml(emptyLabel)}</text>`}
+        <path d="M${RIGHT - 28} ${TOP + 42}V${TOP + 14}m0 0-7 11m7-11 7 11" stroke="#94a3b8" stroke-width="2" fill="none"/>
+        <text x="${RIGHT - 28}" y="${TOP + 8}" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="700">N</text>
+        <text x="${LEFT + 10}" y="${BOTTOM - 10}" fill="#52647c" font-size="11">X + →</text>
+        <text x="${RIGHT - 10}" y="${BOTTOM - 10}" text-anchor="end" fill="#52647c" font-size="11">Z + ↓</text>
+    </svg>`;
+    canvas.innerHTML = svg;
+}
+
+function selectFleetMapDriver(id) {
+    fleetMapSelectedDriver = id;
+    renderDriverMap();
 }
 
 /* ===== Podgląd trasy v2 (SVG, kolor = prędkość, bez podkładu mapy) ===== */
