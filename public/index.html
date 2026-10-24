@@ -3609,10 +3609,10 @@ function renderDriverMap() {
     }
     const px = x => LEFT + ((x - minX) / (maxX - minX)) * (RIGHT - LEFT);
     const py = z => TOP + ((z - minZ) / (maxZ - minZ)) * (BOTTOM - TOP);
-    const grid = Array.from({ length: 11 }, (_, i) => {
-        const x = LEFT + (RIGHT - LEFT) * i / 10, y = TOP + (BOTTOM - TOP) * i / 10;
-        return `<path d="M${x.toFixed(1)} ${TOP}V${BOTTOM} M${LEFT} ${y.toFixed(1)}H${RIGHT}" stroke="#172235" stroke-width="1"/>`;
-    }).join('');
+    const mapWorld = { x1: -136610.156, x2: 170423.75, z1: -191595.031, z2: 115438.875 };
+    const mapImageX = px(mapWorld.x1), mapImageY = py(mapWorld.z1);
+    const mapImageWidth = px(mapWorld.x2) - mapImageX;
+    const mapImageHeight = py(mapWorld.z2) - mapImageY;
     const palette = ['#38bdf8', '#a78bfa', '#fb923c', '#22c55e', '#f472b6', '#facc15', '#2dd4bf'];
     const routeLines = located.map((driver, i) => {
         const track = fleetMapTracks[String(driver.trip_id)] || [];
@@ -3645,18 +3645,19 @@ function renderDriverMap() {
     const emptyLabel = currentLang === 'en' ? 'No saved driver positions yet' : 'Nie zapisano jeszcze pozycji kierowców';
     const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(t('fleetMapTitle'))}" preserveAspectRatio="xMidYMid meet">
         <defs>
-            <radialGradient id="fleet-map-vignette"><stop offset="0" stop-color="#101b2d"/><stop offset="1" stop-color="#080d16"/></radialGradient>
-            <filter id="fleet-map-glow"><feGaussianBlur stdDeviation="7"/></filter>
+            <clipPath id="fleet-map-clip"><rect x="${LEFT}" y="${TOP}" width="${RIGHT - LEFT}" height="${BOTTOM - TOP}"/></clipPath>
         </defs>
-        <rect width="${W}" height="${H}" fill="url(#fleet-map-vignette)"/>
-        ${grid}
+        <rect width="${W}" height="${H}" fill="#080d16"/>
+        <g clip-path="url(#fleet-map-clip)">
+            <image href="/map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageWidth}" height="${mapImageHeight}" preserveAspectRatio="none"/>
+            <rect x="${LEFT}" y="${TOP}" width="${RIGHT - LEFT}" height="${BOTTOM - TOP}" fill="#050a12" fill-opacity=".12"/>
+            ${routeLines}${markers}
+        </g>
         <path d="M${LEFT} ${TOP}H${RIGHT}V${BOTTOM}H${LEFT}Z" fill="none" stroke="#334155" stroke-width="1.5"/>
-        ${routeLines}${markers}
         ${located.length ? '' : `<text x="500" y="300" text-anchor="middle" fill="#64748b" font-size="19">${escapeHtml(emptyLabel)}</text>`}
         <path d="M${RIGHT - 28} ${TOP + 42}V${TOP + 14}m0 0-7 11m7-11 7 11" stroke="#94a3b8" stroke-width="2" fill="none"/>
         <text x="${RIGHT - 28}" y="${TOP + 8}" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="700">N</text>
-        <text x="${LEFT + 10}" y="${BOTTOM - 10}" fill="#52647c" font-size="11">X + →</text>
-        <text x="${RIGHT - 10}" y="${BOTTOM - 10}" text-anchor="end" fill="#52647c" font-size="11">Z + ↓</text>
+        <text x="${LEFT + 10}" y="${BOTTOM - 10}" fill="#94a3b8" fill-opacity=".75" font-size="11" font-weight="600">ETS2 · ProMods · Poland Rebuilding</text>
     </svg>`;
     canvas.innerHTML = svg;
 }
