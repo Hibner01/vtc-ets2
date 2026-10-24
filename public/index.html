@@ -92,13 +92,12 @@
         }
 
         .fleet-map-stage {
-            min-height: 420px;
             overflow: hidden;
             border: 1px solid #263449;
             border-radius: 16px;
             background: #080d16;
         }
-        .fleet-map-stage svg { display: block; width: 100%; height: min(64vh, 620px); min-height: 420px; }
+        .fleet-map-stage svg { display: block; width: 100%; height: auto; }
         .fleet-map-driver {
             border: 1px solid #263449;
             border-radius: 12px;
@@ -112,8 +111,8 @@
         .fleet-map-dot.is-last { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.14); }
         .fleet-map-dot.is-none { background: #64748b; }
         @media (max-width: 767.98px) {
-            .fleet-map-stage, .fleet-map-stage svg { min-height: 340px; }
-            .fleet-map-stage svg { height: 46vh; }
+            .fleet-map-stage { min-height: 0; }
+            .fleet-map-stage svg { min-height: 0; }
         }
 
         .main-wrapper {
@@ -3594,8 +3593,8 @@ function renderDriverMap() {
         }
     }
 
-    const W = 1000, H = 600, LEFT = 64, RIGHT = 936, TOP = 54, BOTTOM = 540;
-    let minX = -15000, maxX = 15000, minZ = -8430, maxZ = 8430;
+    const W = 1000, H = 760, LEFT = 64, RIGHT = 936, TOP = 42, BOTTOM = 718;
+    let minX = -15000, maxX = 15000, minZ = -11628, maxZ = 11628;
     if (allMapPoints.length) {
         minX = Math.min(...allMapPoints.map(p => p[0])); maxX = Math.max(...allMapPoints.map(p => p[0]));
         minZ = Math.min(...allMapPoints.map(p => p[1])); maxZ = Math.max(...allMapPoints.map(p => p[1]));
@@ -3603,6 +3602,8 @@ function renderDriverMap() {
         const aspect = (RIGHT - LEFT) / (BOTTOM - TOP);
         if (spanX / spanZ < aspect) spanX = spanZ * aspect;
         else spanZ = spanX / aspect;
+        spanX *= 1.08;
+        spanZ *= 1.08;
         const centerX = (minX + maxX) / 2, centerZ = (minZ + maxZ) / 2;
         minX = centerX - spanX / 2; maxX = centerX + spanX / 2;
         minZ = centerZ - spanZ / 2; maxZ = centerZ + spanZ / 2;
@@ -3650,7 +3651,7 @@ function renderDriverMap() {
         <rect width="${W}" height="${H}" fill="#080d16"/>
         <g clip-path="url(#fleet-map-clip)">
             <image href="/map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageWidth}" height="${mapImageHeight}" preserveAspectRatio="none"/>
-            <rect x="${LEFT}" y="${TOP}" width="${RIGHT - LEFT}" height="${BOTTOM - TOP}" fill="#050a12" fill-opacity=".12"/>
+            <rect x="${LEFT}" y="${TOP}" width="${RIGHT - LEFT}" height="${BOTTOM - TOP}" fill="#050a12" fill-opacity=".02"/>
             ${routeLines}${markers}
         </g>
         <path d="M${LEFT} ${TOP}H${RIGHT}V${BOTTOM}H${LEFT}Z" fill="none" stroke="#334155" stroke-width="1.5"/>
