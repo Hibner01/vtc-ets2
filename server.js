@@ -275,16 +275,28 @@ async function initDB() {
         );`);
         await pool.query(`CREATE TABLE IF NOT EXISTS recruitment_applications (
             id SERIAL PRIMARY KEY,
+            full_name VARCHAR(150) NOT NULL DEFAULT '',
+            discord_name VARCHAR(100) NOT NULL DEFAULT '',
             age INTEGER NOT NULL,
             ets2_hours INTEGER NOT NULL,
             about TEXT NOT NULL,
+            skills TEXT NOT NULL DEFAULT '',
             previous_companies TEXT NOT NULL,
             source TEXT NOT NULL,
             dlcs TEXT NOT NULL,
+            ets2_apps TEXT NOT NULL DEFAULT '',
+            motivation TEXT NOT NULL DEFAULT '',
+            signature VARCHAR(150) NOT NULL DEFAULT '',
             steam_url VARCHAR(500) NOT NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'new',
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );`);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS full_name VARCHAR(150) NOT NULL DEFAULT '';`);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS discord_name VARCHAR(100) NOT NULL DEFAULT '';`);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS skills TEXT NOT NULL DEFAULT '';`);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS ets2_apps TEXT NOT NULL DEFAULT '';`);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS motivation TEXT NOT NULL DEFAULT '';`);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS signature VARCHAR(150) NOT NULL DEFAULT '';`);
         await pool.query(`CREATE INDEX IF NOT EXISTS recruitment_applications_created_idx ON recruitment_applications(created_at DESC);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS job_id INTEGER DEFAULT NULL;`);
@@ -764,23 +776,33 @@ app.put('/api/recruitment/settings', requireAdmin, async (req, res) => {
 
 app.post('/api/recruitment/applications', async (req, res) => {
     const body = req.body || {};
+    const fullName = String(body.fullName || '').trim();
+    const discordName = String(body.discordName || '').trim();
     const age = Number(body.age);
     const hours = Number(body.ets2Hours);
     const about = String(body.about || '').trim();
+    const skills = String(body.skills || '').trim();
     const previousCompanies = String(body.previousCompanies || '').trim();
-    const source = String(body.source || '').trim();
     const dlcs = String(body.dlcs || '').trim();
+    const ets2Apps = String(body.ets2Apps || '').trim();
+    const motivation = String(body.motivation || '').trim();
+    const signature = String(body.signature || '').trim();
     const steamUrl = String(body.steamUrl || '').trim();
     const sentenceCount = (about.match(/[.!?]+(?=\s|$)/g) || []).length;
 
+    if (fullName.length < 2 || fullName.length > 150) return res.status(400).json({ error: 'Podaj imię i nazwisko (maks. 150 znaków).' });
+    if (discordName.length < 2 || discordName.length > 100) return res.status(400).json({ error: 'Podaj nick Discord (maks. 100 znaków).' });
     if (!Number.isInteger(age) || age < 13 || age > 100) return res.status(400).json({ error: 'Wiek musi być liczbą od 13 do 100.' });
     if (body.ets2Hours == null || String(body.ets2Hours).trim() === '' || !Number.isInteger(hours) || hours < 0 || hours > 200000) {
         return res.status(400).json({ error: 'Podaj poprawną liczbę godzin w ETS2.' });
     }
     if (about.length < 30 || about.length > 3000 || sentenceCount < 3) return res.status(400).json({ error: 'Opisz siebie w co najmniej 3 zdaniach (maks. 3000 znaków).' });
-    if (!previousCompanies || previousCompanies.length > 3000) return res.status(400).json({ error: 'Opisz poprzednie firmy i powód odejścia (maks. 3000 znaków).' });
-    if (!source || source.length > 1000) return res.status(400).json({ error: 'Napisz, skąd dowiedziałe(-aś) się o firmie (maks. 1000 znaków).' });
-    if (!dlcs || dlcs.length > 1000) return res.status(400).json({ error: 'Wpisz posiadane DLC poza mapowymi (maks. 1000 znaków).' });
+    if (skills.length < 10 || skills.length > 3000) return res.status(400).json({ error: 'Opisz swoje umiejętności (maks. 3000 znaków).' });
+    if (!previousCompanies || previousCompanies.length > 3000) return res.status(400).json({ error: 'Opisz wcześniejsze firmy lub wpisz „Brak” (maks. 3000 znaków).' });
+    if (!dlcs || dlcs.length > 3000) return res.status(400).json({ error: 'Wpisz posiadane DLC (maks. 3000 znaków).' });
+    if (!ets2Apps || ets2Apps.length > 2000) return res.status(400).json({ error: 'Wpisz używane programy lub narzędzia (maks. 2000 znaków).' });
+    if (motivation.length < 20 || motivation.length > 3000) return res.status(400).json({ error: 'Napisz, dlaczego chcesz dołączyć do firmy (maks. 3000 znaków).' });
+    if (signature.length < 2 || signature.length > 150) return res.status(400).json({ error: 'Podaj podpis kandydata (maks. 150 znaków).' });
     if (steamUrl.length > 500) return res.status(400).json({ error: 'Link Steam jest za długi.' });
     try {
         const url = new URL(steamUrl);
@@ -794,9 +816,9 @@ app.post('/api/recruitment/applications', async (req, res) => {
         const settings = await pool.query("SELECT value FROM site_settings WHERE key = 'recruitment_open'");
         if (settings.rows.length && settings.rows[0].value === 'false') return res.status(403).json({ error: 'Rekrutacja jest obecnie zamknięta.' });
         const result = await pool.query(
-            "INSERT INTO recruitment_applications (age, ets2_hours, about, previous_companies, source, dlcs, steam_url) " +
-            "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-            [age, hours, about, previousCompanies, source, dlcs, steamUrl]
+            "INSERT INTO recruitment_applications (full_name, discord_name, age, ets2_hours, about, skills, previous_companies, source, dlcs, ets2_apps, motivation, signature, steam_url) " +
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id",
+            [fullName, discordName, age, hours, about, skills, previousCompanies, '', dlcs, ets2Apps, motivation, signature, steamUrl]
         );
         try {
             const staff = await pool.query("SELECT id FROM users WHERE role IN ('admin', 'manager') AND status = 'approved'");
@@ -813,7 +835,7 @@ app.post('/api/recruitment/applications', async (req, res) => {
 app.get('/api/recruitment/applications', requireAdmin, async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT id, age, ets2_hours, about, previous_companies, source, dlcs, steam_url, status, created_at " +
+            "SELECT id, full_name, discord_name, age, ets2_hours, about, skills, previous_companies, dlcs, ets2_apps, motivation, signature, steam_url, status, created_at " +
             "FROM recruitment_applications ORDER BY created_at DESC LIMIT 200"
         );
         res.json(result.rows);
