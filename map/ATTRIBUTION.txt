@@ -1,1 +1,0 @@
-Map background rendered from the local Euro Truck Simulator 2 installation with ProMods 2.84 and Poland Rebuilding 3.0.1 using TS Map (MIT License).
