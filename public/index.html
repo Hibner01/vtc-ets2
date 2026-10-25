@@ -3854,13 +3854,22 @@ let fleetMapCountryBordersPromise = null;
 async function loadFleetMapCountryBorders() {
     if (fleetMapCountryBordersLoaded) return;
     if (!fleetMapCountryBordersPromise) {
-        fleetMapCountryBordersPromise = fetch('/map/country-borders.json', { cache: 'force-cache' })
-            .then(response => response.ok ? response.json() : null)
-            .then(data => {
-                fleetMapCountryBorders = Array.isArray(data?.lines) ? data.lines : [];
+        fleetMapCountryBordersPromise = fetch('/map/country-borders.json', { cache: 'no-store' })
+            .then(response => {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.json();
             })
-            .catch(() => { fleetMapCountryBorders = []; })
-            .finally(() => { fleetMapCountryBordersLoaded = true; });
+            .then(data => {
+                if (!Array.isArray(data?.lines) || !data.lines.length)
+                    throw new Error('Brak linii granic w country-borders.json');
+                fleetMapCountryBorders = data.lines;
+                fleetMapCountryBordersLoaded = true;
+            })
+            .catch(error => {
+                fleetMapCountryBorders = [];
+                console.warn('[Mazren] Nie udało się pobrać granic państw. Kliknij Odśwież, aby spróbować ponownie.', error);
+            })
+            .finally(() => { fleetMapCountryBordersPromise = null; });
     }
     await fleetMapCountryBordersPromise;
 }
