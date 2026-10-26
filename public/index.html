@@ -2247,9 +2247,19 @@
                     let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
 
                     let filesHtml = '';
+                    const myStatusLabel = {
+                        pending: '<span class="badge bg-warning text-dark">Oczekuje na akceptację</span>',
+                        needs_correction: '<span class="badge bg-danger">Do poprawy</span>',
+                        revised: '<span class="badge bg-info text-dark">Poprawiono — czeka na akceptację</span>',
+                        approved: '<span class="badge bg-success">Zatwierdzona</span>'
+                    };
+                    const myCorrectionNote = j.status === 'needs_correction' && j.correction_note
+                        ? `<div class="small text-warning mt-2">Powód poprawki: ${escapeHtml(j.correction_note)}</div>`
+                        : '';
                     if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
                     if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
                     if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
+                    if (j.status === 'needs_correction') filesHtml += `<button onclick="submitJobCorrection(${j.id}, ${Number(j.distance) || 0})" class="btn btn-sm btn-warning"><i class="fa-solid fa-pen me-1"></i> Popraw km</button>`;
                     if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
 
                     container.innerHTML += `
@@ -2263,9 +2273,11 @@
                                     <span class="text-info ms-3 fw-semibold"><i class="fa-solid fa-road me-1"></i> ${j.distance || 0} km</span>
                                 </div>
                             </div>
+                            ${myCorrectionNote}
                             <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="badge bg-secondary text-light">${j.cargo || 'Standard'}</span>
+                                    ${myStatusLabel[j.status] || ''}
                                     <span class="text-light small"><i class="fa-regular fa-calendar-days me-1 text-warning"></i> ${j.formatted_date || 'Dzisiaj'}</span>
                                 </div>
                                 <div class="d-flex gap-2">${filesHtml}</div>
@@ -2300,22 +2312,32 @@
                     
                     let adminActionsHtml = '';
                     if (isStaff()) {
-                        if (j.status === 'pending') {
+                        if (['pending', 'revised'].includes(j.status)) {
                             adminActionsHtml += `<button onclick="approveJob(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fas fa-check"></i> Zatwierdź</button>`;
+                        }
+                        if (['pending', 'revised', 'approved'].includes(j.status)) {
+                            adminActionsHtml += `<button onclick="requestJobCorrection(${j.id})" class="btn btn-sm btn-outline-primary me-2"><i class="fas fa-rotate-left"></i> Do poprawy</button>`;
                         }
                         adminActionsHtml += `<button onclick="deleteJob(${j.id})" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Usuń</button>`;
                     }
 
-                    let statusBadge = j.status === 'pending' 
-                        ? `<span class="badge bg-warning text-dark mb-1">Oczekuje na akceptację</span>` 
-                        : `<span class="badge bg-success mb-1">Zatwierdzona</span>`;
-
+                    const statusLabels = {
+                        pending: '<span class="badge bg-warning text-dark mb-1">Oczekuje na akceptację</span>',
+                        needs_correction: '<span class="badge bg-danger mb-1">Do poprawy przez kierowcę</span>',
+                        revised: '<span class="badge bg-info text-dark mb-1">Poprawiono — czeka na akceptację</span>',
+                        approved: '<span class="badge bg-success mb-1">Zatwierdzona</span>'
+                    };
+                    const statusBadge = statusLabels[j.status] || '';
+                    const correctionNoteHtml = ['needs_correction', 'revised'].includes(j.status) && j.correction_note
+                        ? `<div class="small text-warning mt-1 mb-2">Powód / uwaga: ${escapeHtml(j.correction_note)}</div>`
+                        : '';
                     container.innerHTML += `
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div>
                                     <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${j.username}</span>
                                     ${statusBadge}
+                                    ${correctionNoteHtml}
                                     <h5 class="fw-bold text-white mb-0">
                                         ${placeHtml(j.start_city, j.start_country)} <i class="fas fa-arrow-right text-info mx-2"></i> ${placeHtml(j.end_city, j.end_country)}
                                     </h5>
@@ -2343,6 +2365,57 @@
             }
         }
 
+
+        async function requestJobCorrection(jobId) {
+            const reason = prompt('Co kierowca ma poprawić? Podaj powód, np. „Dystans wygląda na błędny — wpisz 1 427 km”.');
+            if (reason === null) return;
+            if (!reason.trim()) { alert('Wpisz krótki powód poprawki.'); return; }
+            try {
+                const res = await fetch(`/api/jobs/${jobId}/request-correction`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: reason.trim() })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) { alert(data.error || 'Nie udało się odesłać trasy do poprawy.'); return; }
+                if (typeof loadAllJobs === 'function') loadAllJobs();
+                if (typeof loadMyJobs === 'function') loadMyJobs();
+                if (typeof loadCompanyStats === 'function') loadCompanyStats();
+                if (typeof loadCompanyStatsFull === 'function') loadCompanyStatsFull();
+                alert('Trasa została oznaczona do poprawy. Kierowca dostał powiadomienie.');
+            } catch (err) {
+                console.error('Błąd kierowania trasy do poprawy:', err);
+                alert('Nie udało się połączyć z serwerem.');
+            }
+        }
+
+        async function submitJobCorrection(jobId, currentDistance) {
+            const value = prompt('Wpisz poprawny dystans trasy w kilometrach:', String(currentDistance || ''));
+            if (value === null) return;
+            const distance = Number(value.trim());
+            if (!Number.isInteger(distance) || distance < 1 || distance > 20000) {
+                alert('Podaj prawidłowy dystans w kilometrach (1–20 000).');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/jobs/${jobId}/correction`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ distance })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) { alert(data.error || 'Nie udało się zapisać poprawionego dystansu.'); return; }
+                alert('Zapisano poprawkę. Trasa wróciła do kadry do ponownego zatwierdzenia.');
+                if (typeof loadAllJobs === 'function') loadAllJobs();
+                if (typeof loadMyJobs === 'function') loadMyJobs();
+                if (typeof loadCompanyStats === 'function') loadCompanyStats();
+                if (typeof loadCompanyStatsFull === 'function') loadCompanyStatsFull();
+            } catch (err) {
+                console.error('Błąd zapisu poprawionego dystansu:', err);
+                alert('Nie udało się połączyć z serwerem.');
+            }
+        }
+
         async function approveJob(jobId) {
             try {
                 const res = await fetch(`/api/jobs/${jobId}/approve`, { method: 'PUT' });
@@ -2352,6 +2425,8 @@
                         alert('Trasa została zatwierdzona, ale raport nie dotarł na Discorda. Sprawdź zmienną DISCORD_WEBHOOK_URL w Renderze.');
                     }
                     loadAllJobs();
+                    if (typeof loadCompanyStats === 'function') loadCompanyStats();
+                    if (typeof loadCompanyStatsFull === 'function') loadCompanyStatsFull();
                 } else {
                     alert(data.error || 'Nie udało się zatwierdzić trasy.');
                 }
