@@ -299,6 +299,7 @@ async function initDB() {
         await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS signature VARCHAR(150) NOT NULL DEFAULT '';`);
         await pool.query(`CREATE INDEX IF NOT EXISTS recruitment_applications_created_idx ON recruitment_applications(created_at DESC);`);
         await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'approved';`);
+        await pool.query(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS correction_note TEXT;`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS job_id INTEGER DEFAULT NULL;`);
         await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS action_tab VARCHAR(50) DEFAULT 'jobs';`);
         await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS expense_date DATE DEFAULT CURRENT_DATE;`);
@@ -569,6 +570,7 @@ app.get('/api/user', async (req, res) => {
             SELECT SUM(distance) as total, COUNT(*) as deliveries 
             FROM jobs 
             WHERE user_id = $1 
+            AND status = 'approved'
             AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_TIMESTAMP)
         `, [user.id]);
 
@@ -1613,10 +1615,11 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
 
         const job = jobRes.rows[0];
         if (job.status === 'approved') return res.json({ success: true, already_approved: true });
+        if (!['pending', 'revised'].includes(job.status)) return res.status(409).json({ error: 'Trasa musi zostać poprawiona przez kierowcę przed zatwierdzeniem.' });
 
         const kmBefore = parseInt((await pool.query("SELECT COALESCE(SUM(distance),0) AS km FROM jobs WHERE user_id = $1 AND status = 'approved'", [job.user_id])).rows[0].km) || 0;
         const approval = await pool.query(
-            "UPDATE jobs SET status = 'approved' WHERE id = $1 AND status <> 'approved' RETURNING id",
+            "UPDATE jobs SET status = 'approved' WHERE id = $1 AND status IN ('pending', 'revised') RETURNING id",
             [req.params.id]
         );
         if (approval.rowCount === 0) return res.json({ success: true, already_approved: true });
@@ -1650,6 +1653,95 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
         }
         res.json({ success: true, discord_sent: discordSent });
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji trasy' }); }
+});
+
+
+app.put('/api/jobs/:id/request-correction', async (req, res) => {
+    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
+    const reason = String(req.body.reason || '').trim().slice(0, 1000);
+    if (!reason) return res.status(400).json({ error: 'Podaj kierowcy powód poprawki.' });
+    try {
+        const jobRes = await pool.query(
+            'SELECT id, user_id, start_city, end_city, status FROM jobs WHERE id = $1',
+            [req.params.id]
+        );
+        if (jobRes.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono trasy.' });
+        const job = jobRes.rows[0];
+        if (!['pending', 'revised', 'approved'].includes(job.status)) {
+            return res.status(409).json({ error: 'Ta trasa już czeka na poprawę albo nie może zostać odesłana.' });
+        }
+        await pool.query(
+            "UPDATE jobs SET status = 'needs_correction', correction_note = $2 WHERE id = $1",
+            [job.id, reason]
+        );
+        await addNotification(
+            job.user_id,
+            'Trasa do poprawy',
+            `Kadra prosi o poprawę trasy ${job.start_city} ➔ ${job.end_city}. Powód: ${reason}`,
+            job.id,
+            'jobs'
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Błąd kierowania trasy do poprawy:', err);
+        res.status(500).json({ error: 'Nie udało się oznaczyć trasy do poprawy.' });
+    }
+});
+
+app.put('/api/jobs/:id/correction', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Zaloguj się.' });
+    const jobId = Number.parseInt(req.params.id, 10);
+    const distance = Number(req.body.distance);
+    if (!Number.isInteger(distance) || distance < 1 || distance > 20000) {
+        return res.status(400).json({ error: 'Kilometry muszą być liczbą całkowitą od 1 do 20 000.' });
+    }
+    const client = await pool.connect();
+    let job;
+    try {
+        await client.query('BEGIN');
+        const found = await client.query(
+            'SELECT id, user_id, start_city, end_city, distance, status FROM jobs WHERE id = $1 FOR UPDATE',
+            [jobId]
+        );
+        if (!found.rows.length) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Nie znaleziono trasy.' });
+        }
+        job = found.rows[0];
+        if (Number(job.user_id) !== Number(req.session.userId)) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Możesz poprawiać tylko swoje trasy.' });
+        }
+        if (job.status !== 'needs_correction') {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ error: 'Kadra nie oznaczyła tej trasy do poprawy.' });
+        }
+        await client.query(
+            "UPDATE jobs SET distance = $2, status = 'revised' WHERE id = $1",
+            [jobId, distance]
+        );
+        await client.query('UPDATE trips SET distance = $2 WHERE job_id = $1', [jobId, distance]);
+        await client.query('COMMIT');
+        const staff = await pool.query(
+            "SELECT id FROM users WHERE role IN ('admin', 'manager') AND status = 'approved'"
+        );
+        for (const member of staff.rows) {
+            await addNotification(
+                member.id,
+                'Trasa poprawiona',
+                `Kierowca poprawił dystans trasy ${job.start_city} ➔ ${job.end_city}: ${job.distance} km → ${distance} km. Czeka na ponowne zatwierdzenie.`,
+                jobId,
+                'jobs'
+            );
+        }
+        res.json({ success: true, status: 'revised', distance });
+    } catch (err) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        console.error('Błąd poprawiania trasy:', err);
+        res.status(500).json({ error: 'Nie udało się zapisać poprawki.' });
+    } finally {
+        client.release();
+    }
 });
 
 app.delete('/api/jobs/:id', async (req, res) => {
