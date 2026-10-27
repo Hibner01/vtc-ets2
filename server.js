@@ -751,9 +751,13 @@ app.put('/api/requirements', requireAdmin, async (req, res) => {
 // Public recruitment applications. The current open/closed state is stored with the other site settings.
 app.get('/api/recruitment/settings', async (req, res) => {
     try {
-        const result = await pool.query("SELECT value FROM site_settings WHERE key = 'recruitment_open'");
-        const isOpen = result.rows.length === 0 || result.rows[0].value !== 'false';
-        res.json({ isOpen });
+        const result = await pool.query(
+            "SELECT key, value FROM site_settings WHERE key IN ('recruitment_open', 'discord_invite_url')"
+        );
+        const settings = new Map(result.rows.map(row => [row.key, row.value]));
+        const isOpen = !settings.has('recruitment_open') || settings.get('recruitment_open') !== 'false';
+        const discordInviteUrl = isStaff(req.session.role) ? (settings.get('discord_invite_url') || '') : null;
+        res.json({ isOpen, discordInviteUrl });
     } catch (e) {
         console.error('Błąd odczytu statusu rekrutacji:', e.message);
         res.status(500).json({ error: 'Nie udało się pobrać statusu rekrutacji.' });
@@ -773,6 +777,36 @@ app.put('/api/recruitment/settings', requireAdmin, async (req, res) => {
     } catch (e) {
         console.error('Błąd zapisu statusu rekrutacji:', e.message);
         res.status(500).json({ error: 'Nie udało się zapisać statusu rekrutacji.' });
+    }
+});
+app.put('/api/recruitment/settings/discord-invite', requireAdmin, async (req, res) => {
+    const inviteUrl = String((req.body || {}).discordInviteUrl || '').trim();
+    if (inviteUrl.length > 500) return res.status(400).json({ error: 'Link Discord jest za długi.' });
+    if (inviteUrl) {
+        try {
+            const url = new URL(inviteUrl);
+            const host = url.hostname.toLowerCase();
+            const discordHost = ['discord.gg', 'www.discord.gg', 'discord.com', 'www.discord.com', 'discordapp.com'].includes(host);
+            const invitePath = host.endsWith('discord.gg')
+                ? /^\/[A-Za-z0-9-]+\/?$/.test(url.pathname)
+                : /^\/invite\/[A-Za-z0-9-]+\/?$/.test(url.pathname);
+            if (url.protocol !== 'https:' || !discordHost || !invitePath || url.username || url.password) {
+                throw new Error('invalid Discord invite URL');
+            }
+        } catch (_) {
+            return res.status(400).json({ error: 'Wklej poprawny link zaproszenia Discord (discord.gg lub discord.com/invite).' });
+        }
+    }
+    try {
+        await pool.query(
+            "INSERT INTO site_settings (key, value, updated_at) VALUES ('discord_invite_url', $1, NOW()) " +
+            "ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()",
+            [inviteUrl]
+        );
+        res.json({ success: true, discordInviteUrl: inviteUrl });
+    } catch (e) {
+        console.error('Błąd zapisu linku Discord:', e.message);
+        res.status(500).json({ error: 'Nie udało się zapisać linku Discord.' });
     }
 });
 
@@ -955,7 +989,7 @@ app.get('/api/public/overview', async (req, res) => {
             const r = await pool.query(
                 `SELECT u.username, u.rank_override, SUM(j.distance) AS km, COUNT(j.id) AS deliveries
                  FROM jobs j JOIN users u ON u.id = j.user_id
-                 WHERE j.status = 'approved'
+                 WHERE j.status = 'approved' AND u.status = 'approved'
                  GROUP BY u.username, u.rank_override ORDER BY km DESC LIMIT 10`);
             ranking = r.rows.map(d => {
                 const km = parseInt(d.km) || 0;
@@ -1155,6 +1189,7 @@ app.put('/api/users/:id/role', requireLogin, async (req, res) => {
         await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);
         await addNotification(id, 'Zmiana roli', `Twoja rola w firmie to teraz: ${ROLE_LABELS[role]}. Zaloguj się ponownie, żeby zmiana zadziałała.`, null, 'jobs');
         await killUserSessions(id);
+        publicOverviewCache = { t: 0, data: null };
         res.json({ success: true });
     } catch (e) {
         console.error('Błąd zmiany roli:', e.message);
@@ -1197,6 +1232,7 @@ app.put('/api/users/:id/fire', requireAdmin, async (req, res) => {
             [id]
         );
         await killUserSessions(id);
+        publicOverviewCache = { t: 0, data: null };
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -1630,8 +1666,10 @@ app.put('/api/jobs/:id/approve', async (req, res) => {
         try {
             const ranking = await pool.query(
                 `SELECT position FROM (
-                    SELECT user_id, RANK() OVER (ORDER BY SUM(distance) DESC) AS position
-                    FROM jobs WHERE status = 'approved' GROUP BY user_id
+                    SELECT j.user_id, RANK() OVER (ORDER BY SUM(j.distance) DESC) AS position
+                    FROM jobs j JOIN users u ON u.id = j.user_id
+                    WHERE j.status = 'approved' AND u.status = 'approved'
+                    GROUP BY j.user_id
                  ) ranked WHERE user_id = $1`,
                 [job.user_id]
             );
@@ -1778,7 +1816,7 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
             SELECT users.username, users.rank_override, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries,
                    COALESCE(SUM(jobs.distance) FILTER (WHERE jobs.status = 'approved'), 0) as approved_km
             FROM jobs JOIN users ON jobs.user_id = users.id 
-            WHERE jobs.status = 'approved'
+            WHERE jobs.status = 'approved' AND users.status = 'approved'
             GROUP BY users.username, users.rank_override ORDER BY km DESC
         `);
 
