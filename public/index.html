@@ -1414,6 +1414,15 @@
                                 </div>
                                 <button class="btn btn-sm btn-outline-info" type="button" onclick="loadRecruitmentApplications()"><i class="fa-solid fa-rotate me-1"></i><span data-i18n="recruitmentRefresh">Odśwież</span></button>
                             </div>
+                            <div class="bg-dark border border-secondary rounded-3 p-3 mb-4">
+                                <label for="recruitment-discord-invite" class="form-label fw-semibold text-white" data-i18n="recruitmentInviteTitle">Link zaproszenia na Discord</label>
+                                <div class="text-white-50 small mb-2" data-i18n="recruitmentInviteHint">Po przyjęciu podania skopiuj gotową wiadomość i wyślij ją kandydatowi na Discordzie.</div>
+                                <div class="input-group">
+                                    <input id="recruitment-discord-invite" type="url" maxlength="500" class="form-control bg-dark text-white border-secondary" placeholder="https://discord.gg/...">
+                                    <button class="btn btn-outline-info" type="button" onclick="saveRecruitmentDiscordInvite()"><i class="fa-solid fa-floppy-disk me-1"></i><span data-i18n="recruitmentInviteSave">Zapisz link</span></button>
+                                </div>
+                                <div id="recruitment-discord-invite-message" class="small mt-2" aria-live="polite"></div>
+                            </div>
                             <div id="recruitment-applications-list"><div class="text-white-50 small" data-i18n="recruitmentLoadingApplications">Ładowanie podań…</div></div>
                         </div>
                     </div>
@@ -1721,7 +1730,7 @@
                 recruitmentSignature: "Podpis kandydata (wpisz imię)", recruitmentDateAuto: "Data podania zostanie dodana automatycznie po wysłaniu.",
                 recruitmentNameLabel: "Imię", recruitmentDiscordLabel: "Nick Discord", recruitmentSkillsLabel: "Umiejętności",
                 recruitmentAppsLabel: "Programy i narzędzia ETS2", recruitmentMotivationLabel: "Motywacja", recruitmentSignatureLabel: "Podpis kandydata",
-                recruitmentTitle: "Rekrutacja", recruitmentApplyNow: "Złóż podanie", recruitmentStatusOpen: "Rekrutacja otwarta", recruitmentStatusClosed: "Rekrutacja zamknięta", recruitmentOpenMessage: "Aktualnie przyjmujemy podania. Wypełnij formularz, a skontaktuje się z Tobą kadra.", recruitmentClosedNotice: "Formularz podań jest obecnie wyłączony. Spróbuj ponownie później.", recruitmentFormTitle: "CV kandydata na kierowcę", recruitmentFormIntro: "Uzupełnij sekcje poniżej. Podanie trafi bezpośrednio do kadry.", recruitmentAge: "Wiek", recruitmentHours: "Liczba godzin w ETS2", recruitmentAbout: "Napisz kilka zdań o sobie (minimum 3 zdania).", recruitmentSentenceHint: "Zdania: 0 / 3 minimum.", recruitmentCompanies: "W jakich firmach wcześniej pracowałeś(-aś)? Dlaczego odszedłeś(-aś)?", recruitmentSource: "Skąd się o nas dowiedziałeś(-aś)?", recruitmentDlcs: "Posiadane DLC (mapowe i pozostałe)", recruitmentSteam: "Link do konta Steam", recruitmentSubmit: "Wyślij podanie", recruitmentApplications: "Otrzymane podania", recruitmentAdminHint: "Widoczne tylko dla kadry.", recruitmentRefresh: "Odśwież", recruitmentLoadingApplications: "Ładowanie podań…", recruitmentNoApplications: "Nie ma jeszcze żadnych podań.", recruitmentLoadError: "Nie udało się pobrać podań.", recruitmentSettingsError: "Nie udało się pobrać statusu rekrutacji.", recruitmentClose: "Zamknij rekrutację", recruitmentOpen: "Otwórz rekrutację", recruitmentSaved: "Status rekrutacji zapisany.", recruitmentSaveError: "Nie udało się zapisać statusu.", recruitmentSent: "Podanie zostało wysłane. Dziękujemy!", recruitmentSendError: "Nie udało się wysłać podania.", recruitmentSentenceError: "Napisz minimum 3 pełne zdania o sobie.", recruitmentAgeLabel: "Wiek", recruitmentHoursLabel: "Godziny ETS2", recruitmentAboutLabel: "Profil kandydata", recruitmentCompaniesLabel: "Wcześniejsze firmy", recruitmentSourceLabel: "Skąd nas zna", recruitmentDlcsLabel: "Posiadane DLC", recruitmentSteamLabel: "Steam", recruitmentStatusLabel: "Status", recruitmentSaveStatus: "Zapisz status", recruitmentStatusNew: "Nowe", recruitmentStatusReviewing: "Rozpatrywane", recruitmentStatusAccepted: "Przyjęte", recruitmentStatusRejected: "Odrzucone", recruitmentSubmittedAt: "Wysłano", recruitmentFormClosed: "Rekrutacja jest zamknięta.", fleetMapTitle: "Mapa kierowców", fleetMapIntro: "Wszyscy zalogowani kierowcy i szefowie widzą te same pozycje.", fleetMapRefresh: "Odśwież", fleetMapFit: "Dopasuj",
+                recruitmentInviteTitle: "Link zaproszenia na Discord", recruitmentInviteHint: "Po przyjęciu podania skopiuj gotową wiadomość i wyślij ją kandydatowi na Discordzie.", recruitmentInviteSave: "Zapisz link", recruitmentInviteSaved: "Link Discord zapisany.", recruitmentInviteCopy: "Kopiuj wiadomość z zaproszeniem", recruitmentInviteCopied: "Skopiowano wiadomość", recruitmentInviteError: "Nie udało się zapisać linku Discord.", recruitmentTitle: "Rekrutacja", recruitmentApplyNow: "Złóż podanie", recruitmentStatusOpen: "Rekrutacja otwarta", recruitmentStatusClosed: "Rekrutacja zamknięta", recruitmentOpenMessage: "Aktualnie przyjmujemy podania. Wypełnij formularz, a skontaktuje się z Tobą kadra.", recruitmentClosedNotice: "Formularz podań jest obecnie wyłączony. Spróbuj ponownie później.", recruitmentFormTitle: "CV kandydata na kierowcę", recruitmentFormIntro: "Uzupełnij sekcje poniżej. Podanie trafi bezpośrednio do kadry.", recruitmentAge: "Wiek", recruitmentHours: "Liczba godzin w ETS2", recruitmentAbout: "Napisz kilka zdań o sobie (minimum 3 zdania).", recruitmentSentenceHint: "Zdania: 0 / 3 minimum.", recruitmentCompanies: "W jakich firmach wcześniej pracowałeś(-aś)? Dlaczego odszedłeś(-aś)?", recruitmentSource: "Skąd się o nas dowiedziałeś(-aś)?", recruitmentDlcs: "Posiadane DLC (mapowe i pozostałe)", recruitmentSteam: "Link do konta Steam", recruitmentSubmit: "Wyślij podanie", recruitmentApplications: "Otrzymane podania", recruitmentAdminHint: "Widoczne tylko dla kadry.", recruitmentRefresh: "Odśwież", recruitmentLoadingApplications: "Ładowanie podań…", recruitmentNoApplications: "Nie ma jeszcze żadnych podań.", recruitmentLoadError: "Nie udało się pobrać podań.", recruitmentSettingsError: "Nie udało się pobrać statusu rekrutacji.", recruitmentClose: "Zamknij rekrutację", recruitmentOpen: "Otwórz rekrutację", recruitmentSaved: "Status rekrutacji zapisany.", recruitmentSaveError: "Nie udało się zapisać statusu.", recruitmentSent: "Podanie zostało wysłane. Dziękujemy!", recruitmentSendError: "Nie udało się wysłać podania.", recruitmentSentenceError: "Napisz minimum 3 pełne zdania o sobie.", recruitmentAgeLabel: "Wiek", recruitmentHoursLabel: "Godziny ETS2", recruitmentAboutLabel: "Profil kandydata", recruitmentCompaniesLabel: "Wcześniejsze firmy", recruitmentSourceLabel: "Skąd nas zna", recruitmentDlcsLabel: "Posiadane DLC", recruitmentSteamLabel: "Steam", recruitmentStatusLabel: "Status", recruitmentSaveStatus: "Zapisz status", recruitmentStatusNew: "Nowe", recruitmentStatusReviewing: "Rozpatrywane", recruitmentStatusAccepted: "Przyjęte", recruitmentStatusRejected: "Odrzucone", recruitmentSubmittedAt: "Wysłano", recruitmentFormClosed: "Rekrutacja jest zamknięta.", fleetMapTitle: "Mapa kierowców", fleetMapIntro: "Wszyscy zalogowani kierowcy i szefowie widzą te same pozycje.", fleetMapRefresh: "Odśwież", fleetMapFit: "Dopasuj",
                 fleetMapLoading: "Wczytuję pozycje kierowców…", fleetMapDrivers: "Załoga firmy", fleetMapNote: "Pozycje pochodzą ze współrzędnych świata ETS2. Telemetria zapisuje je podczas śledzonego kursu; po zakończeniu zostaje ostatni znany punkt. Przeciągnij mapę, użyj kółka lub przycisków +/−; „Dopasuj” pokazuje wszystkich kierowców.",
                 fleetMapNoLocation: "Brak zapisanej lokalizacji", fleetMapWaiting: "Kurs aktywny — czekam na pierwszy punkt GPS", fleetMapLive: "Na żywo", fleetMapLast: "Ostatnia pozycja", fleetMapNoDrivers: "Brak członków załogi.", fleetMapUpdated: "Odświeżono",
                 navDocuments: "Dokumenty", navAbout: "O nas", navManagement: "Zarządzanie", logout: "Wyloguj się",
@@ -1766,7 +1775,7 @@
                 recruitmentSignature: "Candidate signature (enter your first name)", recruitmentDateAuto: "The application date is added automatically after submission.",
                 recruitmentNameLabel: "First name", recruitmentDiscordLabel: "Discord username", recruitmentSkillsLabel: "Skills",
                 recruitmentAppsLabel: "ETS2 programs and tools", recruitmentMotivationLabel: "Motivation", recruitmentSignatureLabel: "Candidate signature",
-                recruitmentTitle: "Recruitment", recruitmentApplyNow: "Apply now", recruitmentStatusOpen: "Recruitment open", recruitmentStatusClosed: "Recruitment closed", recruitmentOpenMessage: "We are currently accepting applications. Fill in the form and our staff will contact you.", recruitmentClosedNotice: "Applications are currently closed. Please check back later.", recruitmentFormTitle: "Driver application CV", recruitmentFormIntro: "Complete the sections below. Your application will go directly to the company staff.", recruitmentAge: "Age", recruitmentHours: "Hours played in ETS2", recruitmentAbout: "Tell us a little about yourself (at least 3 sentences).", recruitmentSentenceHint: "Sentences: 0 / 3 minimum.", recruitmentCompanies: "Which companies have you worked for before, and why did you leave?", recruitmentSource: "How did you hear about us?", recruitmentDlcs: "DLC you own (map and non-map)", recruitmentSteam: "Steam profile link", recruitmentSubmit: "Submit application", recruitmentApplications: "Received applications", recruitmentAdminHint: "Visible to company staff only.", recruitmentRefresh: "Refresh", recruitmentLoadingApplications: "Loading applications…", recruitmentNoApplications: "There are no applications yet.", recruitmentLoadError: "Failed to load applications.", recruitmentSettingsError: "Failed to load recruitment status.", recruitmentClose: "Close recruitment", recruitmentOpen: "Open recruitment", recruitmentSaved: "Recruitment status saved.", recruitmentSaveError: "Could not save the recruitment status.", recruitmentSent: "Your application has been submitted. Thank you!", recruitmentSendError: "Could not submit your application.", recruitmentSentenceError: "Please write at least 3 complete sentences about yourself.", recruitmentAgeLabel: "Age", recruitmentHoursLabel: "ETS2 hours", recruitmentAboutLabel: "Candidate profile", recruitmentCompaniesLabel: "Previous companies", recruitmentSourceLabel: "How they heard about us", recruitmentDlcsLabel: "DLC owned", recruitmentSteamLabel: "Steam", recruitmentStatusLabel: "Status", recruitmentSaveStatus: "Save status", recruitmentStatusNew: "New", recruitmentStatusReviewing: "Under review", recruitmentStatusAccepted: "Accepted", recruitmentStatusRejected: "Rejected", recruitmentSubmittedAt: "Submitted", recruitmentFormClosed: "Recruitment is closed.", fleetMapTitle: "Driver map", fleetMapIntro: "All signed-in drivers and managers share the same positions.", fleetMapRefresh: "Refresh", fleetMapFit: "Fit all",
+                recruitmentInviteTitle: "Discord invitation link", recruitmentInviteHint: "After accepting an application, copy the prepared message and send it to the candidate on Discord.", recruitmentInviteSave: "Save link", recruitmentInviteSaved: "Discord link saved.", recruitmentInviteCopy: "Copy invitation message", recruitmentInviteCopied: "Message copied", recruitmentInviteError: "Could not save the Discord link.", recruitmentTitle: "Recruitment", recruitmentApplyNow: "Apply now", recruitmentStatusOpen: "Recruitment open", recruitmentStatusClosed: "Recruitment closed", recruitmentOpenMessage: "We are currently accepting applications. Fill in the form and our staff will contact you.", recruitmentClosedNotice: "Applications are currently closed. Please check back later.", recruitmentFormTitle: "Driver application CV", recruitmentFormIntro: "Complete the sections below. Your application will go directly to the company staff.", recruitmentAge: "Age", recruitmentHours: "Hours played in ETS2", recruitmentAbout: "Tell us a little about yourself (at least 3 sentences).", recruitmentSentenceHint: "Sentences: 0 / 3 minimum.", recruitmentCompanies: "Which companies have you worked for before, and why did you leave?", recruitmentSource: "How did you hear about us?", recruitmentDlcs: "DLC you own (map and non-map)", recruitmentSteam: "Steam profile link", recruitmentSubmit: "Submit application", recruitmentApplications: "Received applications", recruitmentAdminHint: "Visible to company staff only.", recruitmentRefresh: "Refresh", recruitmentLoadingApplications: "Loading applications…", recruitmentNoApplications: "There are no applications yet.", recruitmentLoadError: "Failed to load applications.", recruitmentSettingsError: "Failed to load recruitment status.", recruitmentClose: "Close recruitment", recruitmentOpen: "Open recruitment", recruitmentSaved: "Recruitment status saved.", recruitmentSaveError: "Could not save the recruitment status.", recruitmentSent: "Your application has been submitted. Thank you!", recruitmentSendError: "Could not submit your application.", recruitmentSentenceError: "Please write at least 3 complete sentences about yourself.", recruitmentAgeLabel: "Age", recruitmentHoursLabel: "ETS2 hours", recruitmentAboutLabel: "Candidate profile", recruitmentCompaniesLabel: "Previous companies", recruitmentSourceLabel: "How they heard about us", recruitmentDlcsLabel: "DLC owned", recruitmentSteamLabel: "Steam", recruitmentStatusLabel: "Status", recruitmentSaveStatus: "Save status", recruitmentStatusNew: "New", recruitmentStatusReviewing: "Under review", recruitmentStatusAccepted: "Accepted", recruitmentStatusRejected: "Rejected", recruitmentSubmittedAt: "Submitted", recruitmentFormClosed: "Recruitment is closed.", fleetMapTitle: "Driver map", fleetMapIntro: "All signed-in drivers and managers share the same positions.", fleetMapRefresh: "Refresh", fleetMapFit: "Fit all",
                 fleetMapLoading: "Loading driver positions…", fleetMapDrivers: "Company team", fleetMapNote: "Positions use ETS2 world coordinates. Telemetry records them during a tracked trip; the last known point remains after delivery. Drag the map or use the wheel / + and − buttons; Fit all shows every driver.",
                 fleetMapNoLocation: "No saved location", fleetMapWaiting: "Trip active — waiting for the first GPS point", fleetMapLive: "Live", fleetMapLast: "Last known position", fleetMapNoDrivers: "No team members.", fleetMapUpdated: "Updated",
                 navDocuments: "Documents", navAbout: "About Us", navManagement: "Management", logout: "Logout",
@@ -3482,6 +3491,9 @@ async function loadRecruitment() {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || t('recruitmentSettingsError'));
         recruitmentIsOpen = Boolean(data.isOpen);
+        recruitmentDiscordInviteUrl = isStaff() ? String(data.discordInviteUrl || "").trim() : "";
+        const inviteInput = document.getElementById("recruitment-discord-invite");
+        if (inviteInput && isStaff()) inviteInput.value = recruitmentDiscordInviteUrl;
         if (settingsMessage) {
             settingsMessage.className = 'small mt-3';
             settingsMessage.textContent = '';
@@ -3517,6 +3529,28 @@ async function toggleRecruitmentStatus() {
             message.className = 'small mt-3 text-danger';
             message.textContent = error.message || t('recruitmentSaveError');
         }
+    }
+}
+
+async function saveRecruitmentDiscordInvite() {
+    const input = document.getElementById('recruitment-discord-invite');
+    const message = document.getElementById('recruitment-discord-invite-message');
+    if (!input || !message) return;
+    try {
+        const response = await fetch('/api/recruitment/settings/discord-invite', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discordInviteUrl: input.value.trim() })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || t('recruitmentInviteError'));
+        recruitmentDiscordInviteUrl = String(data.discordInviteUrl || '').trim();
+        message.className = 'small mt-2 text-success';
+        message.textContent = t('recruitmentInviteSaved');
+        await loadRecruitmentApplications();
+    } catch (error) {
+        message.className = 'small mt-2 text-danger';
+        message.textContent = error.message || t('recruitmentInviteError');
     }
 }
 function updateRecruitmentSentenceCount() {
@@ -3583,6 +3617,7 @@ async function loadRecruitmentApplications() {
         const response = await fetch('/api/recruitment/applications');
         const applications = await response.json().catch(() => []);
         if (!response.ok) throw new Error(applications.error || t('recruitmentLoadError'));
+        recruitmentApplicationsCache = applications;
         if (!applications.length) {
             list.innerHTML = '<div class="text-white-50 small">' + escapeHtml(t('recruitmentNoApplications')) + '</div>';
             return;
@@ -3594,6 +3629,9 @@ async function loadRecruitmentApplications() {
             const field = (label, input, wide = false) =>
                 '<div class="' + (wide ? 'col-12' : 'col-md-6') + '"><strong>' + escapeHtml(label) + ':</strong><div class="text-white-50" style="white-space:pre-wrap">' + value(input) + '</div></div>';
             const steamUrl = String(application.steam_url || '');
+            const inviteButton = application.status === 'accepted' && recruitmentDiscordInviteUrl
+                ? '<button class="btn btn-sm btn-outline-success" type="button" data-application-id="' + id + '" onclick="copyRecruitmentInviteMessage(this)"><i class="fa-solid fa-link me-1"></i>' + escapeHtml(t('recruitmentInviteCopy')) + '</button>'
+                : '';
             return '<details class="border border-secondary rounded-3 p-3 mb-3">' +
                 '<summary class="d-flex flex-wrap align-items-center gap-2 text-white fw-semibold">' +
                 '<span class="text-info">#' + id + '</span><span>' + value(application.full_name) + '</span>' +
@@ -3617,7 +3655,7 @@ async function loadRecruitmentApplications() {
                 '<label class="form-label mb-0" for="recruitment-status-' + id + '">' + escapeHtml(t('recruitmentStatusLabel')) + '</label>' +
                 '<select id="recruitment-status-' + id + '" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width:220px">' +
                 recruitmentStatuses.map(status => '<option value="' + status + '"' + (status === application.status ? ' selected' : '') + '>' + escapeHtml(recruitmentStatusName(status)) + '</option>').join('') +
-                '</select><button class="btn btn-sm btn-outline-warning" type="button" onclick="saveRecruitmentApplicationStatus(' + id + ')">' + escapeHtml(t('recruitmentSaveStatus')) + '</button></div>' +
+                '</select><button class="btn btn-sm btn-outline-warning" type="button" onclick="saveRecruitmentApplicationStatus(' + id + ')">' + escapeHtml(t('recruitmentSaveStatus')) + '</button>' + inviteButton + '</div>' +
                 '</div></details>';
         }).join('');
     } catch (error) {
@@ -3641,6 +3679,37 @@ async function saveRecruitmentApplicationStatus(id) {
     }
 }
 
+
+async function copyRecruitmentInviteMessage(button) {
+    const id = Number(button && button.dataset.applicationId);
+    const application = recruitmentApplicationsCache.find(item => Number(item.id) === id);
+    const discordName = String(application && application.discord_name || '').trim();
+    if (!discordName || !recruitmentDiscordInviteUrl) return;
+    const message = currentLang === 'en'
+        ? 'Hi ' + discordName + '! Your application to Mazren Spedition has been accepted. Join our Discord here: ' + recruitmentDiscordInviteUrl + ' After joining, message the staff so we can finish the onboarding.'
+        : 'Cześć ' + discordName + '! Twoje podanie do Mazren Spedition zostało zaakceptowane. Dołącz do naszego Discorda: ' + recruitmentDiscordInviteUrl + ' Po wejściu napisz do kadry, żeby dokończyć formalności.';
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(message);
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = message;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            const copied = document.execCommand('copy');
+            textarea.remove();
+            if (!copied) throw new Error('clipboard unavailable');
+        }
+        const original = button.innerHTML;
+        button.innerHTML = '<i class="fa-solid fa-check me-1"></i>' + escapeHtml(t('recruitmentInviteCopied'));
+        button.disabled = true;
+        setTimeout(() => { button.innerHTML = original; button.disabled = false; }, 1800);
+    } catch (_) {
+        window.prompt(currentLang === 'en' ? 'Copy this invitation message:' : 'Skopiuj tę wiadomość z zaproszeniem:', message);
+    }
+}
 /* ===== Wymagania do dołączenia (edytowalne przez Szefa, PL + EN) ===== */
 let reqData = { badge: '', badge_en: '', items: [] };
 let reqEditItems = [];
