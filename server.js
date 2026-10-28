@@ -208,6 +208,17 @@ async function initDB() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS truck_sales (
+                id SERIAL PRIMARY KEY,
+                truck_id INTEGER NOT NULL,
+                truck_model VARCHAR(255) NOT NULL,
+                plates VARCHAR(50) NOT NULL,
+                sale_price INTEGER NOT NULL CHECK (sale_price > 0),
+                sale_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                seller_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE TABLE IF NOT EXISTS trucks (
                 id SERIAL PRIMARY KEY,
                 truck_model VARCHAR(255) NOT NULL,
@@ -1450,9 +1461,30 @@ app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { 
 
 app.get('/api/expenses', requireLogin, async (req, res) => {
     try {
-        const query = `SELECT expenses.*, users.username FROM expenses JOIN users ON expenses.user_id = users.id ORDER BY expenses.id DESC`;
-        const result = await pool.query(query);
-        res.json(result.rows);
+        const [expenses, sales] = await Promise.all([
+            pool.query(`
+                SELECT expenses.*, users.username, 'expense'::text AS transaction_kind
+                FROM expenses JOIN users ON expenses.user_id = users.id
+            `),
+            pool.query(`
+                SELECT ('sale-' || truck_sales.id)::text AS id,
+                       'sale'::text AS type,
+                       truck_sales.sale_price AS amount,
+                       'Sprzedaż ciężarówki: ' || truck_sales.truck_model || ' (' || truck_sales.plates || ')' AS description,
+                       truck_sales.sale_date AS expense_date,
+                       truck_sales.created_at,
+                       COALESCE(users.username, 'Kadra') AS username,
+                       'sale'::text AS transaction_kind
+                FROM truck_sales
+                LEFT JOIN users ON users.id = truck_sales.seller_user_id
+            `)
+        ]);
+        const transactions = [...expenses.rows, ...sales.rows].sort((a, b) => {
+            const dateA = new Date(a.expense_date || a.created_at).getTime() || 0;
+            const dateB = new Date(b.expense_date || b.created_at).getTime() || 0;
+            return dateB - dateA || new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        });
+        res.json(transactions);
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania wydatków' }); }
 });
 
@@ -1610,6 +1642,65 @@ registerVehicleRoutes('/api/trucks', 'trucks', 'truck_model', {
     cabin: 'Standard', chassis: 'Standard', engine: 'Standard', gearbox: 'Standard', interior: 'Standard', accessories: 'Standard'
 });
 registerVehicleRoutes('/api/trailers', 'trailers', 'trailer_model', { description: '' });
+
+app.post('/api/trucks/:id/sell', requireAdmin, async (req, res) => {
+    const truckId = Number.parseInt(req.params.id, 10);
+    const salePrice = Number(req.body && req.body.sale_price);
+    const saleDate = String((req.body && req.body.sale_date) || '').trim();
+    if (!Number.isSafeInteger(truckId) || truckId <= 0) {
+        return res.status(400).json({ error: 'Nieprawidłowy pojazd.' });
+    }
+    if (!Number.isSafeInteger(salePrice) || salePrice <= 0 || salePrice > 2147483647) {
+        return res.status(400).json({ error: 'Podaj prawidłową cenę sprzedaży w euro.' });
+    }
+    if (saleDate) {
+        const parsedDate = new Date(`${saleDate}T00:00:00.000Z`);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(saleDate) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== saleDate) {
+            return res.status(400).json({ error: 'Podaj prawidłową datę sprzedaży.' });
+        }
+    }
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+        const truckResult = await client.query('SELECT * FROM trucks WHERE id = $1 FOR UPDATE', [truckId]);
+        if (truckResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Nie znaleziono ciężarówki w garażu.' });
+        }
+        const truck = truckResult.rows[0];
+        const assignedDriver = String(truck.driver_name || '').trim();
+        if (assignedDriver && assignedDriver.toLocaleLowerCase() !== 'wolne') {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ error: `Najpierw zwolnij ciężarówkę z przydziału kierowcy @${assignedDriver}.` });
+        }
+
+        const saleResult = await client.query(
+            `INSERT INTO truck_sales (truck_id, truck_model, plates, sale_price, sale_date, seller_user_id)
+             VALUES ($1, $2, $3, $4, COALESCE(NULLIF($5, '')::date, CURRENT_DATE), $6)
+             RETURNING id`,
+            [truck.id, truck.truck_model, truck.plates, salePrice, saleDate, req.session.userId]
+        );
+        await client.query('DELETE FROM trucks WHERE id = $1', [truck.id]);
+        await client.query('COMMIT');
+        res.json({
+            success: true,
+            saleId: saleResult.rows[0].id,
+            truckModel: truck.truck_model,
+            plates: truck.plates,
+            salePrice
+        });
+    } catch (err) {
+        if (client) {
+            try { await client.query('ROLLBACK'); } catch (_) {}
+        }
+        console.error('Błąd sprzedaży ciężarówki:', err);
+        res.status(500).json({ error: 'Nie udało się zapisać sprzedaży ciężarówki.' });
+    } finally {
+        if (client) client.release();
+    }
+});
 
 // Jednorazowy import przydziałów, które wcześniej siedziały w localStorage przeglądarki Szefa.
 app.post('/api/trucks/import-assignments', requireAdmin, async (req, res) => {
@@ -1806,11 +1897,13 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
         const totalDeliveriesRes = await pool.query("SELECT COUNT(*) as total FROM jobs WHERE status = 'approved'");
         const totalIncomeRes = await pool.query("SELECT COALESCE(SUM(income), 0) as total_income FROM jobs WHERE status = 'approved'");
         const totalExpensesRes = await pool.query('SELECT SUM(amount) as total_expenses FROM expenses');
+        const totalTruckSalesRes = await pool.query('SELECT COALESCE(SUM(sale_price), 0) AS total_sales FROM truck_sales');
         
         const totalCompanyKm = parseInt(totalKmRes.rows[0].total || 0);
         const totalDeliveries = parseInt(totalDeliveriesRes.rows[0].total || 0);
         const totalIncome = parseInt(totalIncomeRes.rows[0].total_income || 0);
         const totalExpenses = parseInt(totalExpensesRes.rows[0].total_expenses || 0);
+        const totalTruckSales = parseInt(totalTruckSalesRes.rows[0].total_sales || 0);
 
         const rankingRes = await pool.query(`
             SELECT users.username, users.rank_override, SUM(jobs.distance) as km, COUNT(jobs.id) as deliveries,
@@ -1825,7 +1918,8 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
             totalDeliveries,
             totalIncome,
             totalExpenses,
-            totalCompanyBudget: totalIncome - totalExpenses,
+            totalTruckSales,
+            totalCompanyBudget: totalIncome - totalExpenses + totalTruckSales,
             driversRanking: rankingRes.rows.map(d => ({ username: d.username, km: d.km, deliveries: d.deliveries, rank: rankFor(parseInt(d.approved_km) || 0, d.rank_override) }))
         });
     } catch (err) { res.status(500).json({ error: 'Błąd statystyk' }); }
