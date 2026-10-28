@@ -10,6 +10,18 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+const MAIN_DOMAIN = 'https://mazren.duckdns.org';
+
+app.use((req, res, next) => {
+    const hostname = req.headers.host?.split(':')[0]?.toLowerCase();
+
+    if (hostname === 'vtc-bkup.onrender.com') {
+        return res.redirect(301, MAIN_DOMAIN + req.originalUrl);
+    }
+
+    next();
+});
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
