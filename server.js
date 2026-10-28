@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { httpError, uploadSlots, recruitmentLimiter, validFileSignature, checkRecruitmentCapacity } = require('./security');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -36,11 +37,13 @@ if (!fs.existsSync(uploadDir)) {
 // przy każdym restarcie / deployu). Trzymamy je w bazie danych (Supabase) w tabeli "files".
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 12 * 1024 * 1024 }
+    limits: { fileSize: 12 * 1024 * 1024, files: 2, fields: 20, parts: 22, fieldSize: 16 * 1024 },
+    fileFilter: (req, file, cb) => cb(ALLOWED_MIME.test(file.mimetype) ? null : httpError(400, 'Niedozwolony typ pliku.'), true)
 });
 const recruitmentPhotoUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 8 * 1024 * 1024, files: 2, fields: 20, parts: 22 }
+    limits: { fileSize: 8 * 1024 * 1024, files: 2, fields: 20, parts: 22, fieldSize: 16 * 1024 },
+    fileFilter: (req, file, cb) => cb(RECRUITMENT_IMAGE_MIME.test(file.mimetype) ? null : httpError(400, 'Zdjęcia muszą być JPG, PNG lub WEBP.'), true)
 }).fields([
     { name: 'screenshotOne', maxCount: 1 },
     { name: 'screenshotTwo', maxCount: 1 }
@@ -48,10 +51,29 @@ const recruitmentPhotoUpload = multer({
 
 const ALLOWED_MIME = /^(image\/(jpeg|png|webp|gif)|application\/pdf)$/;
 const RECRUITMENT_IMAGE_MIME = /^image\/(jpeg|png|webp)$/;
+const limitUploadConcurrency = uploadSlots(2);
+const limitRecruitment = recruitmentLimiter(pool);
+const recruitmentCapacityMb = Number(process.env.RECRUITMENT_MAX_STORAGE_MB || 128);
+if (!Number.isFinite(recruitmentCapacityMb) || recruitmentCapacityMb < 1 || recruitmentCapacityMb > 1024) {
+    throw new Error('RECRUITMENT_MAX_STORAGE_MB musi wynosić od 1 do 1024.');
+}
+
+async function requireRecruitmentOpen(req, res, next) {
+    try {
+        const settings = await pool.query("SELECT value FROM site_settings WHERE key = 'recruitment_open'");
+        if (settings.rows.length && settings.rows[0].value === 'false') {
+            return res.status(403).json({ error: 'Rekrutacja jest obecnie zamknięta.' });
+        }
+        next();
+    } catch (error) {
+        res.status(503).json({ error: 'Rekrutacja chwilowo niedostępna.' });
+    }
+}
 
 async function saveFile(file, database = pool) {
     if (!file) return null;
     if (!ALLOWED_MIME.test(file.mimetype)) throw new Error('Niedozwolony typ pliku: ' + file.mimetype);
+    if (!validFileSignature(file)) throw httpError(400, 'Zawartość pliku nie odpowiada wybranemu formatowi.');
     const r = await database.query(
         'INSERT INTO files (filename, mime, data) VALUES ($1, $2, $3) RETURNING id',
         [file.originalname, file.mimetype, file.buffer]
@@ -193,6 +215,13 @@ async function seedTrucks() {
 
 async function initDB() {
     try {
+        await pool.query(`CREATE TABLE IF NOT EXISTS security_rate_limits (
+            scope TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            window_start TIMESTAMPTZ NOT NULL,
+            hits INTEGER NOT NULL,
+            PRIMARY KEY (scope, subject, window_start)
+        );`);
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -377,6 +406,7 @@ async function initDB() {
         console.log('Baza danych zainicjalizowana pomyślnie.');
     } catch (err) {
         console.error('Błąd inicjalizacji bazy:', err.message);
+        throw err;
     }
 }
 
@@ -417,7 +447,10 @@ app.use((req, res, next) => {
 });
 
 // sprzątanie wygasłych sesji co godzinę
-setInterval(() => { pool.query('DELETE FROM sessions WHERE expire < NOW()').catch(() => {}); }, 60 * 60 * 1000);
+setInterval(() => {
+    pool.query('DELETE FROM sessions WHERE expire < NOW()').catch(() => {});
+    pool.query("DELETE FROM security_rate_limits WHERE window_start < NOW() - INTERVAL '2 hours'").catch(() => {});
+}, 60 * 60 * 1000);
 
 async function addNotification(userId, title, message, jobId = null, actionTab = 'jobs') {
     try {
@@ -850,7 +883,7 @@ app.put('/api/recruitment/settings/discord-invite', requireAdmin, async (req, re
     }
 });
 
-app.post('/api/recruitment/applications', (req, res, next) => {
+app.post('/api/recruitment/applications', limitRecruitment, requireRecruitmentOpen, limitUploadConcurrency, (req, res, next) => {
     recruitmentPhotoUpload(req, res, error => {
         if (!error) return next();
         const message = error.code === 'LIMIT_FILE_SIZE'
@@ -908,6 +941,7 @@ app.post('/api/recruitment/applications', (req, res, next) => {
         if (settings.rows.length && settings.rows[0].value === 'false') return res.status(403).json({ error: 'Rekrutacja jest obecnie zamknięta.' });
         client = await pool.connect();
         await client.query('BEGIN');
+        await checkRecruitmentCapacity(client, screenshotOne.buffer.length + screenshotTwo.buffer.length, recruitmentCapacityMb * 1024 * 1024);
         const screenshotOnePath = await saveFile(screenshotOne, client);
         const screenshotTwoPath = await saveFile(screenshotTwo, client);
         const screenshotOneId = Number.parseInt(screenshotOnePath.split('/').pop(), 10);
@@ -930,7 +964,7 @@ app.post('/api/recruitment/applications', (req, res, next) => {
             try { await client.query('ROLLBACK'); } catch (_) {}
         }
         console.error('Błąd zapisu podania rekrutacyjnego:', e.message);
-        res.status(500).json({ error: 'Nie udało się zapisać podania. Spróbuj ponownie później.' });
+        res.status(e.status || 500).json({ error: e.status ? e.message : 'Nie udało się zapisać podania. Spróbuj ponownie później.' });
     } finally {
         if (client) client.release();
     }
@@ -1385,7 +1419,7 @@ app.get('/api/documents', requireLogin, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania dokumentów' }); }
 });
 
-app.post('/api/documents', upload.single('doc_file'), async (req, res) => {
+app.post('/api/documents', requireAdmin, limitUploadConcurrency, upload.single('doc_file'), async (req, res) => {
     if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
     const { title, category, content } = req.body;
     let fileUrl = null;
@@ -1397,7 +1431,7 @@ app.post('/api/documents', upload.single('doc_file'), async (req, res) => {
             [title, category || 'Regulamin', content || '', fileUrl]
         );
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Błąd dodawania dokumentu' }); }
+    } catch (err) { res.status(err.status || 500).json({ error: err.status ? err.message : 'Błąd dodawania dokumentu' }); }
 });
 
 app.delete('/api/documents/:id', async (req, res) => {
@@ -1500,7 +1534,7 @@ app.put('/api/dispatches/:id/accept', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd akceptacji' }); }
 });
 
-app.post('/api/dispatches/:id/complete', upload.fields([{ name: 'cmr_file' }, { name: 'summary_photo' }]), async (req, res) => {
+app.post('/api/dispatches/:id/complete', requireLogin, limitUploadConcurrency, upload.fields([{ name: 'cmr_file', maxCount: 1 }, { name: 'summary_photo', maxCount: 1 }]), async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     
     const { distance, income, cargo } = req.body;
@@ -1650,7 +1684,7 @@ function registerVehicleRoutes(base, table, modelCol, extra) {
     });
 
     // Dodanie nowego modelu (z kilkoma tablicami naraz) albo kolejnej sztuki istniejącego modelu.
-    app.post(base, requireAdmin, vehicleUpload, async (req, res) => {
+    app.post(base, requireAdmin, limitUploadConcurrency, vehicleUpload, async (req, res) => {
         const model = (req.body.model_name || '').trim();
         if (!model) return res.status(400).json({ error: 'Podaj nazwę / model.' });
 
@@ -2011,4 +2045,19 @@ app.get('/api/company-stats', requireLogin, async (req, res) => {
 // API aplikacji kierowcy (telemetria ETS2) - patrz client-api.js
 const clientApi = require('./client-api')({ app, pool, requireLogin, addNotification });
 
-initDB().then(() => app.listen(PORT, () => console.log(`Serwer VTC działa na porcie ${PORT}`)));
+app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
+    if (err instanceof multer.MulterError || err.status === 400) {
+        return res.status(err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({
+            error: err.code === 'LIMIT_FILE_SIZE' ? 'Plik jest za duży.' : 'Nieprawidłowy format lub liczba przesyłanych plików i pól.'
+        });
+    }
+    console.error('Błąd żądania:', err.message);
+    res.status(500).json({ error: 'Błąd serwera.' });
+});
+
+module.exports = { app, pool, initDB };
+if (require.main === module) {
+    initDB().then(() => app.listen(PORT, () => console.log(`Serwer VTC działa na porcie ${PORT}`)))
+        .catch(async () => { await pool.end(); process.exit(1); });
+}

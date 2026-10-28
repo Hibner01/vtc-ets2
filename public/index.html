@@ -1693,6 +1693,15 @@
             return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
+        function safeAttachmentUrl(value) {
+            if (!value) return '';
+            try {
+                const url = new URL(String(value), window.location.origin);
+                if (url.protocol === 'https:' || (url.protocol === 'http:' && url.origin === window.location.origin)) return url.href;
+            } catch (_) {}
+            return '';
+        }
+
         function t(key) {
             return (i18n[currentLang] && i18n[currentLang][key]) || i18n.pl[key] || key;
         }
@@ -2319,8 +2328,8 @@
                 container.innerHTML = myJobs.length === 0 ? '<div class="text-white-50 p-2">Nie wykonałeś jeszcze żadnych tras.</div>' : '';
                 
                 myJobs.forEach(j => {
-                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
-                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
+                    const cmrLink = safeAttachmentUrl(j.cmr_file);
+                    const summaryLink = safeAttachmentUrl(j.summary_photo);
 
                     let filesHtml = '';
                     const myStatusLabel = {
@@ -2332,8 +2341,8 @@
                     const myCorrectionNote = j.status === 'needs_correction' && j.correction_note
                         ? `<div class="small text-warning mt-2">Powód poprawki: ${escapeHtml(j.correction_note)}</div>`
                         : '';
-                    if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
-                    if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
+                    if (cmrLink) filesHtml += `<a href="${escapeHtml(cmrLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-invoice me-1"></i> CMR</a>`;
+                    if (summaryLink) filesHtml += `<a href="${escapeHtml(summaryLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success"><i class="fa-solid fa-image me-1"></i> Podsumowanie</a>`;
                     if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
                     if (j.status === 'needs_correction') filesHtml += `<button onclick="submitJobCorrection(${j.id}, ${Number(j.distance) || 0})" class="btn btn-sm btn-warning"><i class="fa-solid fa-pen me-1"></i> Popraw km</button>`;
                     if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
@@ -2352,9 +2361,9 @@
                             ${myCorrectionNote}
                             <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-secondary text-light">${j.cargo || 'Standard'}</span>
+                                    <span class="badge bg-secondary text-light">${escapeHtml(j.cargo || 'Standard')}</span>
                                     ${myStatusLabel[j.status] || ''}
-                                    <span class="text-light small"><i class="fa-regular fa-calendar-days me-1 text-warning"></i> ${j.formatted_date || 'Dzisiaj'}</span>
+                                    <span class="text-light small"><i class="fa-regular fa-calendar-days me-1 text-warning"></i> ${escapeHtml(j.formatted_date || 'Dzisiaj')}</span>
                                 </div>
                                 <div class="d-flex gap-2">${filesHtml}</div>
                             </div>
@@ -2377,12 +2386,12 @@
                 container.innerHTML = jobs.length === 0 ? '<div class="text-white-50 p-2">Brak zarejestrowanych tras w firmie.</div>' : '';
 
                 jobs.forEach(j => {
-                    let cmrLink = j.cmr_file ? (j.cmr_file.startsWith('http') ? j.cmr_file : window.location.origin + j.cmr_file) : '';
-                    let summaryLink = j.summary_photo ? (j.summary_photo.startsWith('http') ? j.summary_photo : window.location.origin + j.summary_photo) : '';
+                    const cmrLink = safeAttachmentUrl(j.cmr_file);
+                    const summaryLink = safeAttachmentUrl(j.summary_photo);
 
                     let filesHtml = '';
-                    if (j.cmr_file) filesHtml += `<a href="${cmrLink}" target="_blank" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
-                    if (j.summary_photo) filesHtml += `<a href="${summaryLink}" target="_blank" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
+                    if (cmrLink) filesHtml += `<a href="${escapeHtml(cmrLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info me-2"><i class="fas fa-file-invoice me-1"></i> CMR</a>`;
+                    if (summaryLink) filesHtml += `<a href="${escapeHtml(summaryLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success me-2"><i class="fas fa-image me-1"></i> Podsumowanie</a>`;
                     if (j.has_trip) filesHtml += `<button onclick="showRoute(${j.id})" class="btn btn-sm btn-outline-warning me-2"><i class="fa-solid fa-route me-1"></i> Trasa</button>`;
                     if (!j.cmr_file) filesHtml += `<button onclick="openVirtualCmr(${j.id})" class="btn btn-sm btn-outline-info me-2"><i class="fa-solid fa-file-invoice me-1"></i> CMR</button>`;
                     
@@ -2411,7 +2420,7 @@
                         <div class="bg-dark border border-secondary rounded-4 p-3 mb-3 shadow-sm">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div>
-                                    <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${j.username}</span>
+                                    <span class="text-warning small fw-bold d-block mb-1"><i class="fas fa-user me-1"></i> ${escapeHtml(j.username)}</span>
                                     ${statusBadge}
                                     ${correctionNoteHtml}
                                     <h5 class="fw-bold text-white mb-0">
@@ -2425,8 +2434,8 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-secondary">${j.cargo || 'Standard'}</span>
-                                    <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> ${j.formatted_date || ''}</small>
+                                    <span class="badge bg-secondary">${escapeHtml(j.cargo || 'Standard')}</span>
+                                    <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> ${escapeHtml(j.formatted_date || '')}</small>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <div class="me-2">${filesHtml}</div>
@@ -2559,9 +2568,9 @@
                             actionBtn = `<button class="btn btn-pill-white btn-sm fw-bold" onclick="acceptDispatch(${d.id})">Przyjmij zlecenie</button>`;
                         }
                     } else if (d.status === 'W trakcie' && (d.accepted_by_username === currentUsername || isStaff())) {
-                        actionBtn = `<button class="btn btn-success btn-sm fw-bold" onclick="openJobReportForm(${d.id}, '${d.start_city}', '${d.end_city}')"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
+                        actionBtn = `<button class="btn btn-success btn-sm fw-bold" data-start-city="${escapeHtml(d.start_city)}" data-end-city="${escapeHtml(d.end_city)}" onclick="openJobReportForm(${Number(d.id)}, this.dataset.startCity, this.dataset.endCity)"><i class="fa-solid fa-flag-checkered me-1"></i> Wyślij raport trasy</button>`;
                     } else {
-                        actionBtn = `<span class="badge bg-secondary">W trakcie (${d.accepted_by_username || 'Kierowca'})</span>`;
+                        actionBtn = `<span class="badge bg-secondary">W trakcie (${escapeHtml(d.accepted_by_username || 'Kierowca')})</span>`;
                     }
 
                     let deleteDispatchBtn = isStaff() 
@@ -2575,9 +2584,9 @@
                                     <h4 class="fw-bold text-white mb-0">${placeHtml(d.start_city, d.start_country)} <i class="fa-solid fa-arrow-right text-info mx-1"></i> ${placeHtml(d.end_city, d.end_country)}</h4>
                                     <div>${deleteDispatchBtn}</div>
                                 </div>
-                                <p class="text-info mb-1 small">Przypisany kierowca: <strong>${d.assigned_to}</strong></p>
-                                <p class="text-light mb-2 small">Zestaw: ${d.truck_name || 'Standard'}</p>
-                                ${d.notes ? `<p class="text-white-50 small mb-3">Ładunek/Uwagi: ${d.notes}</p>` : ''}
+                                <p class="text-info mb-1 small">Przypisany kierowca: <strong>${escapeHtml(d.assigned_to)}</strong></p>
+                                <p class="text-light mb-2 small">Zestaw: ${escapeHtml(d.truck_name || 'Standard')}</p>
+                                ${d.notes ? `<p class="text-white-50 small mb-3">Ładunek/Uwagi: ${escapeHtml(d.notes)}</p>` : ''}
                                 <div class="mt-3">${actionBtn}</div>
                             </div>
                         </div>
