@@ -26,13 +26,21 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 12 * 1024 * 1024 }
 });
+const recruitmentPhotoUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 8 * 1024 * 1024, files: 2, fields: 20, parts: 22 }
+}).fields([
+    { name: 'screenshotOne', maxCount: 1 },
+    { name: 'screenshotTwo', maxCount: 1 }
+]);
 
 const ALLOWED_MIME = /^(image\/(jpeg|png|webp|gif)|application\/pdf)$/;
+const RECRUITMENT_IMAGE_MIME = /^image\/(jpeg|png|webp)$/;
 
-async function saveFile(file) {
+async function saveFile(file, database = pool) {
     if (!file) return null;
     if (!ALLOWED_MIME.test(file.mimetype)) throw new Error('Niedozwolony typ pliku: ' + file.mimetype);
-    const r = await pool.query(
+    const r = await database.query(
         'INSERT INTO files (filename, mime, data) VALUES ($1, $2, $3) RETURNING id',
         [file.originalname, file.mimetype, file.buffer]
     );
@@ -344,6 +352,8 @@ async function initDB() {
                 description TEXT DEFAULT ''
             );
         `);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS screenshot_one_file_id INTEGER REFERENCES files(id) ON DELETE SET NULL;`);
+        await pool.query(`ALTER TABLE recruitment_applications ADD COLUMN IF NOT EXISTS screenshot_two_file_id INTEGER REFERENCES files(id) ON DELETE SET NULL;`);
         await pool.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS photo_back TEXT;`);
         await pool.query(`ALTER TABLE dispatches ADD COLUMN IF NOT EXISTS start_country VARCHAR(2);`);
         await pool.query(`ALTER TABLE dispatches ADD COLUMN IF NOT EXISTS end_country VARCHAR(2);`);
@@ -436,11 +446,18 @@ async function killUserSessions(userId, exceptSid) {
 // Serwowanie plików (CMR, podsumowania, zdjęcia pojazdów) z bazy danych
 app.get('/api/files/:id', requireLogin, async (req, res) => {
     try {
-        const r = await pool.query('SELECT mime, data FROM files WHERE id = $1', [parseInt(req.params.id)]);
+        const r = await pool.query(
+            `SELECT f.mime, f.data,
+                    EXISTS (SELECT 1 FROM recruitment_applications ra
+                            WHERE ra.screenshot_one_file_id = f.id OR ra.screenshot_two_file_id = f.id) AS is_recruitment_photo
+             FROM files f WHERE f.id = $1`,
+            [parseInt(req.params.id)]
+        );
         if (r.rows.length === 0) return res.status(404).send('Nie znaleziono pliku');
+        if (r.rows[0].is_recruitment_photo && !isStaff(req.session.role)) return res.status(403).send('Brak uprawnień');
         res.set('Content-Type', r.rows[0].mime);
         res.set('X-Content-Type-Options', 'nosniff');
-        res.set('Cache-Control', 'private, max-age=31536000, immutable');
+        res.set('Cache-Control', r.rows[0].is_recruitment_photo ? 'private, no-store' : 'private, max-age=31536000, immutable');
         res.send(r.rows[0].data);
     } catch (e) { res.status(500).send('Błąd pobierania pliku'); }
 });
@@ -821,8 +838,18 @@ app.put('/api/recruitment/settings/discord-invite', requireAdmin, async (req, re
     }
 });
 
-app.post('/api/recruitment/applications', async (req, res) => {
+app.post('/api/recruitment/applications', (req, res, next) => {
+    recruitmentPhotoUpload(req, res, error => {
+        if (!error) return next();
+        const message = error.code === 'LIMIT_FILE_SIZE'
+            ? 'Każde zdjęcie może mieć maksymalnie 8 MB.'
+            : 'Dodaj dwa zdjęcia z gry w formacie JPG, PNG lub WEBP.';
+        return res.status(400).json({ error: message });
+    });
+}, async (req, res) => {
     const body = req.body || {};
+    const screenshotOne = req.files && req.files.screenshotOne && req.files.screenshotOne[0];
+    const screenshotTwo = req.files && req.files.screenshotTwo && req.files.screenshotTwo[0];
     const fullName = String(body.fullName || '').trim();
     const discordName = String(body.discordName || '').trim();
     const age = Number(body.age);
@@ -837,6 +864,10 @@ app.post('/api/recruitment/applications', async (req, res) => {
     const steamUrl = String(body.steamUrl || '').trim();
     const sentenceCount = (about.match(/[.!?]+(?=\s|$)/g) || []).length;
 
+    if (!screenshotOne || !screenshotTwo) return res.status(400).json({ error: 'Dołącz dwa zdjęcia z gry.' });
+    if (![screenshotOne, screenshotTwo].every(file => RECRUITMENT_IMAGE_MIME.test(file.mimetype))) {
+        return res.status(400).json({ error: 'Zdjęcia muszą być w formacie JPG, PNG lub WEBP.' });
+    }
     if (fullName.length < 2 || fullName.length > 150) return res.status(400).json({ error: 'Podaj imię (maks. 150 znaków).' });
     if (discordName.length < 2 || discordName.length > 100) return res.status(400).json({ error: 'Podaj nick Discord (maks. 100 znaków).' });
     if (!Number.isInteger(age) || age < 13 || age > 100) return res.status(400).json({ error: 'Wiek musi być liczbą od 13 do 100.' });
@@ -859,14 +890,22 @@ app.post('/api/recruitment/applications', async (req, res) => {
         return res.status(400).json({ error: 'Podaj poprawny link HTTPS do profilu Steam.' });
     }
 
+    let client;
     try {
         const settings = await pool.query("SELECT value FROM site_settings WHERE key = 'recruitment_open'");
         if (settings.rows.length && settings.rows[0].value === 'false') return res.status(403).json({ error: 'Rekrutacja jest obecnie zamknięta.' });
-        const result = await pool.query(
-            "INSERT INTO recruitment_applications (full_name, discord_name, age, ets2_hours, about, skills, previous_companies, source, dlcs, ets2_apps, motivation, signature, steam_url) " +
-            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id",
-            [fullName, discordName, age, hours, about, skills, previousCompanies, '', dlcs, ets2Apps, motivation, signature, steamUrl]
+        client = await pool.connect();
+        await client.query('BEGIN');
+        const screenshotOnePath = await saveFile(screenshotOne, client);
+        const screenshotTwoPath = await saveFile(screenshotTwo, client);
+        const screenshotOneId = Number.parseInt(screenshotOnePath.split('/').pop(), 10);
+        const screenshotTwoId = Number.parseInt(screenshotTwoPath.split('/').pop(), 10);
+        const result = await client.query(
+            "INSERT INTO recruitment_applications (full_name, discord_name, age, ets2_hours, about, skills, previous_companies, source, dlcs, ets2_apps, motivation, signature, steam_url, screenshot_one_file_id, screenshot_two_file_id) " +
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id",
+            [fullName, discordName, age, hours, about, skills, previousCompanies, '', dlcs, ets2Apps, motivation, signature, steamUrl, screenshotOneId, screenshotTwoId]
         );
+        await client.query('COMMIT');
         try {
             const staff = await pool.query("SELECT id FROM users WHERE role IN ('admin', 'manager') AND status = 'approved'");
             await Promise.all(staff.rows.map(user => addNotification(user.id, 'Nowe podanie rekrutacyjne', 'Wpłynęło nowe podanie. Otwórz zakładkę Rekrutacja, aby je sprawdzić.', null, 'recruitment')));
@@ -875,20 +914,52 @@ app.post('/api/recruitment/applications', async (req, res) => {
         }
         res.status(201).json({ success: true, id: result.rows[0].id });
     } catch (e) {
+        if (client) {
+            try { await client.query('ROLLBACK'); } catch (_) {}
+        }
         console.error('Błąd zapisu podania rekrutacyjnego:', e.message);
         res.status(500).json({ error: 'Nie udało się zapisać podania. Spróbuj ponownie później.' });
+    } finally {
+        if (client) client.release();
     }
 });
 app.get('/api/recruitment/applications', requireAdmin, async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT id, full_name, discord_name, age, ets2_hours, about, skills, previous_companies, dlcs, ets2_apps, motivation, signature, steam_url, status, created_at " +
+            "SELECT id, full_name, discord_name, age, ets2_hours, about, skills, previous_companies, dlcs, ets2_apps, motivation, signature, steam_url, status, created_at, screenshot_one_file_id, screenshot_two_file_id " +
             "FROM recruitment_applications ORDER BY created_at DESC LIMIT 200"
         );
-        res.json(result.rows);
+        res.json(result.rows.map(application => ({
+            ...application,
+            screenshot_one_url: application.screenshot_one_file_id ? `/api/recruitment/applications/${application.id}/photos/1` : null,
+            screenshot_two_url: application.screenshot_two_file_id ? `/api/recruitment/applications/${application.id}/photos/2` : null
+        })));
     } catch (e) {
         console.error('Błąd pobierania podań:', e.message);
         res.status(500).json({ error: 'Nie udało się pobrać podań.' });
+    }
+});
+
+app.get('/api/recruitment/applications/:id/photos/:photoNumber', requireAdmin, async (req, res) => {
+    const id = Number.parseInt(req.params.id, 10);
+    const fileColumn = req.params.photoNumber === '1' ? 'screenshot_one_file_id'
+        : req.params.photoNumber === '2' ? 'screenshot_two_file_id' : null;
+    if (!Number.isInteger(id) || id < 1 || !fileColumn) return res.status(404).send('Nie znaleziono zdjęcia');
+    try {
+        const result = await pool.query(
+            `SELECT f.mime, f.data FROM recruitment_applications ra
+             JOIN files f ON f.id = ra.${fileColumn}
+             WHERE ra.id = $1`,
+            [id]
+        );
+        if (!result.rows.length) return res.status(404).send('Nie znaleziono zdjęcia');
+        res.set('Content-Type', result.rows[0].mime);
+        res.set('X-Content-Type-Options', 'nosniff');
+        res.set('Cache-Control', 'private, no-store');
+        res.send(result.rows[0].data);
+    } catch (e) {
+        console.error('Błąd pobierania zdjęcia z podania:', e.message);
+        res.status(500).send('Błąd pobierania zdjęcia');
     }
 });
 
