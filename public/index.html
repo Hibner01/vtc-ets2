@@ -1419,6 +1419,19 @@
                                     <textarea id="recruitment-apps" name="ets2Apps" rows="3" maxlength="2000" class="form-control bg-dark text-white border-secondary" required></textarea>
                                 </div>
 
+                                <div class="col-12 mt-4"><h5 class="fw-bold text-info mb-0" data-i18n="recruitmentScreenshotsSection">Zdjęcia z gry</h5></div>
+                                <div class="col-12 small text-white-50" data-i18n="recruitmentScreenshotHint">Dołącz dwa własne zrzuty ekranu z ETS2. Każde zdjęcie może mieć maksymalnie 8 MB (JPG, PNG lub WEBP).</div>
+                                <div class="col-md-6">
+                                    <label for="recruitment-screenshot-one" class="form-label text-white" data-i18n="recruitmentScreenshotOne">Zdjęcie z gry 1</label>
+                                    <input id="recruitment-screenshot-one" name="screenshotOne" type="file" accept="image/jpeg,image/png,image/webp" class="form-control bg-dark text-white border-secondary" required onchange="previewRecruitmentPhoto(this, 'recruitment-screenshot-preview-one')">
+                                    <img id="recruitment-screenshot-preview-one" alt="" class="img-thumbnail bg-dark border-secondary mt-2" style="display:none;max-height:220px;max-width:100%;object-fit:contain;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="recruitment-screenshot-two" class="form-label text-white" data-i18n="recruitmentScreenshotTwo">Zdjęcie z gry 2</label>
+                                    <input id="recruitment-screenshot-two" name="screenshotTwo" type="file" accept="image/jpeg,image/png,image/webp" class="form-control bg-dark text-white border-secondary" required onchange="previewRecruitmentPhoto(this, 'recruitment-screenshot-preview-two')">
+                                    <img id="recruitment-screenshot-preview-two" alt="" class="img-thumbnail bg-dark border-secondary mt-2" style="display:none;max-height:220px;max-width:100%;object-fit:contain;">
+                                </div>
+
                                 <div class="col-12 mt-4"><h5 class="fw-bold text-info mb-0" data-i18n="recruitmentMotivationSection">Motywacja</h5></div>
                                 <div class="col-12">
                                     <label for="recruitment-motivation" class="form-label text-white" data-i18n="recruitmentMotivation">Dlaczego chcesz dołączyć do Mazren Spedition?</label>
@@ -1756,6 +1769,8 @@
                 recruitmentPersonalSection: "Dane kandydata", recruitmentFullName: "Imię", recruitmentDiscord: "Nick na Discordzie",
                 recruitmentProfileSection: "Profil kandydata", recruitmentNoExperience: "Jeśli nie masz wcześniejszego doświadczenia w firmach, wpisz „Brak”.", recruitmentSkills: "Opisz swoje umiejętności", recruitmentExperienceSection: "Doświadczenie",
                 recruitmentEquipmentSection: "Wyposażenie i narzędzia", recruitmentApps: "Programy i narzędzia przydatne w ETS2 (np. WinRAR)",
+                recruitmentScreenshotsSection: "Zdjęcia z gry", recruitmentScreenshotHint: "Dołącz dwa własne zrzuty ekranu z ETS2. Każde zdjęcie może mieć maksymalnie 8 MB (JPG, PNG lub WEBP).",
+                recruitmentScreenshotOne: "Zdjęcie z gry 1", recruitmentScreenshotTwo: "Zdjęcie z gry 2", recruitmentPhotoRequired: "Dołącz dwa zdjęcia z gry.", recruitmentPhotoType: "Zdjęcia muszą być w formacie JPG, PNG lub WEBP.", recruitmentPhotoTooLarge: "Każde zdjęcie może mieć maksymalnie 8 MB.",
                 recruitmentMotivationSection: "Motywacja", recruitmentMotivation: "Dlaczego chcesz dołączyć do Mazren Spedition?",
                 recruitmentSignature: "Podpis kandydata (wpisz imię)", recruitmentDateAuto: "Data podania zostanie dodana automatycznie po wysłaniu.",
                 recruitmentNameLabel: "Imię", recruitmentDiscordLabel: "Nick Discord", recruitmentSkillsLabel: "Umiejętności",
@@ -1801,6 +1816,8 @@
                 recruitmentPersonalSection: "Candidate details", recruitmentFullName: "First name", recruitmentDiscord: "Discord username",
                 recruitmentProfileSection: "Candidate profile", recruitmentNoExperience: "If you have no previous company experience, enter “None”.", recruitmentSkills: "Describe your skills", recruitmentExperienceSection: "Experience",
                 recruitmentEquipmentSection: "Equipment and tools", recruitmentApps: "Programs and tools used with ETS2 (e.g. WinRAR)",
+                recruitmentScreenshotsSection: "In-game screenshots", recruitmentScreenshotHint: "Attach two screenshots taken in ETS2. Each image can be up to 8 MB (JPG, PNG or WEBP).",
+                recruitmentScreenshotOne: "In-game screenshot 1", recruitmentScreenshotTwo: "In-game screenshot 2", recruitmentPhotoRequired: "Attach two in-game screenshots.", recruitmentPhotoType: "Images must be JPG, PNG or WEBP files.", recruitmentPhotoTooLarge: "Each image can be up to 8 MB.",
                 recruitmentMotivationSection: "Motivation", recruitmentMotivation: "Why would you like to join Mazren Spedition?",
                 recruitmentSignature: "Candidate signature (enter your first name)", recruitmentDateAuto: "The application date is added automatically after submission.",
                 recruitmentNameLabel: "First name", recruitmentDiscordLabel: "Discord username", recruitmentSkillsLabel: "Skills",
@@ -3673,6 +3690,22 @@ function updateRecruitmentSentenceCount() {
     display.className = 'form-text ' + (count >= 3 ? 'text-success' : 'text-white-50');
     return count;
 }
+function previewRecruitmentPhoto(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (!preview) return;
+    if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+    preview.dataset.objectUrl = '';
+    const file = input && input.files && input.files[0];
+    if (!file) {
+        preview.removeAttribute('src');
+        preview.style.display = 'none';
+        return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    preview.dataset.objectUrl = objectUrl;
+    preview.src = objectUrl;
+    preview.style.display = 'block';
+}
 async function submitRecruitmentApplication(event) {
     event.preventDefault();
     const message = document.getElementById('recruitment-form-message');
@@ -3682,32 +3715,39 @@ async function submitRecruitmentApplication(event) {
         message.textContent = t('recruitmentSentenceError');
         return;
     }
-    const payload = {
-        fullName: document.getElementById('recruitment-full-name').value,
-        age: document.getElementById('recruitment-age').value,
-        discordName: document.getElementById('recruitment-discord').value,
-        steamUrl: document.getElementById('recruitment-steam').value,
-        about: document.getElementById('recruitment-about').value,
-        skills: document.getElementById('recruitment-skills').value,
-        ets2Hours: document.getElementById('recruitment-hours').value,
-        previousCompanies: document.getElementById('recruitment-companies').value,
-        dlcs: document.getElementById('recruitment-dlcs').value,
-        ets2Apps: document.getElementById('recruitment-apps').value,
-        motivation: document.getElementById('recruitment-motivation').value,
-        signature: document.getElementById('recruitment-signature').value
-    };
+    const form = document.getElementById('recruitment-application-form');
+    const screenshotOne = document.getElementById('recruitment-screenshot-one').files[0];
+    const screenshotTwo = document.getElementById('recruitment-screenshot-two').files[0];
+    if (!screenshotOne || !screenshotTwo) {
+        message.className = 'small text-warning';
+        message.textContent = t('recruitmentPhotoRequired');
+        return;
+    }
+    const screenshots = [screenshotOne, screenshotTwo];
+    if (screenshots.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) {
+        message.className = 'small text-warning';
+        message.textContent = t('recruitmentPhotoType');
+        return;
+    }
+    if (screenshots.some(file => file.size > 8 * 1024 * 1024)) {
+        message.className = 'small text-warning';
+        message.textContent = t('recruitmentPhotoTooLarge');
+        return;
+    }
+    const payload = new FormData(form);
     const original = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>' + (currentLang === 'en' ? 'Sending…' : 'Wysyłanie…');
     try {
         const response = await fetch('/api/recruitment/applications', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: payload
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || t('recruitmentSendError'));
         document.getElementById('recruitment-application-form').reset();
+        previewRecruitmentPhoto(null, 'recruitment-screenshot-preview-one');
+        previewRecruitmentPhoto(null, 'recruitment-screenshot-preview-two');
         updateRecruitmentSentenceCount();
         message.className = 'small text-success';
         message.textContent = t('recruitmentSent');
@@ -3739,6 +3779,9 @@ async function loadRecruitmentApplications() {
             const value = input => escapeHtml(input == null || input === '' ? '—' : String(input));
             const field = (label, input, wide = false) =>
                 '<div class="' + (wide ? 'col-12' : 'col-md-6') + '"><strong>' + escapeHtml(label) + ':</strong><div class="text-white-50" style="white-space:pre-wrap">' + value(input) + '</div></div>';
+            const screenshotField = (label, url) => url
+                ? '<div class="col-md-6"><strong>' + escapeHtml(label) + ':</strong><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="d-block mt-2"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(label) + '" loading="lazy" class="img-thumbnail bg-dark border-secondary" style="max-height:260px;max-width:100%;object-fit:contain"></a></div>'
+                : '';
             const steamUrl = String(application.steam_url || '');
             const inviteButton = application.status === 'accepted' && recruitmentDiscordInviteUrl
                 ? '<button class="btn btn-sm btn-outline-success" type="button" data-application-id="' + id + '" onclick="copyRecruitmentInviteMessage(this)"><i class="fa-solid fa-link me-1"></i>' + escapeHtml(t('recruitmentInviteCopy')) + '</button>'
@@ -3762,6 +3805,8 @@ async function loadRecruitmentApplications() {
                 field(t('recruitmentMotivationLabel'), application.motivation, true) +
                 '<div class="col-md-6"><strong>' + escapeHtml(t('recruitmentSteamLabel')) + ':</strong><div><a href="' + escapeHtml(steamUrl) + '" target="_blank" rel="noopener noreferrer">' + value(steamUrl) + '</a></div></div>' +
                 field(t('recruitmentSignatureLabel'), application.signature) +
+                screenshotField(t('recruitmentScreenshotOne'), application.screenshot_one_url) +
+                screenshotField(t('recruitmentScreenshotTwo'), application.screenshot_two_url) +
                 '<div class="col-12 d-flex flex-wrap gap-2 align-items-center">' +
                 '<label class="form-label mb-0" for="recruitment-status-' + id + '">' + escapeHtml(t('recruitmentStatusLabel')) + '</label>' +
                 '<select id="recruitment-status-' + id + '" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width:220px">' +
