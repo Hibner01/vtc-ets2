@@ -1,0 +1,485 @@
+'use strict';
+
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const { createRequire } = require('node:module');
+const { EventEmitter } = require('node:events');
+const { uploadSlots, recruitmentLimiter, validFileSignature, checkRecruitmentCapacity } = require('../security');
+
+function response() {
+    return Object.assign(new EventEmitter(), {
+        statusCode: 200, headers: {},
+        status(n) { this.statusCode = n; return this; },
+        set(k, v) { this.headers[k] = v; return this; },
+        json(body) { this.body = body; return this; }
+    });
+}
+
+test('upload slots reject excess work and release exactly once on close/finish', () => {
+    const guard = uploadSlots(1);
+    const first = response();
+    let admitted = 0;
+    guard({}, first, () => admitted++);
+    const blocked = response();
+    guard({}, blocked, () => admitted++);
+    assert.equal(blocked.statusCode, 503);
+    first.emit('close'); first.emit('finish');
+    const second = response();
+    guard({}, second, () => admitted++);
+    const stillBlocked = response();
+    guard({}, stillBlocked, () => admitted++);
+    assert.equal(stillBlocked.statusCode, 503);
+    assert.equal(admitted, 2);
+});
+
+function limiterDatabase() {
+    let counters = new Map();
+    return {
+        async connect() {
+            let staged;
+            return {
+                async query(sql, params) {
+                    if (sql === 'BEGIN') { staged = new Map(counters); return {}; }
+                    if (sql === 'COMMIT') { counters = staged; return {}; }
+                    if (sql === 'ROLLBACK') return {};
+                    const [scope, subject, limit] = params;
+                    const key = scope + ':' + subject;
+                    const hits = staged.get(key) || 0;
+                    if (hits >= limit) return { rows: [] };
+                    staged.set(key, hits + 1);
+                    return { rows: [{ hits: hits + 1 }] };
+                }, release() {}
+            };
+        }
+    };
+}
+
+test('recruitment limits persist across middleware instances and rejected IPs do not spend global quota', async () => {
+    const database = limiterDatabase();
+    const attempt = async (ip, limiter = recruitmentLimiter(database)) => {
+        const res = response();
+        let allowed = false;
+        await limiter({ ip }, res, () => { allowed = true; });
+        return { res, allowed };
+    };
+    for (let i = 0; i < 3; i++) assert.equal((await attempt('127.0.0.1')).allowed, true);
+    for (let i = 0; i < 12; i++) assert.equal((await attempt('127.0.0.1')).res.statusCode, 429);
+    for (let i = 0; i < 7; i++) assert.equal((await attempt('127.0.0.' + (i + 2))).allowed, true);
+    assert.equal((await attempt('127.0.0.100')).res.statusCode, 429);
+});
+
+test('recruitment fails closed when its database is unavailable', async () => {
+    const res = response();
+    await recruitmentLimiter({ async connect() { throw new Error('test outage'); } })({}, res, () => assert.fail('must not admit'));
+    assert.equal(res.statusCode, 503);
+});
+
+test('file validation rejects an HTML body with a forged image MIME', () => {
+    assert.equal(validFileSignature({ mimetype: 'image/png', buffer: Buffer.from('<html><script>bad()</script>') }), false);
+    assert.equal(validFileSignature({ mimetype: 'image/png', buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]) }), true);
+    assert.equal(validFileSignature({ mimetype: 'text/html', buffer: Buffer.from('text') }), false);
+});
+
+test('recruitment capacity permits exact boundary, rejects excess and locks before checking', async () => {
+    const calls = [];
+    const client = { async query(sql) {
+        calls.push(sql);
+        return { rows: [{ bytes: '100' }] };
+    } };
+    await checkRecruitmentCapacity(client, 28, 128);
+    assert.match(calls[0], /pg_advisory_xact_lock/);
+    await assert.rejects(checkRecruitmentCapacity(client, 29, 128), error => error.status === 503);
+});
+
+// Exercise the real Express routes and Multer using an isolated session store and
+// database double. No production database, Discord, or external service is used.
+function isolatedApp(query) {
+    const filename = path.resolve(__dirname, '../server.js');
+    const localRequire = createRequire(filename);
+    const realSession = localRequire('express-session');
+    function session(options) { return realSession({ ...options, store: new realSession.MemoryStore() }); }
+    session.Store = realSession.Store;
+    const pool = { query, connect: async () => ({ query, release() {} }) };
+    const customRequire = name => {
+        if (name === 'pg') return { Pool: function () { return pool; } };
+        if (name === 'express-session') return session;
+        if (name === './client-api') return () => ({ initTables: async () => {} });
+        return localRequire(name);
+    };
+    const module = { exports: {} };
+    vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
+        require: customRequire, module, __dirname: path.dirname(filename),
+        process: { env: { SESSION_SECRET: 'test-only-secret-with-sufficient-entropy' } },
+        console, Buffer, URL, setInterval() {}, setTimeout, clearTimeout, AbortController,
+        fetch: () => assert.fail('no external calls expected')
+    }, { filename });
+    return module.exports.app;
+}
+
+async function withServer(app, fn) {
+    const server = app.listen(0, '127.0.0.1');
+    await new Promise(resolve => server.once('listening', resolve));
+    try { await fn('http://127.0.0.1:' + server.address().port); }
+    finally { await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }); }
+}
+
+const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+const photo = () => new Blob([png], { type: 'image/png' });
+
+test('anonymous uploads are refused before malformed multipart parsing', async () => {
+    const app = isolatedApp(async () => assert.fail('anonymous upload must not query database'));
+    await withServer(app, async base => {
+        for (const [route, expected] of [['/api/documents', 403], ['/api/dispatches/1/complete', 401], ['/api/trucks', 403]]) {
+            const res = await fetch(base + route, { method: 'POST', headers: { 'Content-Type': 'multipart/form-data' }, body: 'broken body' });
+            assert.equal(res.status, expected, route);
+        }
+    });
+});
+
+test('closed recruitment is checked before parsing a malformed multipart body', async () => {
+    const app = isolatedApp(async sql => ({ rows: sql.includes('recruitment_open') ? [{ value: 'false' }] : [{ hits: 1 }] }));
+    await withServer(app, async base => {
+        const res = await fetch(base + '/api/recruitment/applications', { method: 'POST', headers: { 'Content-Type': 'multipart/form-data' }, body: 'broken' });
+        assert.equal(res.status, 403);
+    });
+});
+
+test('authenticated document uploads work, reject forged content and excess files', async () => {
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash('correct-test-password', 4);
+    let files = 0, documents = 0;
+    const app = isolatedApp(async sql => {
+        if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role: 'admin', status: 'approved', password: hash }] };
+        if (sql.includes('INSERT INTO files')) { files++; return { rows: [{ id: files }] }; }
+        if (sql.includes('INSERT INTO documents')) { documents++; return { rows: [] }; }
+        return { rows: [] };
+    });
+    await withServer(app, async base => {
+        const login = await fetch(base + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'test', password: 'correct-test-password' }) });
+        assert.equal(login.status, 200);
+        const cookie = login.headers.get('set-cookie').split(';')[0];
+        const send = form => fetch(base + '/api/documents', { method: 'POST', headers: { cookie }, body: form });
+        const good = new FormData(); good.set('title', 'Test'); good.set('doc_file', photo(), 'test.png');
+        assert.equal((await send(good)).status, 200);
+        assert.equal(documents, 1);
+        const bad = new FormData(); bad.set('doc_file', new Blob(['<html>'], { type: 'image/png' }), 'fake.png');
+        assert.equal((await send(bad)).status, 400);
+        const duplicate = new FormData(); duplicate.append('doc_file', photo(), '1.png'); duplicate.append('doc_file', photo(), '2.png');
+        assert.equal((await send(duplicate)).status, 400);
+        assert.equal(files, 1);
+    });
+});
+
+function applicationForm() {
+    const form = new FormData();
+    const fields = {
+        fullName: 'Test Candidate', discordName: 'TestDriver', age: '20', ets2Hours: '200',
+        about: 'To jest pierwsze zdanie. To jest drugie zdanie. To jest trzecie zdanie.',
+        skills: 'Umiem prowadzić pojazdy.', previousCompanies: 'Brak', dlcs: 'Brak', ets2Apps: 'Brak',
+        motivation: 'Chcę dołączyć do firmy i wspólnie jeździć.', signature: 'Test',
+        steamUrl: 'https://steamcommunity.com/id/test'
+    };
+    for (const [key, value] of Object.entries(fields)) form.set(key, value);
+    form.set('screenshotOne', photo(), 'one.png'); form.set('screenshotTwo', photo(), 'two.png');
+    return form;
+}
+
+test('valid recruitment commits two photos and an application; a full quota rolls back before writing files', async () => {
+    for (const full of [false, true]) {
+        let files = 0;
+        const queries = [];
+        const app = isolatedApp(async sql => {
+            queries.push(sql);
+            if (sql.includes('INSERT INTO security_rate_limits')) return { rows: [{ hits: 1 }] };
+            if (sql.includes('recruitment_open')) return { rows: [{ value: 'true' }] };
+            if (sql.includes('octet_length')) return { rows: [{ bytes: full ? String(128 * 1024 * 1024) : '0' }] };
+            if (sql.includes('INSERT INTO files')) return { rows: [{ id: ++files }] };
+            if (sql.includes('INSERT INTO recruitment_applications')) return { rows: [{ id: 1 }] };
+            return { rows: [] };
+        });
+        await withServer(app, async base => {
+            const res = await fetch(base + '/api/recruitment/applications', { method: 'POST', body: applicationForm() });
+            assert.equal(res.status, full ? 503 : 201);
+            assert.equal(files, full ? 0 : 2);
+            assert.ok(queries.includes(full ? 'ROLLBACK' : 'COMMIT'));
+        });
+    }
+});
+
+test('multipart file and field size limits reject oversized authenticated input', async () => {
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash('correct-test-password', 4);
+    const app = isolatedApp(async sql => {
+        if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role: 'admin', status: 'approved', password: hash }] };
+        assert.fail('oversized input must not be saved');
+    });
+    await withServer(app, async base => {
+        const login = await fetch(base + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'test', password: 'correct-test-password' }) });
+        const cookie = login.headers.get('set-cookie').split(';')[0];
+        const oversized = new FormData(); oversized.set('doc_file', new Blob([Buffer.alloc(12 * 1024 * 1024 + 1)], { type: 'image/png' }), 'large.png');
+        assert.equal((await fetch(base + '/api/documents', { method: 'POST', headers: { cookie }, body: oversized })).status, 413);
+        const largeField = new FormData(); largeField.set('content', 'x'.repeat(16 * 1024 + 1));
+        assert.equal((await fetch(base + '/api/documents', { method: 'POST', headers: { cookie }, body: largeField })).status, 400);
+    });
+});
+
+// Run actual render functions with malicious saved data, not a copy of their logic.
+const html = fs.readFileSync(path.resolve(__dirname, '../public/index.html'), 'utf8');
+function frontendFunction(name) {
+    const start = html.search(new RegExp('(?:async )?function ' + name + '\\('));
+    assert.notEqual(start, -1, name);
+    const end = html.indexOf('\n        }', start);
+    return html.slice(start, end + '\n        }'.length);
+}
+
+test('saved report XSS is escaped in both personal and company views; script links are rejected', async () => {
+    const attack = '<img src=x onerror="globalThis.compromised=true">';
+    for (const name of ['loadMyJobs', 'loadAllJobs']) {
+        const container = { innerHTML: '' };
+        const context = vm.createContext({
+            window: { location: { origin: 'https://example.test' } }, URL, console,
+            document: { getElementById: () => container },
+            fetch: async () => ({ ok: true, json: async () => [{ id: 1, username: attack, cargo: attack, start_city: 'A', end_city: 'B', cmr_file: 'javascript:alert(1)' }] }),
+            currentUsername: attack, cacheJobs() {}, isStaff: () => false,
+            placeHtml: value => value
+        });
+        for (const fn of ['escapeHtml', 'safeAttachmentUrl', name]) vm.runInContext(frontendFunction(fn), context);
+        await vm.runInContext(name + '()', context);
+        assert.ok(!container.innerHTML.includes('<img'), name);
+        assert.ok(container.innerHTML.includes('&lt;img'), name);
+        assert.ok(!container.innerHTML.includes('javascript:'), name);
+    }
+});
+
+test('dispatch text and city arguments do not become executable markup', async () => {
+    const attack = "'><img src=x onerror=alert(1)>";
+    const container = { innerHTML: '' };
+    const context = vm.createContext({
+        console, document: { getElementById: () => container },
+        fetch: async () => ({ ok: true, json: async () => [{ id: 1, status: 'W trakcie', accepted_by_username: attack, assigned_to: attack, start_city: attack, end_city: attack, truck_name: attack, notes: attack }] }),
+        isStaff: () => true, currentUsername: attack, placeHtml: () => 'A', t: value => value
+    });
+    for (const name of ['escapeHtml', 'loadDispatches']) vm.runInContext(frontendFunction(name), context);
+    await vm.runInContext('loadDispatches()', context);
+    assert.ok(!container.innerHTML.includes('<img'));
+    assert.ok(container.innerHTML.includes('this.dataset.startCity'));
+    assert.ok(container.innerHTML.includes('&lt;img'));
+});
+
+async function staffSession(base, role = 'admin') {
+    const response = await fetch(base + '/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'test', password: 'correct-test-password' })
+    });
+    assert.equal(response.status, 200, role);
+    return response.headers.get('set-cookie').split(';')[0];
+}
+
+test('deletion requires staff access, correct origin and a strictly valid application ID', async () => {
+    const hash = await require('bcryptjs').hash('correct-test-password', 4);
+    for (const role of ['driver', 'manager', 'admin']) {
+        let databaseCalls = 0;
+        const app = isolatedApp(async sql => {
+            if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role, status: 'approved', password: hash }] };
+            databaseCalls++;
+            return { rows: [] };
+        });
+        await withServer(app, async base => {
+            assert.equal((await fetch(base + '/api/recruitment/applications/1', { method: 'DELETE', headers: { origin: base } })).status, 403);
+            const cookie = await staffSession(base, role);
+            const send = (id, origin) => fetch(base + '/api/recruitment/applications/' + id, { method: 'DELETE', headers: { cookie, ...(origin ? { origin } : {}) } });
+            if (role === 'driver') {
+                assert.equal((await send('1', base)).status, 403);
+            } else {
+                assert.equal((await send('1', 'https://attacker.test')).status, 403);
+                assert.equal((await send('1')).status, 403);
+                for (const id of ['0', '-1', '1abc', '9007199254740993']) assert.equal((await send(id, base)).status, 400);
+            }
+            assert.equal(databaseCalls, 0, 'access and input errors must not modify the database');
+        });
+    }
+});
+
+test('deletion commits application and photo cleanup together; errors and missing records roll back', async () => {
+    const hash = await require('bcryptjs').hash('correct-test-password', 4);
+    for (const scenario of ['success', 'no-photos', 'missing', 'photo-error']) {
+        const queries = [];
+        const app = isolatedApp(async (sql, params) => {
+            if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role: 'admin', status: 'approved', password: hash }] };
+            queries.push({ sql, params });
+            if (sql.includes('FROM recruitment_applications WHERE id = $1 FOR UPDATE')) return {
+                rows: scenario === 'missing' ? [] : [{ screenshot_one_file_id: scenario === 'no-photos' ? null : 11, screenshot_two_file_id: scenario === 'no-photos' ? null : 12 }]
+            };
+            if (sql.includes('DELETE FROM files')) {
+                if (scenario === 'photo-error') throw new Error('simulated photo cleanup failure');
+                assert.deepEqual(Array.from(params[0]), [11, 12]);
+            }
+            return { rows: [] };
+        });
+        await withServer(app, async base => {
+            const cookie = await staffSession(base);
+            const response = await fetch(base + '/api/recruitment/applications/7', { method: 'DELETE', headers: { cookie, origin: base } });
+            assert.equal(response.status, scenario === 'missing' ? 404 : scenario === 'photo-error' ? 500 : 200);
+            const sqls = queries.map(q => q.sql);
+            assert.equal(sqls[0], 'BEGIN');
+            assert.match(sqls[1], /pg_advisory_xact_lock/);
+            assert.equal(sqls.at(-1), ['success', 'no-photos'].includes(scenario) ? 'COMMIT' : 'ROLLBACK');
+            if (scenario === 'missing') assert.ok(!sqls.some(sql => sql.includes('DELETE FROM')));
+            if (scenario === 'no-photos') assert.ok(!sqls.some(sql => sql.includes('DELETE FROM files')));
+        });
+    }
+});
+
+test('delete button asks for confirmation, handles stale records and restores itself on errors', async () => {
+    const start = html.indexOf('async function deleteRecruitmentApplication(');
+    const end = html.indexOf('async function copyRecruitmentInviteMessage(', start);
+    const source = html.slice(start, end);
+    for (const scenario of ['cancel', 'success', 'missing', 'error']) {
+        let requests = 0, refreshes = 0, alerts = 0;
+        const context = vm.createContext({
+            isStaff: () => true, currentLang: 'pl',
+            window: { confirm: message => { assert.match(message, /#7/); return scenario !== 'cancel'; } },
+            fetch: async (url, options) => {
+                requests++; assert.equal(url, '/api/recruitment/applications/7'); assert.equal(options.method, 'DELETE');
+                return { ok: scenario === 'success', status: scenario === 'missing' ? 404 : 500, json: async () => ({ error: 'Test error' }) };
+            },
+            recruitmentApplicationsCache: [{ id: 7 }, { id: 8 }],
+            loadRecruitmentApplications: async () => { refreshes++; },
+            alert: () => { alerts++; }
+        });
+        vm.runInContext(source, context);
+        const button = { disabled: false };
+        context.button = button;
+        await vm.runInContext('deleteRecruitmentApplication(7, button)', context);
+        assert.equal(button.disabled, false);
+        assert.equal(requests, scenario === 'cancel' ? 0 : 1);
+        assert.equal(refreshes, ['success', 'missing'].includes(scenario) ? 1 : 0);
+        assert.equal(alerts, scenario === 'error' ? 1 : 0);
+        assert.equal(context.recruitmentApplicationsCache.length, ['success', 'missing'].includes(scenario) ? 1 : 2);
+    }
+});
+
+test('account approval enforces current database roles, target hierarchy and account state', async () => {
+    const hash = await require('bcryptjs').hash('correct-test-password', 4);
+    let current;
+    let queries = [];
+    const app = isolatedApp(async (sql, params) => {
+        if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role: 'admin', status: 'approved', password: hash }] };
+        queries.push(sql);
+        if (sql.includes('WHERE id = ANY')) {
+            assert.deepEqual(Array.from(params[0]), [1, 2]);
+            return { rows: [
+                ...(current.actorMissing ? [] : [{ id: 1, role: current.actor, status: current.actorStatus || 'approved' }]),
+                ...(current.missing ? [] : [{ id: 2, role: current.target, status: current.status }])
+            ] };
+        }
+        return { rows: [] };
+    });
+    await withServer(app, async base => {
+        const cookie = await staffSession(base);
+        const cases = [
+            { actor: 'admin', target: 'driver', status: 'pending', expected: 200 },
+            { actor: 'manager', target: 'driver', status: 'pending', expected: 200 },
+            { actor: 'manager', target: 'driver', status: 'fired', expected: 200 },
+            { actor: 'admin', target: 'manager', status: 'fired', expected: 200 },
+            { actor: 'manager', target: 'manager', status: 'fired', expected: 403 },
+            { actor: 'manager', target: 'manager', status: 'pending', expected: 403 },
+            { actor: 'admin', target: 'admin', status: 'fired', expected: 403 },
+            { actor: 'driver', target: 'driver', status: 'pending', expected: 403 },
+            { actor: 'manager', actorStatus: 'fired', target: 'driver', status: 'pending', expected: 403 },
+            { actorMissing: true, target: 'driver', status: 'pending', expected: 403 },
+            { actor: 'admin', target: 'driver', status: 'approved', expected: 409 },
+            { actor: 'admin', target: 'driver', status: 'unknown', expected: 409 },
+            { actor: 'admin', target: 'unknown', status: 'pending', expected: 403 },
+            { actor: 'admin', missing: true, expected: 404 }
+        ];
+        for (const scenario of cases) {
+            current = scenario; queries = [];
+            const response = await fetch(base + '/api/users/2/approve', { method: 'PUT', headers: { cookie } });
+            assert.equal(response.status, scenario.expected, JSON.stringify(scenario));
+            if (scenario.expected === 200) {
+                assert.ok(queries.some(sql => sql.startsWith('DELETE FROM sessions')));
+                assert.ok(queries.some(sql => sql.startsWith('DELETE FROM api_tokens')));
+                assert.ok(queries.some(sql => sql.startsWith('UPDATE users')));
+                assert.ok(queries.includes('COMMIT'));
+            } else {
+                assert.ok(!queries.some(sql => /^(UPDATE|DELETE|INSERT)/.test(sql)));
+                assert.equal(queries.at(-1), 'ROLLBACK');
+            }
+        }
+        for (const [id, expected] of [['1', 403], ['2abc', 400], ['0', 400]]) {
+            queries = [];
+            assert.equal((await fetch(base + '/api/users/' + id + '/approve', { method: 'PUT', headers: { cookie } })).status, expected);
+            assert.equal(queries.length, 0);
+        }
+    });
+});
+
+test('failed session invalidation rolls account activation back instead of restoring access', async () => {
+    const hash = await require('bcryptjs').hash('correct-test-password', 4);
+    const queries = [];
+    const app = isolatedApp(async sql => {
+        if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role: 'admin', status: 'approved', password: hash }] };
+        queries.push(sql);
+        if (sql.includes('WHERE id = ANY')) return { rows: [{ id: 1, role: 'admin', status: 'approved' }, { id: 2, role: 'driver', status: 'fired' }] };
+        if (sql.startsWith('DELETE FROM sessions')) throw new Error('simulated session-store failure');
+        return { rows: [] };
+    });
+    await withServer(app, async base => {
+        const cookie = await staffSession(base);
+        assert.equal((await fetch(base + '/api/users/2/approve', { method: 'PUT', headers: { cookie } })).status, 500);
+        assert.equal(queries.at(-1), 'ROLLBACK');
+        assert.ok(!queries.some(sql => sql.startsWith('UPDATE users')));
+    });
+});
+
+test('expense mutations protect purchases and ownership using active database roles', async () => {
+    const hash = await require('bcryptjs').hash('correct-test-password', 4);
+    let current;
+    let mutations = [];
+    const app = isolatedApp(async (sql, params) => {
+        if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role: 'admin', status: 'approved', password: hash }] };
+        if (sql.startsWith('SELECT id, role, status FROM users WHERE id = $1')) return { rows: [{ id: 1, role: current.actor || 'driver', status: current.actorStatus || 'approved' }] };
+        if (sql.startsWith('SELECT user_id, type FROM expenses')) return { rows: current.missing ? [] : [{ user_id: current.owner || 1, type: current.existing || 'fuel' }] };
+        if (/^(INSERT INTO|UPDATE|DELETE FROM) expenses/.test(sql)) {
+            mutations.push({ sql, params });
+            return { rows: current.race ? [] : [{ id: 4 }] };
+        }
+        return { rows: [] };
+    });
+    await withServer(app, async base => {
+        const cookie = await staffSession(base);
+        const cases = [
+            { method: 'POST', type: 'fuel', expected: 200 },
+            { method: 'POST', type: 'purchase', expected: 403 },
+            { method: 'POST', type: '<img src=x onerror=alert(1)>', expected: 400 },
+            { method: 'POST', type: 'purchase', actor: 'manager', expected: 200 },
+            { method: 'PUT', type: 'fuel', expected: 200 },
+            { method: 'PUT', type: 'purchase', expected: 403 },
+            { method: 'PUT', type: 'fuel', existing: 'purchase', expected: 403 },
+            { method: 'PUT', type: 'sale', expected: 400 },
+            { method: 'PUT', type: 'fuel', owner: 2, expected: 403 },
+            { method: 'PUT', type: 'purchase', owner: 2, actor: 'manager', expected: 200 },
+            { method: 'PUT', type: 'fuel', missing: true, expected: 404 },
+            { method: 'PUT', type: 'fuel', race: true, expected: 409 },
+            { method: 'DELETE', expected: 200 },
+            { method: 'DELETE', existing: 'purchase', expected: 403 },
+            { method: 'DELETE', owner: 2, expected: 403 },
+            { method: 'DELETE', existing: 'purchase', owner: 2, actor: 'admin', expected: 200 },
+            { method: 'DELETE', race: true, expected: 409 },
+            ...['POST', 'PUT', 'DELETE'].map(method => ({ method, type: 'fuel', actorStatus: 'fired', expected: 403 }))
+        ];
+        for (const scenario of cases) {
+            current = scenario; mutations = [];
+            const response = await fetch(base + '/api/expenses' + (scenario.method === 'POST' ? '' : '/4'), {
+                method: scenario.method, headers: { cookie, 'Content-Type': 'application/json' },
+                ...(scenario.method === 'DELETE' ? {} : { body: JSON.stringify({ type: scenario.type, amount: 100, description: 'Test' }) })
+            });
+            assert.equal(response.status, scenario.expected, JSON.stringify(scenario));
+            assert.equal(mutations.length, scenario.expected === 200 || scenario.race ? 1 : 0);
+        }
+    });
+});

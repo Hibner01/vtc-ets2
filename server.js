@@ -467,6 +467,21 @@ function requireLogin(req, res, next) {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     next();
 }
+
+async function requireActiveAccount(req, res, next) {
+    if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
+    try {
+        const result = await pool.query('SELECT id, role, status FROM users WHERE id = $1', [req.session.userId]);
+        const actor = result.rows[0];
+        if (!actor || actor.status !== 'approved' || !['admin', 'manager', 'driver'].includes(actor.role)) {
+            return res.status(403).json({ error: 'Konto nieaktywne.' });
+        }
+        req.activeAccount = actor;
+        next();
+    } catch (error) {
+        res.status(503).json({ error: 'Nie udało się sprawdzić uprawnień. Spróbuj ponownie.' });
+    }
+}
 // Role: 'admin' (Szef), 'manager' (Kierownik: te same uprawnienia co Szef, z dwoma wyjątkami poniżej), 'driver' (Kierowca).
 // Wyjątki: role nadaje tylko Szef, a kont Szefa i Kierowników (zwolnienie, usunięcie, zmiana hasła) nie rusza Kierownik.
 const STAFF_ROLES = ['admin', 'manager'];
@@ -1373,13 +1388,36 @@ app.put('/api/users/:id/role', requireLogin, async (req, res) => {
     }
 });
 
-app.put('/api/users/:id/approve', async (req, res) => {
-    if (!req.session.userId || !isStaff(req.session.role)) return res.status(403).json({ error: 'Brak uprawnień' });
+app.put('/api/users/:id/approve', requireLogin, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!/^\d+$/.test(req.params.id) || !Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: 'Nieprawidłowy numer konta.' });
+    if (id === req.session.userId) return res.status(403).json({ error: 'Nie możesz aktywować własnego konta.' });
+    let client;
     try {
-        await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', req.params.id]);
-        await addNotification(req.params.id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez Szefa!', null, 'jobs');
+        client = await pool.connect();
+        await client.query('BEGIN');
+        // Lock both accounts in ID order and use current database roles, not session snapshots.
+        const users = await client.query('SELECT id, role, status FROM users WHERE id = ANY($1::int[]) ORDER BY id FOR UPDATE', [[req.session.userId, id]]);
+        const actor = users.rows.find(user => user.id === req.session.userId);
+        const target = users.rows.find(user => user.id === id);
+        if (!actor || actor.status !== 'approved' || !isStaff(actor.role)) throw httpError(403, 'Brak uprawnień.');
+        if (!target) throw httpError(404, 'Nie znaleziono konta.');
+        if (!canManageUser(actor.role, target.role) || !['driver', 'manager'].includes(target.role)) throw httpError(403, 'To konto może przywrócić tylko Szef.');
+        if (!['pending', 'fired'].includes(target.status)) throw httpError(409, 'To konto nie oczekuje na aktywację.');
+        // Old sessions and client tokens must not regain access after reactivation.
+        await client.query("DELETE FROM sessions WHERE (sess->>'userId')::int = $1", [id]);
+        await client.query('DELETE FROM api_tokens WHERE user_id = $1', [id]);
+        await client.query('UPDATE users SET status = $1 WHERE id = $2', ['approved', id]);
+        await client.query('COMMIT');
+        publicOverviewCache = { t: 0, data: null };
+        await addNotification(id, 'Konto Aktywne', 'Twoje konto zostało zatwierdzone przez kadrę. Zaloguj się ponownie.', null, 'jobs');
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: 'Błąd zatwierdzania' }); }
+    } catch (err) {
+        if (client) { try { await client.query('ROLLBACK'); } catch (_) {} }
+        res.status(err.status || 500).json({ error: err.status ? err.message : 'Błąd zatwierdzania' });
+    } finally {
+        if (client) client.release();
+    }
 });
 
 function randomPassword() {
@@ -1653,12 +1691,15 @@ app.get('/api/expenses', requireLogin, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Błąd pobierania wydatków' }); }
 });
 
-app.post('/api/expenses', async (req, res) => {
+const EXPENSE_TYPES = new Set(['fuel', 'ferry', 'tolls', 'service', 'fine', 'other', 'purchase']);
+
+app.post('/api/expenses', requireActiveAccount, async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     const { type, amount, description, expense_date, liters } = req.body;
     const parsedAmount = parseInt(amount) || 0;
     if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
-    if (type === 'purchase' && !isStaff(req.session.role)) return res.status(403).json({ error: 'Zakupy pojazdów może zapisywać tylko Szef.' });
+    if (!EXPENSE_TYPES.has(type || 'other')) return res.status(400).json({ error: 'Nieprawidłowa kategoria wydatku.' });
+    if (type === 'purchase' && !isStaff(req.activeAccount.role)) return res.status(403).json({ error: 'Zakupy pojazdów może zapisywać tylko kadra.' });
 
     try {
         await pool.query(
@@ -1672,35 +1713,40 @@ app.post('/api/expenses', async (req, res) => {
     }
 });
 
-app.put('/api/expenses/:id', async (req, res) => {
+app.put('/api/expenses/:id', requireActiveAccount, async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     const { type, amount, description } = req.body;
     const parsedAmount = parseInt(amount) || 0;
     if (parsedAmount <= 0) return res.status(400).json({ error: 'Kwota musi być większa od 0.' });
+    if (!EXPENSE_TYPES.has(type)) return res.status(400).json({ error: 'Nieprawidłowa kategoria wydatku.' });
 
     try {
-        const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
+        const expCheck = await pool.query('SELECT user_id, type FROM expenses WHERE id = $1', [req.params.id]);
         if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
 
-        if (!isStaff(req.session.role) && expCheck.rows[0].user_id !== req.session.userId) {
+        if (!isStaff(req.activeAccount.role) && expCheck.rows[0].user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Możesz edytować tylko własne wydatki!' });
         }
 
-        await pool.query(
-            'UPDATE expenses SET type = $1, amount = $2, description = $3 WHERE id = $4',
-            [type, parsedAmount, description || '', req.params.id]
+        if (!isStaff(req.activeAccount.role) && (type === 'purchase' || expCheck.rows[0].type === 'purchase')) {
+            return res.status(403).json({ error: 'Zakupy pojazdów może zmieniać tylko kadra.' });
+        }
+
+        const updated = await pool.query(
+            "UPDATE expenses SET type = $1, amount = $2, description = $3 WHERE id = $4 AND ($5::boolean OR (user_id = $6 AND type <> 'purchase' AND $1 <> 'purchase')) RETURNING id",
+            [type, parsedAmount, description || '', req.params.id, isStaff(req.activeAccount.role), req.session.userId]
         );
+        if (!updated.rows.length) return res.status(409).json({ error: 'Wydatek został zmieniony lub usunięty. Odśwież listę.' });
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Błąd edycji wydatku' }); }
 });
 
-app.delete('/api/expenses/:id', async (req, res) => {
+app.delete('/api/expenses/:id', requireActiveAccount, async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Brak sesji' });
     try {
-        const userRes = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
-        const userRole = userRes.rows.length > 0 ? userRes.rows[0].role : null;
+        const userRole = req.activeAccount.role;
 
-        const expCheck = await pool.query('SELECT user_id FROM expenses WHERE id = $1', [req.params.id]);
+        const expCheck = await pool.query('SELECT user_id, type FROM expenses WHERE id = $1', [req.params.id]);
         if (expCheck.rows.length === 0) return res.status(404).json({ error: 'Nie znaleziono wydatku' });
 
         const isOwner = expCheck.rows[0].user_id === req.session.userId;
@@ -1710,7 +1756,12 @@ app.delete('/api/expenses/:id', async (req, res) => {
             return res.status(403).json({ error: 'Możesz usuwać tylko własne wydatki lub musisz być szefem!' });
         }
 
-        await pool.query('DELETE FROM expenses WHERE id = $1', [req.params.id]);
+        if (!isAdmin && expCheck.rows[0].type === 'purchase') {
+            return res.status(403).json({ error: 'Zakupy pojazdów może usuwać tylko kadra.' });
+        }
+
+        const removed = await pool.query("DELETE FROM expenses WHERE id = $1 AND ($2::boolean OR (user_id = $3 AND type <> 'purchase')) RETURNING id", [req.params.id, isAdmin, req.session.userId]);
+        if (!removed.rows.length) return res.status(409).json({ error: 'Wydatek został zmieniony lub usunięty. Odśwież listę.' });
         res.json({ success: true });
     } catch (err) { 
         console.error("Błąd usuwania wydatku:", err);
