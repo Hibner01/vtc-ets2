@@ -999,6 +999,36 @@
                                     </form>
                                 </div>
                             </div>
+                            <div class="col-md-12" id="sell-truck-card" style="display:none;">
+                                <div class="bg-card-bms p-4">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                                        <h5 class="fw-bold mb-0 text-white"><i class="fa-solid fa-tag me-2 text-warning"></i>Sprzedaż ciężarówki</h5>
+                                        <div class="small text-white-50 text-end">Budżet firmy: <b class="text-white" id="sell-truck-budget">-</b></div>
+                                    </div>
+                                    <p class="text-white-50 small">Wybierz wolną ciężarówkę i wpisz cenę sprzedaży. Pojazd zniknie z Garażu, a kwota zasili budżet firmy i pojawi się w historii finansów. Przydzielony pojazd trzeba najpierw zwolnić w Garażu.</p>
+                                    <form id="sell-truck-form" onsubmit="submitTruckSale(event)">
+                                        <div class="row g-3 align-items-end">
+                                            <div class="col-md-6">
+                                                <label class="form-label text-white fw-semibold" for="sell-truck-select">Ciężarówka</label>
+                                                <select id="sell-truck-select" class="form-select text-white bg-dark border-secondary" required>
+                                                    <option value="">Wczytuję flotę…</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label text-white fw-semibold" for="sell-truck-price">Cena sprzedaży (€)</label>
+                                                <input type="number" id="sell-truck-price" min="1" max="2147483647" step="1" class="form-control text-white bg-dark border-secondary" placeholder="np. 85000" required>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label text-white fw-semibold" for="sell-truck-date">Data sprzedaży</label>
+                                                <input type="date" id="sell-truck-date" class="form-control text-white bg-dark border-secondary" required>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="submit" id="sell-truck-submit-btn" class="btn btn-warning fw-bold w-100"><i class="fa-solid fa-hand-holding-dollar me-1"></i> Sprzedaj</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                             <div class="col-md-12">
                                 <div class="bg-card-bms p-4">
                                     <h5 class="fw-bold mb-3 text-white"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>Zgłoś wydatek / koszt</h5>
@@ -3022,15 +3052,21 @@
                 const expenses = await res.json();
                 const pcard = document.getElementById('purchase-card');
                 if (pcard) pcard.style.display = isStaff() ? 'block' : 'none';
+                const sellCard = document.getElementById('sell-truck-card');
+                if (sellCard) sellCard.style.display = isStaff() ? 'block' : 'none';
                 const ptot = document.getElementById('purchase-total');
                 if (ptot) ptot.textContent = expenses.filter(x => x.type === 'purchase').reduce((sum, x) => sum + (x.amount || 0), 0).toLocaleString('pl-PL') + ' €';
-                if (isStaff()) refreshPurchaseBudget();
+                if (isStaff()) {
+                    await refreshPurchaseBudget();
+                    await loadSaleableTrucks();
+                }
                 
                 const tbody = document.getElementById('expenses-table-body');
                 if (!tbody) return;
                 tbody.innerHTML = '';
 
                 expenses.forEach(e => {
+                    const isSale = e.transaction_kind === 'sale';
                     let typeName = e.type;
                     if (e.type === 'fuel') typeName = '⛽ Paliwo';
                     else if (e.type === 'ferry') typeName = '🚢 Prom';
@@ -3038,16 +3074,21 @@
                     else if (e.type === 'service') typeName = '🔧 Serwis';
                     else if (e.type === 'fine') typeName = '🚨 Mandat';
                     else if (e.type === 'purchase') typeName = '🚛 Zakup pojazdu';
+                    else if (isSale) typeName = '💰 Sprzedaż ciężarówki';
 
-                    let deleteBtn = `<button class="btn btn-outline-danger btn-sm" onclick="deleteExpense(${e.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`;
+                    let deleteBtn = isSale
+                        ? '<span class="text-white-50">—</span>'
+                        : `<button class="btn btn-outline-danger btn-sm" onclick="deleteExpense(${e.id})" title="Usuń wydatek"><i class="fa-solid fa-trash"></i></button>`;
                     let formattedDate = e.expense_date ? new Date(e.expense_date).toLocaleDateString('pl-PL') : '-';
+                    const amount = Number(e.amount) || 0;
+                    const amountText = (isSale ? '+ ' : '') + amount.toLocaleString('pl-PL') + ' €';
 
                     tbody.innerHTML += `
                         <tr>
                             <td>${formattedDate}</td>
                             <td><span class="badge bg-secondary">${typeName}</span></td>
                             <td>${escapeHtml(e.description || '-')}</td>
-                            <td class="fw-bold text-warning">${e.amount} €</td>
+                            <td class="fw-bold ${isSale ? 'text-success' : 'text-warning'}">${amountText}</td>
                             <td>${escapeHtml(e.username || 'Kierowca')}</td>
                             <td class="text-end">${deleteBtn}</td>
                         </tr>
@@ -3055,6 +3096,74 @@
                 });
             } catch (err) {
                 console.error("Błąd ładowania wydatków:", err);
+            }
+        }
+
+        async function loadSaleableTrucks() {
+            const select = document.getElementById('sell-truck-select');
+            if (!select || !isStaff()) return;
+            try {
+                const res = await fetch('/api/trucks');
+                if (!res.ok) throw new Error('Nie udało się pobrać floty.');
+                const trucks = await res.json();
+                const available = trucks.filter(truck => {
+                    const driver = String(truck.driver_name || '').trim().toLocaleLowerCase();
+                    return !driver || driver === 'wolne';
+                });
+                select.replaceChildren(new Option('Wybierz ciężarówkę…', ''));
+                available.forEach(truck => {
+                    const label = `${truck.truck_model || 'Ciężarówka'} — ${truck.plates || 'bez tablic'}`;
+                    select.add(new Option(label, String(truck.id)));
+                });
+                if (!available.length) select.add(new Option('Brak wolnych ciężarówek', ''));
+                select.disabled = available.length === 0;
+                const dateInput = document.getElementById('sell-truck-date');
+                if (dateInput && !dateInput.value) {
+                    const now = new Date();
+                    dateInput.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+                }
+            } catch (error) {
+                select.replaceChildren(new Option(error.message || 'Błąd pobierania floty', ''));
+                select.disabled = true;
+            }
+        }
+
+        async function submitTruckSale(event) {
+            event.preventDefault();
+            const select = document.getElementById('sell-truck-select');
+            const truckId = Number.parseInt(select && select.value, 10);
+            const truckLabel = select && select.selectedOptions[0] ? select.selectedOptions[0].textContent : '';
+            const salePrice = Number(document.getElementById('sell-truck-price').value);
+            const saleDate = document.getElementById('sell-truck-date').value;
+            if (!Number.isSafeInteger(truckId) || truckId <= 0) return alert('Wybierz ciężarówkę do sprzedaży.');
+            if (!Number.isSafeInteger(salePrice) || salePrice <= 0) return alert('Podaj cenę sprzedaży większą od 0 €.');
+            if (!confirm(`Sprzedać ${truckLabel} za ${salePrice.toLocaleString('pl-PL')} €?\n\nCiężarówka zostanie usunięta z Garażu, a pieniądze dodane do budżetu firmy.`)) return;
+
+            const button = document.getElementById('sell-truck-submit-btn');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Zapisywanie…';
+            try {
+                const response = await fetch(`/api/trucks/${truckId}/sell`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sale_price: salePrice, sale_date: saleDate })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.error || 'Nie udało się sprzedać ciężarówki.');
+                alert(`Sprzedano ${data.truckModel} (${data.plates}) za ${Number(data.salePrice).toLocaleString('pl-PL')} €. Kwota trafiła do budżetu firmy.`);
+                document.getElementById('sell-truck-form').reset();
+                await loadExpenses();
+                await loadCompanyStats();
+                if (typeof refreshVehicles === 'function') {
+                    await refreshVehicles();
+                    if (typeof renderGarage === 'function') renderGarage();
+                }
+            } catch (error) {
+                alert(error.message || 'Błąd połączenia z serwerem.');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
             }
         }
 
@@ -3323,6 +3432,8 @@ async function refreshPurchaseBudget() {
         const d = await r.json();
         const el = document.getElementById('purchase-budget');
         if (el) el.textContent = (d.totalCompanyBudget || 0).toLocaleString('pl-PL') + ' €';
+        const saleEl = document.getElementById('sell-truck-budget');
+        if (saleEl) saleEl.textContent = (d.totalCompanyBudget || 0).toLocaleString('pl-PL') + ' €';
         return d.totalCompanyBudget || 0;
     } catch (e) { return null; }
 }
