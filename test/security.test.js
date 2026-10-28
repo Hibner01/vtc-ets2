@@ -268,3 +268,96 @@ test('dispatch text and city arguments do not become executable markup', async (
     assert.ok(container.innerHTML.includes('this.dataset.startCity'));
     assert.ok(container.innerHTML.includes('&lt;img'));
 });
+
+async function staffSession(base, role = 'admin') {
+    const response = await fetch(base + '/api/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'test', password: 'correct-test-password' })
+    });
+    assert.equal(response.status, 200, role);
+    return response.headers.get('set-cookie').split(';')[0];
+}
+
+test('deletion requires staff access, correct origin and a strictly valid application ID', async () => {
+    const hash = await require('bcryptjs').hash('correct-test-password', 4);
+    for (const role of ['driver', 'manager', 'admin']) {
+        let databaseCalls = 0;
+        const app = isolatedApp(async sql => {
+            if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role, status: 'approved', password: hash }] };
+            databaseCalls++;
+            return { rows: [] };
+        });
+        await withServer(app, async base => {
+            assert.equal((await fetch(base + '/api/recruitment/applications/1', { method: 'DELETE', headers: { origin: base } })).status, 403);
+            const cookie = await staffSession(base, role);
+            const send = (id, origin) => fetch(base + '/api/recruitment/applications/' + id, { method: 'DELETE', headers: { cookie, ...(origin ? { origin } : {}) } });
+            if (role === 'driver') {
+                assert.equal((await send('1', base)).status, 403);
+            } else {
+                assert.equal((await send('1', 'https://attacker.test')).status, 403);
+                assert.equal((await send('1')).status, 403);
+                for (const id of ['0', '-1', '1abc', '9007199254740993']) assert.equal((await send(id, base)).status, 400);
+            }
+            assert.equal(databaseCalls, 0, 'access and input errors must not modify the database');
+        });
+    }
+});
+
+test('deletion commits application and photo cleanup together; errors and missing records roll back', async () => {
+    const hash = await require('bcryptjs').hash('correct-test-password', 4);
+    for (const scenario of ['success', 'no-photos', 'missing', 'photo-error']) {
+        const queries = [];
+        const app = isolatedApp(async (sql, params) => {
+            if (sql.includes('SELECT * FROM users WHERE')) return { rows: [{ id: 1, username: 'Test', role: 'admin', status: 'approved', password: hash }] };
+            queries.push({ sql, params });
+            if (sql.includes('FROM recruitment_applications WHERE id = $1 FOR UPDATE')) return {
+                rows: scenario === 'missing' ? [] : [{ screenshot_one_file_id: scenario === 'no-photos' ? null : 11, screenshot_two_file_id: scenario === 'no-photos' ? null : 12 }]
+            };
+            if (sql.includes('DELETE FROM files')) {
+                if (scenario === 'photo-error') throw new Error('simulated photo cleanup failure');
+                assert.deepEqual(Array.from(params[0]), [11, 12]);
+            }
+            return { rows: [] };
+        });
+        await withServer(app, async base => {
+            const cookie = await staffSession(base);
+            const response = await fetch(base + '/api/recruitment/applications/7', { method: 'DELETE', headers: { cookie, origin: base } });
+            assert.equal(response.status, scenario === 'missing' ? 404 : scenario === 'photo-error' ? 500 : 200);
+            const sqls = queries.map(q => q.sql);
+            assert.equal(sqls[0], 'BEGIN');
+            assert.match(sqls[1], /pg_advisory_xact_lock/);
+            assert.equal(sqls.at(-1), ['success', 'no-photos'].includes(scenario) ? 'COMMIT' : 'ROLLBACK');
+            if (scenario === 'missing') assert.ok(!sqls.some(sql => sql.includes('DELETE FROM')));
+            if (scenario === 'no-photos') assert.ok(!sqls.some(sql => sql.includes('DELETE FROM files')));
+        });
+    }
+});
+
+test('delete button asks for confirmation, handles stale records and restores itself on errors', async () => {
+    const start = html.indexOf('async function deleteRecruitmentApplication(');
+    const end = html.indexOf('async function copyRecruitmentInviteMessage(', start);
+    const source = html.slice(start, end);
+    for (const scenario of ['cancel', 'success', 'missing', 'error']) {
+        let requests = 0, refreshes = 0, alerts = 0;
+        const context = vm.createContext({
+            isStaff: () => true, currentLang: 'pl',
+            window: { confirm: message => { assert.match(message, /#7/); return scenario !== 'cancel'; } },
+            fetch: async (url, options) => {
+                requests++; assert.equal(url, '/api/recruitment/applications/7'); assert.equal(options.method, 'DELETE');
+                return { ok: scenario === 'success', status: scenario === 'missing' ? 404 : 500, json: async () => ({ error: 'Test error' }) };
+            },
+            recruitmentApplicationsCache: [{ id: 7 }, { id: 8 }],
+            loadRecruitmentApplications: async () => { refreshes++; },
+            alert: () => { alerts++; }
+        });
+        vm.runInContext(source, context);
+        const button = { disabled: false };
+        context.button = button;
+        await vm.runInContext('deleteRecruitmentApplication(7, button)', context);
+        assert.equal(button.disabled, false);
+        assert.equal(requests, scenario === 'cancel' ? 0 : 1);
+        assert.equal(refreshes, ['success', 'missing'].includes(scenario) ? 1 : 0);
+        assert.equal(alerts, scenario === 'error' ? 1 : 0);
+        assert.equal(context.recruitmentApplicationsCache.length, ['success', 'missing'].includes(scenario) ? 1 : 2);
+    }
+});

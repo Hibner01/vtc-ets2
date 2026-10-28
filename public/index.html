@@ -3840,7 +3840,8 @@ async function loadRecruitmentApplications() {
                 '<label class="form-label mb-0" for="recruitment-status-' + id + '">' + escapeHtml(t('recruitmentStatusLabel')) + '</label>' +
                 '<select id="recruitment-status-' + id + '" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width:220px">' +
                 recruitmentStatuses.map(status => '<option value="' + status + '"' + (status === application.status ? ' selected' : '') + '>' + escapeHtml(recruitmentStatusName(status)) + '</option>').join('') +
-                '</select><button class="btn btn-sm btn-outline-warning" type="button" onclick="saveRecruitmentApplicationStatus(' + id + ')">' + escapeHtml(t('recruitmentSaveStatus')) + '</button>' + inviteButton + '</div>' +
+                '</select><button class="btn btn-sm btn-outline-warning" type="button" onclick="saveRecruitmentApplicationStatus(' + id + ')">' + escapeHtml(t('recruitmentSaveStatus')) + '</button>' + inviteButton +
+                '<button class="btn btn-sm btn-outline-danger ms-md-auto" type="button" onclick="deleteRecruitmentApplication(' + id + ', this)"><i class="fa-solid fa-trash me-1"></i>' + (currentLang === 'en' ? 'Delete application' : 'Usuń podanie') + '</button></div>' +
                 '</div></details>';
         }).join('');
     } catch (error) {
@@ -3864,6 +3865,29 @@ async function saveRecruitmentApplicationStatus(id) {
     }
 }
 
+
+async function deleteRecruitmentApplication(id, button) {
+    if (!isStaff() || !Number.isSafeInteger(id) || id < 1 || button.disabled) return;
+    const english = currentLang === 'en';
+    const message = english
+        ? 'Permanently delete application #' + id + ' and its photos? This cannot be undone.'
+        : 'Trwale usunąć podanie #' + id + ' wraz ze zdjęciami? Tej operacji nie można cofnąć.';
+    if (!window.confirm(message)) return;
+    button.disabled = true;
+    try {
+        const response = await fetch('/api/recruitment/applications/' + id, { method: 'DELETE' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok && response.status !== 404) {
+            throw new Error(data.error || (english ? 'Could not delete the application.' : 'Nie udało się usunąć podania.'));
+        }
+        recruitmentApplicationsCache = recruitmentApplicationsCache.filter(item => Number(item.id) !== id);
+        await loadRecruitmentApplications();
+    } catch (error) {
+        alert(error.message || (english ? 'Connection error. Try again.' : 'Błąd połączenia. Spróbuj ponownie.'));
+    } finally {
+        button.disabled = false;
+    }
+}
 
 async function copyRecruitmentInviteMessage(button) {
     const id = Number(button && button.dataset.applicationId);

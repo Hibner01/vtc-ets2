@@ -986,6 +986,54 @@ app.get('/api/recruitment/applications', requireAdmin, async (req, res) => {
     }
 });
 
+app.delete('/api/recruitment/applications/:id', requireAdmin, async (req, res) => {
+    // This destructive action is used by the same-origin staff interface only.
+    if (req.get('origin') !== `${req.protocol}://${req.get('host')}`) {
+        return res.status(403).json({ error: 'Odśwież stronę i spróbuj ponownie.' });
+    }
+    const id = Number(req.params.id);
+    if (!/^\d+$/.test(req.params.id) || !Number.isSafeInteger(id) || id < 1) {
+        return res.status(400).json({ error: 'Nieprawidłowy numer podania.' });
+    }
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
+        // Use the same lock as recruitment storage accounting.
+        await client.query('SELECT pg_advisory_xact_lock(172904, 1)');
+        const application = await client.query(
+            'SELECT screenshot_one_file_id, screenshot_two_file_id FROM recruitment_applications WHERE id = $1 FOR UPDATE', [id]
+        );
+        if (!application.rows.length) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Podanie już nie istnieje.' });
+        }
+        const photoIds = [...new Set([
+            application.rows[0].screenshot_one_file_id,
+            application.rows[0].screenshot_two_file_id
+        ].filter(Number.isInteger))];
+        await client.query('DELETE FROM recruitment_applications WHERE id = $1', [id]);
+        // Delete only the candidate's photos, preserving any files still in use.
+        if (photoIds.length) await client.query(`
+            DELETE FROM files f WHERE f.id = ANY($1::int[])
+            AND NOT EXISTS (SELECT 1 FROM recruitment_applications ra WHERE ra.screenshot_one_file_id = f.id OR ra.screenshot_two_file_id = f.id)
+            AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.cmr_file = '/api/files/' || f.id::text OR j.summary_photo = '/api/files/' || f.id::text)
+            AND NOT EXISTS (SELECT 1 FROM documents d WHERE d.file_url = '/api/files/' || f.id::text)
+            AND NOT EXISTS (SELECT 1 FROM trucks t WHERE t.photo = '/api/files/' || f.id::text OR t.photo_back = '/api/files/' || f.id::text)
+            AND NOT EXISTS (SELECT 1 FROM trailers t WHERE t.photo = '/api/files/' || f.id::text OR t.photo_back = '/api/files/' || f.id::text)
+        `, [photoIds]);
+        await client.query('COMMIT');
+        console.info('Usunięto podanie rekrutacyjne:', { applicationId: id, actorId: req.session.userId });
+        res.json({ success: true });
+    } catch (error) {
+        if (client) { try { await client.query('ROLLBACK'); } catch (_) {} }
+        console.error('Błąd usuwania podania:', error.message);
+        res.status(500).json({ error: 'Nie udało się usunąć podania. Spróbuj ponownie później.' });
+    } finally {
+        if (client) client.release();
+    }
+});
+
 app.get('/api/recruitment/applications/:id/photos/:photoNumber', requireAdmin, async (req, res) => {
     const id = Number.parseInt(req.params.id, 10);
     const fileColumn = req.params.photoNumber === '1' ? 'screenshot_one_file_id'
