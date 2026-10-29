@@ -2,11 +2,13 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <script src="./config.js"></script>
+    <script src="./deployment.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Mazren Spedition - Mazren Control System</title>
 	
 <!-- Ikona strony -->
-<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="icon" type="image/png" href="./favicon.png">
 
 <!-- Opis strony -->
 <meta name="description" content="Mazren Spedition — wirtualna firma transportowa Euro Truck Simulator 2.">
@@ -16,8 +18,8 @@
 <meta property="og:site_name" content="Mazren Spedition">
 <meta property="og:title" content="Mazren Spedition | Mazren Control System">
 <meta property="og:description" content="Witaj w Mazren Spedition! Poznaj naszą wirtualną firmę transportową ETS2.">
-<meta property="og:url" content="https://mazren.duckdns.org/">
-<meta property="og:image" content="https://mazren.duckdns.org/preview.png">
+<meta property="og:url" content="https://hibner01.github.io/vtc-ets2/">
+<meta property="og:image" content="https://hibner01.github.io/vtc-ets2/preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 
@@ -38,12 +40,12 @@
         }
 
         .auth-bg-main { 
-            background: linear-gradient(rgba(11, 15, 25, 0.6), rgba(11, 15, 25, 0.6)), url('/volvo1.png') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(11, 15, 25, 0.6), rgba(11, 15, 25, 0.6)), url('./volvo1.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
         .auth-bg-side { 
-            background: linear-gradient(rgba(11, 15, 25, 0.7), rgba(11, 15, 25, 0.7)), url('/volvo2.png') center/cover no-repeat fixed;
+            background: linear-gradient(rgba(11, 15, 25, 0.7), rgba(11, 15, 25, 0.7)), url('./volvo2.png') center/cover no-repeat fixed;
             min-height: 100vh; 
         }
 
@@ -599,7 +601,7 @@
 
         <!-- EKRAN AUTORYZACJI -->
         <div id="auth-section" class="auth-bg-main flex-column justify-content-between align-items-center py-5" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
-            <div style="cursor: pointer;" onclick="exitApp()"><img src="/logo.png" alt="Mazren Spedition" style="max-height: 120px;" loading="eager" onerror="this.style.display='none'"></div>
+            <div style="cursor: pointer;" onclick="exitApp()"><img src="./logo.png" alt="Mazren Spedition" style="max-height: 120px;" loading="eager" onerror="this.style.display='none'"></div>
             
             <div id="auth-main-card" class="text-center" style="width: 100%; max-width: 400px;">
                 <button class="btn btn-pill-white w-100 mb-3 shadow" onclick="showAuthForm('login')">
@@ -702,7 +704,7 @@
             <div id="mobile-sidebar-backdrop" class="sidebar-backdrop" onclick="closeMobileMenu()" aria-hidden="true"></div>
             <aside class="sidebar" id="main-sidebar">
                 <div class="sidebar-brand" onclick="switchTab('dashboard')" title="Strona Główna">
-                    <img src="/logo.png" alt="Mazren Spedition" style="max-height: 48px;" loading="eager" onerror="this.style.display='none'">
+                    <img src="./logo.png" alt="Mazren Spedition" style="max-height: 48px;" loading="eager" onerror="this.style.display='none'">
                 </div>
 
                 <div class="sidebar-user">
@@ -1281,10 +1283,10 @@
                                         <div>
                                             <span class="badge bg-success mb-2">DO POBRANIA</span>
                                             <h5 class="fw-bold text-white mb-3">Wzór CMR</h5>
-                                            <img src="/uploads/wzor.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+                                            <img src="./uploads/wzor.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='./logo.png'">
                                             <p class="text-white-50 small">Czysty wzór listu przewozowego Mazren Spedition.</p>
                                         </div>
-                                        <a href="/uploads/wzor.jpg" target="_blank" download class="btn btn-pill-white w-100 fw-bold mt-3">
+                                        <a href="./uploads/wzor.jpg" target="_blank" download class="btn btn-pill-white w-100 fw-bold mt-3">
                                             <i class="fa-solid fa-download me-2"></i> Pobierz
                                         </a>
                                     </div>
@@ -1295,10 +1297,10 @@
                                         <div>
                                             <span class="badge bg-danger mb-2">OFICJALNA</span>
                                             <h5 class="fw-bold text-white mb-3">Pieczątka Firmowa</h5>
-                                            <img src="/uploads/pieczatka.jpg" class="img-fluid rounded border border-secondary mb-3 bg-white p-2" style="max-height: 160px; object-fit: contain;" loading="lazy" onerror="this.src='/logo.png'">
+                                            <img src="./uploads/pieczatka.jpg" class="img-fluid rounded border border-secondary mb-3 bg-white p-2" style="max-height: 160px; object-fit: contain;" loading="lazy" onerror="this.src='./logo.png'">
                                             <p class="text-white-50 small">Firmowa pieczęć Mazren Spedition Sp. z o.o.</p>
                                         </div>
-                                        <a href="/uploads/pieczatka.jpg" target="_blank" download class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                        <a href="./uploads/pieczatka.jpg" target="_blank" download class="btn btn-pill-dark w-100 fw-bold mt-3">
                                             <i class="fa-solid fa-download me-2"></i> Pobierz Stempel
                                         </a>
                                     </div>
@@ -1309,10 +1311,10 @@
                                         <div>
                                             <span class="badge bg-info mb-2">PRZYKŁAD</span>
                                             <h5 class="fw-bold text-white mb-3">Wypełniony CMR</h5>
-                                            <img src="/uploads/cmr_przyklad.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+                                            <img src="./uploads/cmr_przyklad.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='./logo.png'">
                                             <p class="text-white-50 small">Instrukcja poprawnego wypełniania listu przewozowego.</p>
                                         </div>
-                                        <a href="/uploads/cmr_przyklad.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                        <a href="./uploads/cmr_przyklad.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
                                             <i class="fa-solid fa-eye me-2"></i> Zobacz
                                         </a>
                                     </div>
@@ -1323,10 +1325,10 @@
                                         <div>
                                             <span class="badge bg-warning text-dark mb-2">RAPORT</span>
                                             <h5 class="fw-bold text-white mb-3">Podsumowanie Trasy</h5>
-                                            <img src="/uploads/przyklad-summary.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='/logo.png'">
+                                            <img src="./uploads/przyklad-summary.jpg" class="img-fluid rounded border border-secondary mb-3" style="max-height: 160px; object-fit: cover;" loading="lazy" onerror="this.src='./logo.png'">
                                             <p class="text-white-50 small">Przykładowy zrzut ekranu z gry ETS2.</p>
                                         </div>
-                                        <a href="/uploads/przyklad-summary.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
+                                        <a href="./uploads/przyklad-summary.jpg" target="_blank" class="btn btn-pill-dark w-100 fw-bold mt-3">
                                             <i class="fa-solid fa-eye me-2"></i> Zobacz
                                         </a>
                                     </div>
@@ -1696,7 +1698,7 @@
         function safeAttachmentUrl(value) {
             if (!value) return '';
             try {
-                const url = new URL(String(value), window.location.origin);
+                const url = new URL(window.mazrenResourceUrl(String(value)), document.baseURI);
                 if (url.protocol === 'https:' || (url.protocol === 'http:' && url.origin === window.location.origin)) return url.href;
             } catch (_) {}
             return '';
@@ -2242,7 +2244,7 @@
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    localStorage.setItem('vtc_logged_user', email);
+                    localStorage.removeItem('vtc_logged_user');
                     checkUser();
                 } else { alert(data.error || 'Błąd logowania'); }
             } catch (err) { alert('Błąd połączenia z serwerem.'); }
@@ -3454,7 +3456,7 @@ async function generateClientToken() {
     const d = await r.json();
     if (!r.ok) return alert(d.error || 'Błąd');
     document.getElementById('client-token-value').value = d.token;
-    document.getElementById('client-site-url').textContent = window.location.origin;
+    document.getElementById('client-site-url').textContent = window.MAZREN_CONFIG.apiOrigin || window.location.origin;
     document.getElementById('client-token-box').classList.remove('d-none');
     const box = document.getElementById('client-token-status');
     box.innerHTML = '<span class="badge bg-success">Token aktywny</span> (właśnie wygenerowany)';
@@ -4153,7 +4155,7 @@ async function importJobs(dryRun) {
 
 /* ===== Wirtualny CMR (generowany automatycznie, zamiast skanu) ===== */
 // Pieczątka firmowa wstawiana w polu 23 (przewoźnik). To ten sam plik, który jest do pobrania w zakładce Dokumenty.
-const CMR_STAMP_URL = '/uploads/pieczatka.jpg';
+const CMR_STAMP_URL = './uploads/pieczatka.jpg';
 const jobsCache = {};
 function cacheJobs(list) { (list || []).forEach(j => { jobsCache[j.id] = j; }); }
 function openVirtualCmr(jobId) {
@@ -4161,7 +4163,7 @@ function openVirtualCmr(jobId) {
     if (!j) return alert('Nie znaleziono danych trasy. Odśwież stronę.');
     const e = escapeHtml;
     const num = 'MZ/' + (new Date().getFullYear()) + '/' + String(j.id).padStart(5, '0');
-    const stampUrl = window.location.origin + CMR_STAMP_URL;
+    const stampUrl = new URL(CMR_STAMP_URL, document.baseURI).href;
     const box = (n, title, body, extra) => `<div class="b ${extra || ''}"><div class="n">${n}</div><div class="t">${title}</div><div class="v">${body}</div></div>`;
     const html = `<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8"><title>CMR ${num}</title>
 <style>
@@ -4341,12 +4343,12 @@ function renderDriverMap() {
                     const x1 = mapWorld.x1 + col * tileWorldWidth, x2 = x1 + tileWorldWidth;
                     if (x2 <= minX || x1 >= maxX) continue;
                     const x = px(x1), y = py(z1), width = px(x2) - x, height = py(z2) - y;
-                    parts.push(`<image href="/map/ets2-map-hq-${col}-${row}.png" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none"/>`);
+                    parts.push(`<image href="./map/ets2-map-hq-${col}-${row}.png" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none"/>`);
                 }
             }
             return parts.join('');
         })()
-        : `<image href="/map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageWidth}" height="${mapImageHeight}" preserveAspectRatio="none"/>`;
+        : `<image href="./map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageWidth}" height="${mapImageHeight}" preserveAspectRatio="none"/>`;
     const palette = ['#38bdf8', '#a78bfa', '#fb923c', '#22c55e', '#f472b6', '#facc15', '#2dd4bf'];
     const routeLines = located.map((driver, i) => {
         const track = fleetMapTracks[String(driver.trip_id)] || [];
@@ -4555,7 +4557,7 @@ async function showRoute(jobId) {
                 </defs>
                 <rect width="${W}" height="${H}" fill="#080d16"/>
                 <g clip-path="url(#rt-clip)">
-                    <image href="/map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageSize}" height="${mapImageSize}" preserveAspectRatio="none" opacity=".94"/>
+                    <image href="./map/ets2-map.png" x="${mapImageX}" y="${mapImageY}" width="${mapImageSize}" height="${mapImageSize}" preserveAspectRatio="none" opacity=".94"/>
                     <rect x="${PAD}" y="${PAD}" width="${W - 2 * PAD}" height="${H - 2 * PAD}" fill="#050a12" fill-opacity=".08"/>
                     <polyline points="${glow}" fill="none" stroke="#38bdf8" stroke-opacity="0.48" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#rt-blur)"/>
                     ${lines}${arrows}
